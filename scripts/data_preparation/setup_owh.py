@@ -137,11 +137,23 @@ def link_subset(subset, split, names, name_map, args, mixed=False):
     dst_hazy_dir = osp.join(root, HAZY_NAME)
     dst_clear_dir = osp.join(root, CLEAR_NAME)
 
+    skipped = 0
     for name in names:
         share_name = name_map[subset][name]
+        src_hazy = osp.join(src_hazy_dir, share_name)
+        # training crops a gt_size patch, so skip images smaller than --min_size
+        if split == 'train' and args.min_size > 0:
+            from PIL import Image
+            with Image.open(src_hazy) as img:
+                w, h = img.size
+            if min(h, w) < args.min_size:
+                skipped += 1
+                continue
         dst_name = f'{subset}_{share_name}' if mixed else share_name
-        make_link(osp.join(src_hazy_dir, share_name), osp.join(dst_hazy_dir, dst_name))
+        make_link(src_hazy, osp.join(dst_hazy_dir, dst_name))
         make_link(osp.join(src_clear_dir, share_name), osp.join(dst_clear_dir, dst_name))
+    if skipped:
+        print(f'  [{subset}/{split}{"/Mixed" if mixed else ""}] skip {skipped} images smaller than {args.min_size}px')
 
 
 def main():
@@ -153,6 +165,12 @@ def main():
         default='/home/xieyuhang/Learn/DEA-Net/dataset',
         help='dir that contains the existing OWH-<Subset> train/test split; empty to re-split')
     parser.add_argument('--out_dir', type=str, default='datasets/OWH', help='output symlink root')
+    parser.add_argument(
+        '--min_size',
+        type=int,
+        default=256,
+        help='skip training images whose shorter side is smaller than this value (for gt_size '
+        'random crop); set 0 to disable. Test images are never filtered.')
     parser.add_argument('--rebuild_map', action='store_true', help='rebuild the md5 name map even if cached')
     args = parser.parse_args()
 
