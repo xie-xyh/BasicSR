@@ -67,9 +67,9 @@ basicsr/
 └── utils/                    # registry.py, logger.py, options.py, file_client.py,
                               # img_util.py, color_util.py, matlab_functions.py, dist_util.py 等
 options/train/SRResNet_SRGAN/   # SR 训练配置模板（train_MSRResNet_x{2,3,4}.yml）
-options/train/DEANet/           # DEA-Net 去雾训练配置
+options/train/DEANet/           # DEA-Net 去雾训练配置（train_DEANet_mixed 混合 + dense/mist/moderate 分开）
 options/test/SRResNet_SRGAN/    # SR 测试配置模板
-options/test/DEANet/            # DEA-Net 去雾测试配置
+options/test/DEANet/            # DEA-Net 去雾测试配置（按子集分别输出指标）
 inference/                      # inference_esrgan.py / inference_swinir.py 单图推理范例
 scripts/data_preparation/       # extract_subimages.py, create_lmdb.py, generate_meta_info.py
 scripts/metrics/                # calculate_psnr_ssim.py, calculate_lpips.py
