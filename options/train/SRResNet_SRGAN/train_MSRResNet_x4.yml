@@ -112,9 +112,14 @@ logger:
   print_freq: 100
   save_checkpoint_freq: !!float 5e3
   use_tb_logger: true
+  use_swanlab: false  # 开启后同步 tensorboard 的标量与图像到 swanlab；依赖 requirements.txt 中的 swanlab
   wandb:
     project: ~
     resume_id: ~
+  swanlab:
+    project: ~  # 为空时自动取实验名
+    mode: local  # local: 本地看板(swanlab watch)，无需账号; online: 同步云端(需 swanlab login); offline/disabled 可选
+    resume_id: ~  # 填实验 id 可 resume 到已有实验
 
 # dist training settings
 dist_params:
