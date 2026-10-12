@@ -48,8 +48,9 @@ basicsr/
 │   ├── srresnet_arch.py      # MSRResNet (SRGAN 的 Generator，去雾常用改造起点)
 │   ├── rrdbnet_arch.py       # RRDBNet (ESRGAN 的 Generator)
 │   ├── swinir_arch.py        # SwinIR (Transformer 骨干)
+│   ├── deanet_arch.py        # DEANet 去雾网络（差分卷积 DEConv + CGA 注意力，WACV 2024）
 │   ├── discriminator_arch.py # UNetDiscriminatorSN (GAN 训练用)
-│   └── vgg_arch.py           # VGGFeatureExtractor (感知损失用)
+│   └── vgg_arch.py           # VGGFeatureExtractor (感知/对比损失用)
 ├── data/
 │   ├── paired_image_dataset.py   # 成对数据集（hazy/GT 训练与测试）
 │   ├── single_image_dataset.py   # 仅 LQ（无 GT 的推理/测试）
@@ -58,14 +59,17 @@ basicsr/
 │   └── meta_info/                # DIV2K 的 meta 文件（大数据集加速用，可选）
 ├── models/
 │   ├── base_model.py         # 模型基类：优化器/scheduler/EMA/保存/加载/resume
-│   ├── sr_model.py           # SRModel —— 去雾模型的直接模板
+│   ├── sr_model.py           # SRModel —— 单图像复原模型的直接模板
+│   ├── dehaze_model.py       # DehazeModel（= SRModel + 可选 CR 对比损失，negative=有雾输入）
 │   └── lr_scheduler.py       # CosineAnnealingRestartLR 等
-├── losses/                   # basic_loss.py (L1/L2/MSE/Gradient/Perceptual), gan_loss.py, loss_util.py
+├── losses/                   # basic_loss.py (L1/L2/MSE/Gradient/Perceptual), contrastive_loss.py (DEA-Net CR 损失), gan_loss.py, loss_util.py
 ├── metrics/                  # psnr_ssim.py (calculate_psnr/ssim 及其 _pt 版本), metric_util.py
 └── utils/                    # registry.py, logger.py, options.py, file_client.py,
                               # img_util.py, color_util.py, matlab_functions.py, dist_util.py 等
-options/train/SRResNet_SRGAN/   # 训练配置模板（train_MSRResNet_x{2,3,4}.yml）
-options/test/SRResNet_SRGAN/    # 测试配置模板
+options/train/SRResNet_SRGAN/   # SR 训练配置模板（train_MSRResNet_x{2,3,4}.yml）
+options/train/DEANet/           # DEA-Net 去雾训练配置
+options/test/SRResNet_SRGAN/    # SR 测试配置模板
+options/test/DEANet/            # DEA-Net 去雾测试配置
 inference/                      # inference_esrgan.py / inference_swinir.py 单图推理范例
 scripts/data_preparation/       # extract_subimages.py, create_lmdb.py, generate_meta_info.py
 scripts/metrics/                # calculate_psnr_ssim.py, calculate_lpips.py
