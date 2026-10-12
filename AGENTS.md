@@ -143,10 +143,12 @@ python basicsr/train.py -opt xxx.yml
 | `path` | 预训练/续训 | `pretrain_network_g`、`param_key_g`（`params` 或 `params_ema`）、`strict_load_g`、`resume_state` |
 | `train` | 训练策略 | `ema_decay`、`optim_g`、`scheduler`、`total_iter`、`warmup_iter`、`pixel_opt`、`perceptual_opt` |
 | `val` | 验证频率与指标 | `val_freq`、`save_img`、`metrics.<name>.type`（指标函数名）+ 指标参数 |
-| `logger` | 日志 | `print_freq`、`save_checkpoint_freq`、`use_tb_logger`、`wandb` |
+| `logger` | 日志 | `print_freq`、`save_checkpoint_freq`、`use_tb_logger`、`wandb`、`use_swanlab`、`swanlab` |
 | `dist_params` | 分布式 | `backend: nccl`、`port` |
 
 实验命名约定（PDF §4.3.1.1）：`<编号>_<模型>_<关键配置>_<数据集>_<迭代数>k_B<batch>G<卡数>`，如 `001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1`。
+
+**SwanLab 实验跟踪（开箱即用，可替代 wandb）**：配置 `use_swanlab: true` 即启用，框架通过 `swanlab.sync_tensorboard_torch()` 自动同步 tensorboard 的全部标量（loss、lr、验证指标）与图像到 SwanLab，训练代码零改动。`logger.swanlab` 配置段：`project`（为空取实验名）、`mode`（默认 `local`，本地记录无需账号，用 `swanlab watch <logdir>` 打开看板；`online` 同步云端需先 `swanlab login`）、`resume_id`（续传到已有实验）、`logdir`（默认 `./swanlog`）。前置要求与 wandb 相同：`use_tb_logger: true`，且 debug 模式自动关闭。详见 `basicsr/utils/logger.py::init_swanlab_logger`。
 
 ## 5. 开发指引：如何添加/修改模块
 
@@ -297,6 +299,7 @@ python basicsr/test.py  -opt /tmp/smoke_test.yml       # 测试应正常加载 c
 - **数据通道约定**：dataset 返回的 tensor 为 RGB、CHW、float32、[0,1]；OpenCV 读图是 BGR，用 `img2tensor(..., bgr2rgb=True)` 转换。
 - **可视化**：`model.get_current_visuals()` 返回 lq/output/gt 的 GPU tensor，validation 时由框架统一 `tensor2img` 保存。
 - **分布式**：多卡只需 `bash scripts/dist_train.sh N config.yml`；模型内部用 `@master_only` 控制只在主卡保存/打印，metric 求均值走 `dist_validation`。
+- **SwanLab**：`use_swanlab: true` 同步 tensorboard 指标到 SwanLab（依赖 `swanlab[dashboard]`）；本地看板用 `swanlab watch swanlog` 查看；云端模式先 `swanlab login` 再设 `mode: online`。
 - **被删内容的线索**：若某篇论文代码引用了 `basicsr.ops`、`video_*`、`stylegan2_*`、`realesrgan*` 等，说明它依赖已裁剪模块，需要先从 git 历史恢复（`git checkout <commit> -- <path>`）或改用保留的等价物。
 
 ## 10. 与 BasicSR-Tutorial-v0.5.pdf 章节对照
