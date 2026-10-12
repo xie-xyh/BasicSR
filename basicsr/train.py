@@ -10,17 +10,11 @@ from basicsr.data.data_sampler import EnlargedSampler
 from basicsr.data.prefetch_dataloader import CPUPrefetcher, CUDAPrefetcher
 from basicsr.models import build_model
 from basicsr.utils import (AvgTimer, MessageLogger, check_resume, get_env_info, get_root_logger, get_time_str,
-                           init_swanlab_logger, init_tb_logger, init_wandb_logger, make_exp_dirs, mkdir_and_rename,
-                           scandir)
+                           init_swanlab_logger, init_tb_logger, make_exp_dirs, mkdir_and_rename, scandir)
 from basicsr.utils.options import copy_opt_file, dict2str, parse_options
 
 
 def init_tb_loggers(opt):
-    # initialize wandb logger before tensorboard logger to allow proper sync
-    if (opt['logger'].get('wandb') is not None) and (opt['logger']['wandb'].get('project')
-                                                     is not None) and ('debug' not in opt['name']):
-        assert opt['logger'].get('use_tb_logger') is True, ('should turn on tensorboard when using wandb')
-        init_wandb_logger(opt)
     # initialize swanlab logger before tensorboard logger to allow proper sync
     if opt['logger'].get('use_swanlab') and ('debug' not in opt['name']):
         assert opt['logger'].get('use_tb_logger') is True, ('should turn on tensorboard when using swanlab')
@@ -118,7 +112,7 @@ def train_pipeline(root_path):
     logger = get_root_logger(logger_name='basicsr', log_level=logging.INFO, log_file=log_file)
     logger.info(get_env_info())
     logger.info(dict2str(opt))
-    # initialize wandb and tb loggers
+    # initialize swanlab and tb loggers
     tb_logger = init_tb_loggers(opt)
 
     # create train and validation dataloaders

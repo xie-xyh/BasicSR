@@ -123,27 +123,6 @@ def init_tb_logger(log_dir):
 
 
 @master_only
-def init_wandb_logger(opt):
-    """We now only use wandb to sync tensorboard log."""
-    import wandb
-    logger = get_root_logger()
-
-    project = opt['logger']['wandb']['project']
-    resume_id = opt['logger']['wandb'].get('resume_id')
-    if resume_id:
-        wandb_id = resume_id
-        resume = 'allow'
-        logger.warning(f'Resume wandb logger with id={wandb_id}.')
-    else:
-        wandb_id = wandb.util.generate_id()
-        resume = 'never'
-
-    wandb.init(id=wandb_id, resume=resume, name=opt['name'], config=opt, project=project, sync_tensorboard=True)
-
-    logger.info(f'Use wandb logger with id={wandb_id}; project={project}.')
-
-
-@master_only
 def init_swanlab_logger(opt):
     """SwanLab logger: sync tensorboard metrics (scalars and images) to SwanLab.
 
