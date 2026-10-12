@@ -8,6 +8,7 @@ pyyaml
 requests
 scikit-image
 scipy
+swanlab[dashboard]
 tb-nightly
 torch>=1.7
 torchvision
