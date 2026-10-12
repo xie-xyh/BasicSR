@@ -6,7 +6,7 @@
 # PYTHONPATH="./:${PYTHONPATH}"  CUDA_VISIBLE_DEVICES=0 python basicsr/train.py -opt options/train/SRResNet_SRGAN/train_MSRResNet_x4.yml --auto_resume
 
 # general settings
-name: 001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1_wandb
+name: 001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1
 model_type: SRModel
 scale: 4
 num_gpu: 1  # set num_gpu: 0 for cpu mode
@@ -113,9 +113,6 @@ logger:
   save_checkpoint_freq: !!float 5e3
   use_tb_logger: true
   use_swanlab: false  # 开启后同步 tensorboard 的标量与图像到 swanlab；依赖 requirements.txt 中的 swanlab
-  wandb:
-    project: ~
-    resume_id: ~
   swanlab:
     project: ~  # 为空时自动取实验名
     mode: local  # local: 本地看板(swanlab watch)，无需账号; online: 同步云端(需 swanlab login); offline/disabled 可选
