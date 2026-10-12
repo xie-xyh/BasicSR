@@ -11,7 +11,7 @@
 
 ## Experiment Name Convention
 
-Taking `001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1_wandb` as an example:
+Taking `001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1` as an example:
 
 - `001`: We usually use index for managing experiments
 - `MSRResNet`: Model name, here is Modified SRResNet
@@ -19,9 +19,9 @@ Taking `001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1_wandb` as an example:
 - `DIV2K`: Training data is DIV2K
 - `1000k`: Total training iteration is 1000k
 - `B16G1`: Batch size is 16; one GPU is used for training
-- `wandb`: Use wandb logger; the training process has been uploaded to wandb server
+- `swanlab`: Use swanlab logger; the training process can be viewed with `swanlab watch` (local mode) or on the swanlab cloud (online mode)
 
-**Note**: If `debug` is in the experiment name, it will enter the debug mode. That is, the program will log and validate more intensively and will not use `tensorboard logger` and `wandb logger`.
+**Note**: If `debug` is in the experiment name, it will enter the debug mode. That is, the program will log and validate more intensively and will not use `tensorboard logger` and `swanlab logger`.
 
 ## Configuration Explanation
 
@@ -36,7 +36,7 @@ Taking [train_MSRResNet_x4.yml](../options/train/SRResNet_SRGAN/train_MSRResNet_
 # The following are general settings
 ####################################
 # Experiment name, more details are in [Experiment Name Convention]. If debug in the experiment name, it will enter debug mode
-name: 001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1_wandb
+name: 001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1
 # Model type. Usually the class name defined in the `models` folder
 model_type: SRModel
 # The scale of the output over the input. In SR, it is the upsampling ratio. If not defined, use 1
@@ -207,12 +207,14 @@ logger:
   save_checkpoint_freq: !!float 5e3
   # Whether to tensorboard logger
   use_tb_logger: true
-  # Whether to use wandb logger. Currently, wandb only sync the tensorboard log. So we should also turn on tensorboard when using wandb
-  wandb:
-    # wandb project name. Default is None, that is not using wandb.
-    # Here, we use the basicsr wandb project: https://app.wandb.ai/xintao/basicsr
-    project: basicsr
-    # If resuming, wandb id could automatically link previous logs
+  # Whether to use swanlab logger. SwanLab syncs tensorboard scalars and images, so tensorboard should also be turned on
+  use_swanlab: true
+  swanlab:
+    # swanlab project name. If empty, the experiment name is used
+    project: ~
+    # Running mode: 'local' (default, local dashboard without account), 'online' (cloud, requires `swanlab login`), 'offline' or 'disabled'
+    mode: local
+    # If resuming, the swanlab experiment id to link previous logs
     resume_id: ~
 
 ################################################
@@ -230,7 +232,7 @@ Taking [test_MSRResNet_x4.yml](../options/test/SRResNet_SRGAN/test_MSRResNet_x4.
 
 ```yml
 # Experiment name
-name: 001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1_wandb
+name: 001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1
 # Model type. Usually the class name defined in the `models` folder
 model_type: SRModel
 # The scale of the output over the input. In SR, it is the upsampling ratio. If not defined, use 1
@@ -300,7 +302,7 @@ network_g:
 #################################################
 path:
   ## Path for pretrained models, usually end with pth
-  pretrain_network_g: experiments/001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1_wandb/models/net_g_1000000.pth
+  pretrain_network_g: experiments/001_MSRResNet_x4_f64b16_DIV2K_1000k_B16G1/models/net_g_1000000.pth
   # Whether to load pretrained models strictly, that is the corresponding parameter names should be the same
   strict_load_g: true
 
