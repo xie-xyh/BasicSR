@@ -1,0 +1,118 @@
+# DEA-Net 单图像去雾训练配置（超参数参考 DEA-Net 官方实现移植）
+# ----------- Commands for running
+# ----------- Single GPU
+# PYTHONPATH="./:${PYTHONPATH}" CUDA_VISIBLE_DEVICES=0 python basicsr/train.py -opt options/train/DEANet/train_DEANet.yml
+# PYTHONPATH="./:${PYTHONPATH}" CUDA_VISIBLE_DEVICES=0 python basicsr/train.py -opt options/train/DEANet/train_DEANet.yml --debug
+# ----------- Multiple GPUs
+# bash scripts/dist_train.sh 2 options/train/DEANet/train_DEANet.yml
+
+# general settings
+name: 001_DEANet_OTH_100k_B16G1
+model_type: DehazeModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1  # set num_gpu: 0 for cpu mode
+manual_seed: 0
+
+# dataset and data loader settings
+# 雾图与清晰图需按相同文件名成对存放；若命名形如 00001_Dense.jpg -> 00001.jpg，
+# 请先重命名或做软链接使两侧同名
+datasets:
+  train:
+    name: OWH
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/train/clear
+    dataroot_lq: datasets/OWH/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 256
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 6
+    batch_size_per_gpu: 16  # 未开 AMP 的保守默认；RTX 3090 24G 显存充足时可试 32
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  val:
+    name: OWH-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/test/clear
+    dataroot_lq: datasets/OWH/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANet
+  base_dim: 32
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [100000]
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 100000
+  warmup_iter: -1  # no warm up
+
+  # losses
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  # DEA-Net 的 CR 对比损失（anchor=输出, positive=GT, negative=有雾输入）
+  # 不需要时可整段删除，即退化为纯 L1 训练
+  contrastive_opt:
+    type: ContrastiveLoss
+    loss_weight: 0.1
+
+# validation settings
+val:
+  val_freq: 5000
+  save_img: true
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 0  # 去雾无放大，无需裁剪边界
+      test_y_channel: false
+      better: higher  # the higher, the better. Default: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 5e3
+  use_tb_logger: true
+  use_swanlab: true  # 本地看板开箱即用；云端请改 mode: online 并先 swanlab login
+  swanlab:
+    project: dehaze
+    mode: local
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

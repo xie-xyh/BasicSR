@@ -1,0 +1,48 @@
+# DEA-Net 单图像去雾测试配置
+# ----------- Commands for running
+# PYTHONPATH="./:${PYTHONPATH}" CUDA_VISIBLE_DEVICES=0 python basicsr/test.py -opt options/test/DEANet/test_DEANet.yml
+
+# general settings
+name: 001_DEANet_OTH
+model_type: DehazeModel
+scale: 1
+num_gpu: 1  # set num_gpu: 0 for cpu mode
+manual_seed: 0
+
+# test dataset settings
+datasets:
+  test_1:
+    name: OWH-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/test/clear
+    dataroot_lq: datasets/OWH/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANet
+  base_dim: 32
+
+# path
+path:
+  pretrain_network_g: experiments/001_DEANet_OTH_100k_B16G1/models/net_g_latest.pth
+  param_key_g: params_ema  # 训练开启 EMA，加载 EMA 权重；如需原始权重改为 params
+  strict_load_g: true
+
+# validation settings
+val:
+  save_img: true
+  suffix: ~  # add suffix to saved images, if None, use exp name
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
