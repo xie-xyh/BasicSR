@@ -143,6 +143,41 @@ def init_wandb_logger(opt):
     logger.info(f'Use wandb logger with id={wandb_id}; project={project}.')
 
 
+@master_only
+def init_swanlab_logger(opt):
+    """SwanLab logger: sync tensorboard metrics (scalars and images) to SwanLab.
+
+    It must be initialized before the tensorboard SummaryWriter is created.
+    Docs: https://docs.swanlab.cn
+    """
+    import swanlab
+    logger = get_root_logger()
+
+    swanlab_opt = opt['logger'].get('swanlab') or {}
+    project = swanlab_opt.get('project')
+    experiment_name = swanlab_opt.get('experiment_name') or opt['name']
+    # 'local' works out of the box without an account; use 'online' for cloud sync
+    mode = swanlab_opt.get('mode', 'local')
+    resume_id = swanlab_opt.get('resume_id')
+    logdir = swanlab_opt.get('logdir')
+
+    init_kwargs = dict(experiment_name=experiment_name, description=opt['name'], config=opt, mode=mode)
+    if project is not None:
+        init_kwargs['project'] = project
+    if logdir is not None:
+        init_kwargs['logdir'] = logdir
+    if resume_id:
+        init_kwargs['id'] = resume_id
+        init_kwargs['resume'] = 'allow'
+        logger.warning(f'Resume swanlab logger with id={resume_id}.')
+
+    swanlab.init(**init_kwargs)
+    # sync the torch tensorboard logger; call before SummaryWriter is created
+    swanlab.sync_tensorboard_torch()
+
+    logger.info(f'Use swanlab logger with mode={mode}; project={project or experiment_name}.')
+
+
 def get_root_logger(logger_name='basicsr', log_level=logging.INFO, log_file=None):
     """Get the root logger.
 
