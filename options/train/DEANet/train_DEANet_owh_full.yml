@@ -1,0 +1,127 @@
+# DEA-Net 全量 OWH 混合数据正式训练配置
+# 双卡 RTX 3090 拉满显存（bs=40/GPU，探测峰值 21.7/23.6 GiB），仅 L1 损失（不启用 CR）
+# 启动（后台，ssh 断连不中断）：
+#   cd /home/xieyuhang/Learn/BasicSR
+#   nohup bash scripts/dist_train.sh 2 options/train/DEANet/train_DEANet_owh_full.yml \
+#       > experiments/001_DEANet_OWH-Mixed-L1_30k_B40G2_nohup.log 2>&1 &
+# 监控：swanlab 云端看板（mode: online，已登录）
+
+# general settings
+name: 001_DEANet_OWH-Mixed-L1_30k_B40G2
+model_type: DehazeModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 2
+manual_seed: 0
+
+# dataset and data loader settings
+# 数据由 scripts/data_preparation/setup_owh.py 生成（软链接到 /share/Overwater-Haze）
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 256
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 40  # 探测 21.74/23.56 GiB；44 即 OOM，40 为安全拉满值
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 混合训练时按子集分开监控验证指标（DehazeModel 继承自 SRModel，支持多 val）
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANet
+  base_dim: 32
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 2.5e-4  # 按 DEA-Net 规则线性缩放：2e-4 x (40x2)/64
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [30000]
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 30000  # 24389 张 x 有效 bs80 ≈ 305 iter/epoch，30k ≈ 100 epoch
+  warmup_iter: -1  # no warm up
+
+  # losses：仅 L1，不启用 CR 对比损失
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: 1000
+  save_img: true
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+      crop_border: 0  # 去雾无放大，无需裁剪边界
+      test_y_channel: false
+      better: higher  # the higher, the better. Default: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e3
+  use_tb_logger: true
+  use_swanlab: true  # 已登录，直接云端记录；本地看板请改 mode: local
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
