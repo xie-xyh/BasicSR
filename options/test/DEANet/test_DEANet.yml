@@ -1,9 +1,10 @@
-# DEA-Net 单图像去雾测试配置
+# DEA-Net 单图像去雾测试配置（按子集分别输出指标）
+# 数据：datasets/OWH/<Subset>/test（setup_owh.py 生成）
 # ----------- Commands for running
 # PYTHONPATH="./:${PYTHONPATH}" CUDA_VISIBLE_DEVICES=0 python basicsr/test.py -opt options/test/DEANet/test_DEANet.yml
 
 # general settings
-name: 001_DEANet_OTH
+name: 001_DEANet_OWH
 model_type: DehazeModel
 scale: 1
 num_gpu: 1  # set num_gpu: 0 for cpu mode
@@ -11,11 +12,25 @@ manual_seed: 0
 
 # test dataset settings
 datasets:
-  test_1:
-    name: OWH-test
+  test_1:  # Dense：极浓雾子集，PSNR 存在 ~30dB 量级的噪声放大上限
+    name: OWH-Dense-test
     type: PairedImageDataset
-    dataroot_gt: datasets/OWH/test/clear
-    dataroot_lq: datasets/OWH/test/hazy
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  test_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  test_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
     io_backend:
       type: disk
 
@@ -26,7 +41,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/001_DEANet_OTH_100k_B16G1/models/net_g_latest.pth
+  pretrain_network_g: experiments/001_DEANet_OWH-Mixed_150k_B16G1/models/net_g_latest.pth
   param_key_g: params_ema  # 训练开启 EMA，加载 EMA 权重；如需原始权重改为 params
   strict_load_g: true
 
@@ -38,7 +53,7 @@ val:
   metrics:
     psnr:
       type: calculate_psnr
-      crop_border: 0
+      crop_border: 0  # 去雾无放大，无需裁剪边界
       test_y_channel: false
       better: higher
     ssim:

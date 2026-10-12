@@ -1,27 +1,27 @@
-# DEA-Net 单图像去雾训练配置（超参数参考 DEA-Net 官方实现移植）
+# DEA-Net 三子集（Dense/Mist/Moderate）混合训练配置
+# 超参数参考 DEA-Net 官方实现移植；与分开训练配置仅数据路径与迭代数不同
 # ----------- Commands for running
 # ----------- Single GPU
-# PYTHONPATH="./:${PYTHONPATH}" CUDA_VISIBLE_DEVICES=0 python basicsr/train.py -opt options/train/DEANet/train_DEANet.yml
-# PYTHONPATH="./:${PYTHONPATH}" CUDA_VISIBLE_DEVICES=0 python basicsr/train.py -opt options/train/DEANet/train_DEANet.yml --debug
+# PYTHONPATH="./:${PYTHONPATH}" CUDA_VISIBLE_DEVICES=0 python basicsr/train.py -opt options/train/DEANet/train_DEANet_mixed.yml
+# PYTHONPATH="./:${PYTHONPATH}" CUDA_VISIBLE_DEVICES=0 python basicsr/train.py -opt options/train/DEANet/train_DEANet_mixed.yml --debug
 # ----------- Multiple GPUs
-# bash scripts/dist_train.sh 2 options/train/DEANet/train_DEANet.yml
+# bash scripts/dist_train.sh 2 options/train/DEANet/train_DEANet_mixed.yml
 
 # general settings
-name: 001_DEANet_OTH_100k_B16G1
+name: 001_DEANet_OWH-Mixed_150k_B16G1
 model_type: DehazeModel
 scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
 num_gpu: 1  # set num_gpu: 0 for cpu mode
 manual_seed: 0
 
 # dataset and data loader settings
-# 雾图与清晰图需按相同文件名成对存放；若命名形如 00001_Dense.jpg -> 00001.jpg，
-# 请先重命名或做软链接使两侧同名
+# 数据由 scripts/data_preparation/setup_owh.py 生成（软链接到 /share/Overwater-Haze）
 datasets:
   train:
-    name: OWH
+    name: OWH-Mixed
     type: PairedImageDataset
-    dataroot_gt: datasets/OWH/train/clear
-    dataroot_lq: datasets/OWH/train/hazy
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
     filename_tmpl: '{}'
     io_backend:
       type: disk
@@ -35,11 +35,26 @@ datasets:
     dataset_enlarge_ratio: 1
     prefetch_mode: ~
 
+  # 混合训练时按子集分开监控验证指标（DehazeModel 继承自 SRModel，支持多 val）
   val:
-    name: OWH-test
+    name: OWH-Dense-test
     type: PairedImageDataset
-    dataroot_gt: datasets/OWH/test/clear
-    dataroot_lq: datasets/OWH/test/hazy
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
     io_backend:
       type: disk
 
@@ -66,11 +81,11 @@ train:
 
   scheduler:
     type: CosineAnnealingRestartLR
-    periods: [100000]
+    periods: [150000]
     restart_weights: [1]
     eta_min: !!float 1e-6
 
-  total_iter: 100000
+  total_iter: 150000  # 24389 张 x bs16 ≈ 1524 iter/epoch，150k ≈ 100 epoch
   warmup_iter: -1  # no warm up
 
   # losses
