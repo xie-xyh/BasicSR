@@ -1,5 +1,8 @@
 from collections import OrderedDict
 
+import torch
+from torch.nn import functional as F
+
 from basicsr.losses import build_loss
 from basicsr.utils.registry import MODEL_REGISTRY
 
@@ -17,7 +20,33 @@ class DehazeModel(SRModel):
 
     If `contrastive_opt` is not provided, DehazeModel behaves exactly like
     SRModel with `scale: 1`.
+
+    Note: DEANet contains two stride-2 downsamples followed by transposed-conv
+    upsamples, so its skip connections only align when H and W are multiples
+    of 4. test() therefore reflect-pads arbitrary-size inputs to multiples of
+    4 and crops the padding off afterwards.
     """
+
+    def test(self):
+        h, w = self.lq.shape[2:]
+        pad_h = (4 - h % 4) % 4
+        pad_w = (4 - w % 4) % 4
+        lq = self.lq
+        if pad_h != 0 or pad_w != 0:
+            lq = F.pad(lq, (0, pad_w, 0, pad_h), mode='reflect')
+
+        if hasattr(self, 'net_g_ema'):
+            self.net_g_ema.eval()
+            with torch.no_grad():
+                self.output = self.net_g_ema(lq)
+        else:
+            self.net_g.eval()
+            with torch.no_grad():
+                self.output = self.net_g(lq)
+            self.net_g.train()
+
+        if pad_h != 0 or pad_w != 0:
+            self.output = self.output[:, :, :h, :w]
 
     def init_training_settings(self):
         super().init_training_settings()
