@@ -63,7 +63,7 @@ basicsr/
 │   ├── dehaze_model.py       # DehazeModel（= SRModel + 可选 CR 对比损失，negative=有雾输入）
 │   └── lr_scheduler.py       # CosineAnnealingRestartLR 等
 ├── losses/                   # basic_loss.py (L1/L2/MSE/Gradient/Perceptual), contrastive_loss.py (DEA-Net CR 损失), gan_loss.py, loss_util.py
-├── metrics/                  # psnr_ssim.py (calculate_psnr/ssim 及其 _pt 版本), metric_util.py
+├── metrics/                  # psnr_ssim.py (PSNR/SSIM), no_ref.py (FADE/NIQE/BRISQUE 无参考指标), metric_util.py
 └── utils/                    # registry.py, logger.py, options.py, file_client.py,
                               # img_util.py, color_util.py, matlab_functions.py, dist_util.py 等
 options/train/SRResNet_SRGAN/   # SR 训练配置模板（train_MSRResNet_x{2,3,4}.yml）
@@ -296,6 +296,7 @@ python basicsr/test.py  -opt /tmp/smoke_test.yml       # 测试应正常加载 c
 
 - **文件后缀即注册**：新模块文件必须以 `_arch.py`/`_model.py`/`_dataset.py`/`_loss.py` 结尾；普通工具文件避开这些后缀。
 - **metrics 双重步骤**：注册装饰器 + `metrics/__init__.py` 显式 import，缺一不可。
+- **无参考指标**：`calculate_fade/niqe/brisque`（越低越好，依赖 pyiqa 与 fade-python，见 requirements 注释的免依赖装法）适合真实雾图等无 GT 场景；速度较慢，建议只在最终评估开启，勿挂到每 1k iter 的训练验证上。
 - **类/函数名全局唯一**：跨模块也不能重名（注册表启动时即报错）。
 - **`scale` 字段**：dataset 的成对裁剪依赖它；去雾写 1。
 - **EMA**：`train.ema_decay > 0` 即开启；保存的 pth 含 `params` 与 `params_ema` 两个字段，测试/推理时用 `path.param_key_g: params_ema` 加载 EMA 权重。

@@ -10,6 +10,11 @@ scikit-image
 scipy
 swanlab[dashboard]
 tb-nightly
+# 无参考质量指标（calculate_fade/niqe/brisque 用）。体积大依赖多，
+# 建议免依赖安装避免拉入 transformers 全家桶并锁定 numpy 1.26：
+#   pip install --no-deps pyiqa fade-python && pip install numba turbojpeg "timm>=0.8" safetensors huggingface-hub
+# pyiqa
+# fade-python
 torch>=1.7
 torchvision
 tqdm
