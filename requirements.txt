@@ -15,6 +15,16 @@ tb-nightly
 #   pip install --no-deps pyiqa fade-python && pip install numba turbojpeg "timm>=0.8" safetensors huggingface-hub
 # pyiqa
 # fade-python
+
+# SD-LoRA 去雾（SDLoRADehaze / SDLoRAModel，options/train/SDLoRA/）。
+# SD2.1-base 权重需另行下载（huggingface.co 不通时走 ModelScope，
+# 见 research/002_sdlora/download_sd21base.sh）：
+#   pip install diffusers==0.31.0 peft==0.13.2 transformers==4.44.2 accelerate==0.34.2 safetensors
+diffusers==0.31.0
+peft==0.13.2
+transformers==4.44.2
+accelerate==0.34.2
+safetensors
 torch>=1.7
 torchvision
 tqdm
