@@ -1,0 +1,41 @@
+# 002_SDLoRA 冒烟测试（test.py 流程）：加载 LoRA-only checkpoint 推理
+name: smoke_SDLoRA_test
+model_type: SDLoRAModel
+scale: 1
+num_gpu: 1
+
+datasets:
+  test_1:
+    name: smoke-val
+    type: PairedImageDataset
+    dataroot_gt: /tmp/sdlora_smoke/val/GT
+    dataroot_lq: /tmp/sdlora_smoke/val/LQ
+    io_backend:
+      type: disk
+
+network_g:
+  type: SDLoRADehaze
+  sd_path: experiments/pretrained_models/sd21base
+  lora_rank: 8
+  lora_targets: [to_q, to_k, to_v, to_out.0]
+  fixed_timestep: 999
+  vae_fp32: false
+  gradient_checkpointing: false
+
+path:
+  pretrain_network_g: experiments/smoke_SDLoRA/models/net_g_latest.pth
+  param_key_g: params_ema
+  strict_load_g: false
+
+val:
+  save_img: true
+  suffix: ~
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
