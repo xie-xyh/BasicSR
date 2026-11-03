@@ -49,6 +49,8 @@ basicsr/
 │   ├── rrdbnet_arch.py       # RRDBNet (ESRGAN 的 Generator)
 │   ├── swinir_arch.py        # SwinIR (Transformer 骨干)
 │   ├── deanet_arch.py        # DEANet 去雾网络（差分卷积 DEConv + CGA 注意力，WACV 2024）
+│   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
+│   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）
 │   ├── discriminator_arch.py # UNetDiscriminatorSN (GAN 训练用)
 │   └── vgg_arch.py           # VGGFeatureExtractor (感知/对比损失用)
 ├── data/
@@ -61,6 +63,7 @@ basicsr/
 │   ├── base_model.py         # 模型基类：优化器/scheduler/EMA/保存/加载/resume
 │   ├── sr_model.py           # SRModel —— 单图像复原模型的直接模板
 │   ├── dehaze_model.py       # DehazeModel（= SRModel + 可选 CR 对比损失，negative=有雾输入）
+│   ├── sdlora_model.py       # SDLoRAModel（= DehazeModel + mod-8 测试填充 + LoRA-only 检查点/EMA）
 │   └── lr_scheduler.py       # CosineAnnealingRestartLR 等
 ├── losses/                   # basic_loss.py (L1/L2/MSE/Gradient/Perceptual), contrastive_loss.py (DEA-Net CR 损失), gan_loss.py, loss_util.py
 ├── metrics/                  # psnr_ssim.py (PSNR/SSIM), no_ref.py (FADE/NIQE/BRISQUE 无参考指标), metric_util.py
@@ -68,12 +71,16 @@ basicsr/
                               # img_util.py, color_util.py, matlab_functions.py, dist_util.py 等
 options/train/SRResNet_SRGAN/   # SR 训练配置模板（train_MSRResNet_x{2,3,4}.yml）
 options/train/DEANet/           # DEA-Net 去雾训练配置（train_DEANet_mixed 混合 + dense/mist/moderate 分开）
+options/train/SDLoRA/           # SDLoRA 单步扩散去雾训练配置（002 基线，Dense 子集 LoRA 适配）
 options/test/SRResNet_SRGAN/    # SR 测试配置模板
 options/test/DEANet/            # DEA-Net 去雾测试配置（按子集分别输出指标）
+options/test/SDLoRA/            # SDLoRA 去雾测试配置（Dense 主测 + Mist/Moderate 泛化观察）
 inference/                      # inference_esrgan.py / inference_swinir.py 单图推理范例
-scripts/data_preparation/       # extract_subimages.py, create_lmdb.py, generate_meta_info.py
+scripts/data_preparation/       # extract_subimages.py, create_lmdb.py, generate_meta_info.py,
+                                # filter_min_size.py（按最小边长过滤成对数据集，生成软链接副本）
 scripts/metrics/                # calculate_psnr_ssim.py, calculate_lpips.py
 datasets/                       # 数据集存放（推荐软链接），见 datasets/README.md
+research/                       # 研究日志（002_sdlora/RESEARCH_LOG.md 等）与临时实验配置
 ```
 
 ### 3.2 核心机制：Registry 动态实例化
@@ -306,6 +313,8 @@ python basicsr/test.py  -opt /tmp/smoke_test.yml       # 测试应正常加载 c
 - **分布式**：多卡只需 `bash scripts/dist_train.sh N config.yml`；模型内部用 `@master_only` 控制只在主卡保存/打印，metric 求均值走 `dist_validation`。
 - **SwanLab**：`use_swanlab: true` 同步 tensorboard 指标到 SwanLab（依赖 `swanlab[dashboard]`）；本地看板用 `swanlab watch swanlog` 查看；云端模式先 `swanlab login` 再设 `mode: online`。
 - **被删内容的线索**：若某篇论文代码引用了 `basicsr.ops`、`video_*`、`stylegan2_*`、`realesrgan*` 等，说明它依赖已裁剪模块，需要先从 git 历史恢复（`git checkout <commit> -- <path>`）或改用保留的等价物。
+- **SD-LoRA 去雾（SDLoRADehaze/SDLoRAModel）**：SD 权重从 `sd_path`（默认 `experiments/pretrained_models/sd21base`，下载见 `research/002_sdlora/download_sd21base.sh`）加载；checkpoint 只含 LoRA 参数（MB 级），加载/续训必须 `strict_load_g: false`；输入需 pad 到 8 的倍数（SDLoRAModel.test 已处理）；`fixed_timestep` 勿用 999（ᾱ≈0.005 导致 x0 重建放大 ~14.6 倍、纯像素监督不收敛，实测见 research/002_sdlora/RESEARCH_LOG.md），用 250 或 `prediction: x0`；OWH 各子集图片尺寸不齐，训练集需先用 `scripts/data_preparation/filter_min_size.py` 按 gt_size 过滤。
+- **临时素材勿放 /tmp**：`/tmp` 会被系统定期清理，冒烟数据集等需持久的小样本放 `research/` 下。
 
 ## 10. 与 BasicSR-Tutorial-v0.5.pdf 章节对照
 
