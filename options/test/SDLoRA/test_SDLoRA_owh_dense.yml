@@ -39,6 +39,7 @@ network_g:
   lora_rank: 8
   lora_targets: [to_q, to_k, to_v, to_out.0]
   fixed_timestep: 999
+  prediction: x0  # 必须与训练配置一致
   vae_fp32: false
   gradient_checkpointing: false
 

@@ -49,6 +49,7 @@ network_g:
   lora_rank: 8
   lora_targets: [to_q, to_k, to_v, to_out.0]  # DOD 消融：仅 UNet、rank 8 最优
   fixed_timestep: 999
+  prediction: x0  # 探针结论：x0 直出收敛最快（2k iter PSNR 13.8 vs t250 11.4 vs t999 6.3）
   vae_fp32: false  # 若 decode 出现数值伪影改 true
   gradient_checkpointing: true
 

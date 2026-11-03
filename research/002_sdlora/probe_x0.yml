@@ -1,0 +1,128 @@
+# 002_SDLoRA 单步扩散去雾：OWH Dense 子集 LoRA 适配训练配置
+# SD2.1-base 冻结主干 + UNet LoRA（rank 8），有雾 latent 单步扩散（固定 t=999），L1 + VGG 感知损失
+# 仅训练 Dense 子集（8140 对），验证扩散先验在极浓雾下的收益
+# 启动（后台，ssh 断连不中断）：
+#   cd /home/xieyuhang/Learn/BasicSR
+#   nohup bash scripts/dist_train.sh 2 options/train/SDLoRA/train_SDLoRA_owh_dense.yml \
+#       > experiments/002_SDLoRA_OWH-Dense_L1LPIPS_15k_B4G2_nohup.log 2>&1 &
+# 监控：swanlab 云端看板（project: dehaze）+ research/002_sdlora/RESEARCH_LOG.md
+
+# general settings
+name: probe_x0
+model_type: SDLoRAModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Dense-train
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense_ge512/train/clear   # 尺寸 >=512 的过滤子集（6803 对），
+    dataroot_lq: datasets/OWH/Dense_ge512/train/hazy    # 由 scripts/data_preparation/filter_min_size.py 生成
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 384
+    use_hflip: true
+    use_rot: false  # 海面/船舶场景旋转无物理意义
+
+    # data loader
+    num_worker_per_gpu: 4
+    batch_size_per_gpu: 2  # SD UNet fp16 + grad ckpt，2x3090 有效 bs=4
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: research/002_sdlora/smoke_val/GT
+    dataroot_lq: research/002_sdlora/smoke_val/LQ
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: SDLoRADehaze
+  sd_path: experiments/pretrained_models/sd21base
+  lora_rank: 8
+  lora_targets: [to_q, to_k, to_v, to_out.0]  # DOD 消融：仅 UNet、rank 8 最优
+  fixed_timestep: 999
+  prediction: x0
+  vae_fp32: false  # 若 decode 出现数值伪影改 true
+  gradient_checkpointing: true
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params_ema
+  strict_load_g: false  # checkpoint 只含 LoRA 参数，主干由 sd_path 加载
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999  # SDLoRAModel 仅对 LoRA 参数做 EMA
+
+  optim_g:
+    type: AdamW
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.999]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [2000]
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 2000
+  warmup_iter: 100
+
+  # losses：L1 保结构 + VGG 感知损失保质感
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  perceptual_opt:
+    type: PerceptualLoss
+    layer_weights: {conv1_2: 0.1, conv2_2: 0.1, conv3_4: 1, conv4_4: 1, conv5_4: 1}
+    vgg_type: vgg19
+    use_input_norm: true
+    range_norm: false
+    perceptual_weight: 2.0
+    style_weight: 0
+    criterion: l1
+
+# validation settings
+val:
+  val_freq: 1000
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: 1000
+  use_tb_logger: false
+  use_swanlab: false
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29501

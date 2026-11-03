@@ -8,8 +8,8 @@ datasets:
   test_1:
     name: smoke-val
     type: PairedImageDataset
-    dataroot_gt: /tmp/sdlora_smoke/val/GT
-    dataroot_lq: /tmp/sdlora_smoke/val/LQ
+    dataroot_gt: research/002_sdlora/smoke_val/GT
+    dataroot_lq: research/002_sdlora/smoke_val/LQ
     io_backend:
       type: disk
 
