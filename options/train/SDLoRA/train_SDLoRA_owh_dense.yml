@@ -19,8 +19,8 @@ datasets:
   train:
     name: OWH-Dense-train
     type: PairedImageDataset
-    dataroot_gt: datasets/OWH/Dense/train/clear
-    dataroot_lq: datasets/OWH/Dense/train/hazy
+    dataroot_gt: datasets/OWH/Dense_ge512/train/clear   # 尺寸 >=512 的过滤子集（6803 对），
+    dataroot_lq: datasets/OWH/Dense_ge512/train/hazy    # 由 scripts/data_preparation/filter_min_size.py 生成
     filename_tmpl: '{}'
     io_backend:
       type: disk
