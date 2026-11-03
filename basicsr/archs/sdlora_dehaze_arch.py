@@ -27,7 +27,14 @@ class SDLoRADehaze(nn.Module):
         lora_dropout (float): LoRA dropout. Default: 0.
         lora_targets (list[str]): UNet submodules to inject LoRA into.
             Default: attention projections ('to_q', 'to_k', 'to_v', 'to_out.0').
+        lora_conv_targets (list[str]): Additional conv-layer LoRA targets for
+            a larger trainable budget (e.g. ['conv1', 'conv2', 'conv_shortcut',
+            'conv_in', 'conv_out']). Default: empty (attention-only).
         fixed_timestep (int): The fixed diffusion timestep. Default: 999.
+        prediction (str): 'eps' — UNet predicts the noise residual and the
+            clean latent is reconstructed analytically (OSEDiff-style);
+            'x0' — the UNet directly predicts the clean latent (faster to
+            fit, loses the diffusion-ODE interpretation). Default: 'eps'.
         vae_fp32 (bool): Run the VAE in fp32 (numerical-safety fallback).
             Default: False (fp16).
         gradient_checkpointing (bool): Enable UNet gradient checkpointing to
@@ -40,7 +47,9 @@ class SDLoRADehaze(nn.Module):
                  lora_alpha=None,
                  lora_dropout=0.0,
                  lora_targets=('to_q', 'to_k', 'to_v', 'to_out.0'),
+                 lora_conv_targets=(),
                  fixed_timestep=999,
+                 prediction='eps',
                  vae_fp32=False,
                  gradient_checkpointing=True):
         super().__init__()
@@ -49,6 +58,8 @@ class SDLoRADehaze(nn.Module):
 
         if lora_alpha is None:
             lora_alpha = lora_rank
+        assert prediction in ('eps', 'x0')
+        self.prediction = prediction
         self.scale_factor = 0.18215
         self.fixed_timestep = fixed_timestep
         self.vae_fp32 = vae_fp32
@@ -66,7 +77,7 @@ class SDLoRADehaze(nn.Module):
         self.unet.requires_grad_(False)
         lora_config = LoraConfig(
             r=lora_rank, lora_alpha=lora_alpha, lora_dropout=lora_dropout,
-            target_modules=list(lora_targets))
+            target_modules=list(lora_targets) + list(lora_conv_targets))
         self.unet.add_adapter(lora_config)
         if gradient_checkpointing:
             self.unet.enable_gradient_checkpointing()
@@ -106,8 +117,12 @@ class SDLoRADehaze(nn.Module):
         t = torch.full((b, ), self.fixed_timestep, device=z.device, dtype=torch.long)
         noise_pred = self.unet(z, t, encoder_hidden_states=self.null_emb.expand(b, -1, -1)).sample
 
-        # analytic one-step x0 reconstruction
-        pred_x0 = (z - (1 - self.alpha_bar).sqrt() * noise_pred) / self.alpha_bar.sqrt()
+        if self.prediction == 'x0':
+            # the UNet directly predicts the clean latent
+            pred_x0 = noise_pred
+        else:
+            # epsilon-prediction: analytic one-step x0 reconstruction
+            pred_x0 = (z - (1 - self.alpha_bar).sqrt() * noise_pred) / self.alpha_bar.sqrt()
 
         img = self.vae.decode((pred_x0 / self.scale_factor).to(vae_dtype)).sample
         img = (img.float() + 1) / 2
