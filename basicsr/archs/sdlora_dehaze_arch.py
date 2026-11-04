@@ -30,6 +30,8 @@ class SDLoRADehaze(nn.Module):
         lora_conv_targets (list[str]): Additional conv-layer LoRA targets for
             a larger trainable budget (e.g. ['conv1', 'conv2', 'conv_shortcut',
             'conv_in', 'conv_out']). Default: empty (attention-only).
+        unfreeze_up_blocks (bool): Fully unfreeze the UNet decoder side
+            (up_blocks + conv_out) for full-rank adaptation. Default: False.
         fixed_timestep (int): The fixed diffusion timestep. Default: 999.
         prediction (str): 'eps' — UNet predicts the noise residual and the
             clean latent is reconstructed analytically (OSEDiff-style);
@@ -48,6 +50,7 @@ class SDLoRADehaze(nn.Module):
                  lora_dropout=0.0,
                  lora_targets=('to_q', 'to_k', 'to_v', 'to_out.0'),
                  lora_conv_targets=(),
+                 unfreeze_up_blocks=False,
                  fixed_timestep=999,
                  prediction='eps',
                  vae_fp32=False,
@@ -73,12 +76,27 @@ class SDLoRADehaze(nn.Module):
         self.vae = AutoencoderKL.from_pretrained(sd_path, subfolder='vae', torch_dtype=vae_dtype)
         self.vae.requires_grad_(False)
 
-        self.unet = UNet2DConditionModel.from_pretrained(sd_path, subfolder='unet', torch_dtype=torch.float16)
+        # full fp32 UNet when partially unfreezing: mixing frozen fp16 blocks
+        # with trainable fp32 blocks would break dtype alignment at boundaries
+        unet_dtype = torch.float32 if unfreeze_up_blocks else torch.float16
+        self.unet_dtype = unet_dtype
+        self.unet = UNet2DConditionModel.from_pretrained(sd_path, subfolder='unet', torch_dtype=unet_dtype)
         self.unet.requires_grad_(False)
         lora_config = LoraConfig(
             r=lora_rank, lora_alpha=lora_alpha, lora_dropout=lora_dropout,
             target_modules=list(lora_targets) + list(lora_conv_targets))
         self.unet.add_adapter(lora_config)
+        if unfreeze_up_blocks:
+            # full fine-tune of the decoder side (up_blocks + conv_out) for
+            # full-rank adaptation capacity beyond low-rank LoRA updates.
+            # unfrozen params are saved/EMA'd by SDLoRAModel via the
+            # requires_grad filter together with the LoRA params.
+            self.unet.up_blocks.requires_grad_(True)
+            self.unet.conv_out.requires_grad_(True)
+            for param in self.unet.up_blocks.parameters():
+                param.data = param.data.float()
+            for param in self.unet.conv_out.parameters():
+                param.data = param.data.float()
         if gradient_checkpointing:
             self.unet.enable_gradient_checkpointing()
 
@@ -111,11 +129,12 @@ class SDLoRADehaze(nn.Module):
         # hazy latent as the diffusion starting point (no noise added)
         with torch.no_grad():
             z = self.vae.encode((x * 2 - 1).to(vae_dtype)).latent_dist.mean
-        z = (z * self.scale_factor).to(torch.float16)
+        z = (z * self.scale_factor).to(self.unet_dtype)
 
         b = z.shape[0]
         t = torch.full((b, ), self.fixed_timestep, device=z.device, dtype=torch.long)
-        noise_pred = self.unet(z, t, encoder_hidden_states=self.null_emb.expand(b, -1, -1)).sample
+        null_emb = self.null_emb.to(self.unet_dtype)
+        noise_pred = self.unet(z, t, encoder_hidden_states=null_emb.expand(b, -1, -1)).sample
 
         if self.prediction == 'x0':
             # the UNet directly predicts the clean latent

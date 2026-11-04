@@ -1,0 +1,54 @@
+!!python/object/apply:collections.OrderedDict
+- - - name
+    - 001_dense_eval
+  - - model_type
+    - DehazeModel
+  - - scale
+    - 1
+  - - num_gpu
+    - 1
+  - - datasets
+    - test_1: !!python/object/apply:collections.OrderedDict
+      - - - name
+          - OWH-Dense-test
+        - - type
+          - PairedImageDataset
+        - - dataroot_gt
+          - datasets/OWH/Dense/test/clear
+        - - dataroot_lq
+          - datasets/OWH/Dense/test/hazy
+        - - io_backend
+          - !!python/object/apply:collections.OrderedDict
+            - - - type
+                - disk
+  - - network_g
+    - base_dim: 32
+      type: DEANet
+  - - path
+    - param_key_g: params_ema
+      pretrain_network_g: experiments/001_DEANet_OWH-Mixed-L1_30k_B40G2/models/net_g_30000.pth
+      strict_load_g: true
+  - - val
+    - !!python/object/apply:collections.OrderedDict
+      - - - save_img
+          - true
+        - - suffix
+          - null
+        - - metrics
+          - !!python/object/apply:collections.OrderedDict
+            - - - psnr
+                - !!python/object/apply:collections.OrderedDict
+                  - - - type
+                      - calculate_psnr
+                    - - crop_border
+                      - 0
+                    - - test_y_channel
+                      - false
+              - - ssim
+                - !!python/object/apply:collections.OrderedDict
+                  - - - type
+                      - calculate_ssim
+                    - - crop_border
+                      - 0
+                    - - test_y_channel
+                      - false

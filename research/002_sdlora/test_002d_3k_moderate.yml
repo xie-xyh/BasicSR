@@ -1,0 +1,80 @@
+!!python/object/apply:collections.OrderedDict
+- - - name
+    - 002d_eval_3k_mod
+  - - model_type
+    - SDLoRAModel
+  - - scale
+    - 1
+  - - num_gpu
+    - 1
+  - - datasets
+    - test_3: !!python/object/apply:collections.OrderedDict
+      - - - name
+          - OWH-Moderate-test
+        - - type
+          - PairedImageDataset
+        - - dataroot_gt
+          - datasets/OWH/Moderate/test/clear
+        - - dataroot_lq
+          - datasets/OWH/Moderate/test/hazy
+        - - io_backend
+          - !!python/object/apply:collections.OrderedDict
+            - - - type
+                - disk
+  - - network_g
+    - !!python/object/apply:collections.OrderedDict
+      - - - type
+          - SDLoRADehaze
+        - - sd_path
+          - experiments/pretrained_models/sd21base
+        - - lora_rank
+          - 16
+        - - lora_targets
+          - - to_q
+            - to_k
+            - to_v
+            - to_out.0
+        - - lora_conv_targets
+          - - conv1
+            - conv2
+            - conv_shortcut
+        - - fixed_timestep
+          - 999
+        - - prediction
+          - x0
+        - - vae_fp32
+          - false
+        - - gradient_checkpointing
+          - false
+  - - path
+    - !!python/object/apply:collections.OrderedDict
+      - - - pretrain_network_g
+          - experiments/002d_SDLoRA_OWH-Mixed_convlora_20k_B4G2/models/net_g_3000.pth
+        - - param_key_g
+          - params_ema
+        - - strict_load_g
+          - false
+  - - val
+    - !!python/object/apply:collections.OrderedDict
+      - - - save_img
+          - true
+        - - suffix
+          - null
+        - - metrics
+          - !!python/object/apply:collections.OrderedDict
+            - - - psnr
+                - !!python/object/apply:collections.OrderedDict
+                  - - - type
+                      - calculate_psnr
+                    - - crop_border
+                      - 0
+                    - - test_y_channel
+                      - false
+              - - ssim
+                - !!python/object/apply:collections.OrderedDict
+                  - - - type
+                      - calculate_ssim
+                    - - crop_border
+                      - 0
+                    - - test_y_channel
+                      - false

@@ -17,20 +17,23 @@ class SDLoRAModel(DehazeModel):
 
     Differences from DehazeModel:
     - test() reflect-pads to multiples of 8 (VAE scale factor) instead of 4;
-    - save() stores only LoRA parameters (MB-scale checkpoints instead of
-      multi-GB full SD dumps);
-    - load_network() only applies LoRA keys (the frozen SD base always comes
-      from the local sd_path snapshot), so resume/test need
-      `strict_load_g: false`;
-    - model_ema() only tracks LoRA parameters;
+    - save() stores only trainable parameters (LoRA + optionally unfrozen
+      blocks), so checkpoints stay small even with the frozen SD base;
+    - load_network() only applies keys matching the current trainable set
+      (the frozen SD base always comes from the local sd_path snapshot), so
+      resume/test need `strict_load_g: false`;
+    - model_ema() only tracks trainable parameters;
     - print_network()/setup_optimizers() log summaries instead of dumping the
       whole SD structure / hundreds of frozen-parameter warnings.
     """
 
     @staticmethod
-    def _lora_state_dict(net):
-        state_dict = net.state_dict()
-        return {k: v.cpu() for k, v in state_dict.items() if 'lora_' in k}
+    def _trainable_keys(net):
+        return {k for k, v in net.named_parameters() if v.requires_grad}
+
+    def _trainable_state_dict(self, net):
+        keys = self._trainable_keys(net)
+        return {k: v.cpu() for k, v in net.state_dict().items() if k in keys}
 
     def test(self):
         h, w = self.lq.shape[2:]
@@ -54,11 +57,11 @@ class SDLoRAModel(DehazeModel):
             self.output = self.output[:, :, :h, :w]
 
     def model_ema(self, decay=0.999):
+        trainable = self._trainable_keys(self.get_bare_model(self.net_g))
         net_g_params = dict(self.get_bare_model(self.net_g).named_parameters())
         net_g_ema_params = dict(self.net_g_ema.named_parameters())
-        for k, ema_v in net_g_ema_params.items():
-            if 'lora_' in k:
-                ema_v.data.mul_(decay).add_(net_g_params[k].data, alpha=1 - decay)
+        for k in trainable:
+            net_g_ema_params[k].data.mul_(decay).add_(net_g_params[k].data, alpha=1 - decay)
 
     def setup_optimizers(self):
         train_opt = self.opt['train']
@@ -93,24 +96,25 @@ class SDLoRAModel(DehazeModel):
                 param_key = 'params'
                 logger.info('Loading: params_ema does not exist, use params.')
             load_net = load_net[param_key]
-        lora_keys = {}
-        for k, v in load_net.items():
-            if k.startswith('module.'):
-                k = k[7:]
-            if 'lora_' in k:
-                lora_keys[k] = v
-        net.load_state_dict(lora_keys, strict=False)
-        logger.info(f'Loading {net.__class__.__name__} LoRA params from {load_path} '
-                    f'[param key: {param_key}]: {len(lora_keys)} tensors loaded.')
+        # keep only keys belonging to the current trainable set (LoRA and/or
+        # unfrozen blocks); missing keys (e.g. newly added conv LoRA when
+        # warm-starting from an attention-only checkpoint) stay at init values
+        trainable = self._trainable_keys(net)
+        trainable_net = {k: v for k, v in load_net.items()
+                         if (k[7:] if k.startswith('module.') else k) in trainable}
+        trainable_net = {(k[7:] if k.startswith('module.') else k): v for k, v in trainable_net.items()}
+        net.load_state_dict(trainable_net, strict=False)
+        logger.info(f'Loading {net.__class__.__name__} trainable params from {load_path} '
+                    f'[param key: {param_key}]: {len(trainable_net)} tensors loaded.')
 
     @master_only
-    def _save_lora_network(self, current_iter):
+    def _save_trainable_network(self, current_iter):
         if current_iter == -1:
             current_iter = 'latest'
         save_path = os.path.join(self.opt['path']['models'], f'net_g_{current_iter}.pth')
-        save_dict = {'params': self._lora_state_dict(self.get_bare_model(self.net_g))}
+        save_dict = {'params': self._trainable_state_dict(self.get_bare_model(self.net_g))}
         if hasattr(self, 'net_g_ema'):
-            save_dict['params_ema'] = self._lora_state_dict(self.get_bare_model(self.net_g_ema))
+            save_dict['params_ema'] = self._trainable_state_dict(self.get_bare_model(self.net_g_ema))
 
         retry = 3
         while retry > 0:
@@ -129,5 +133,5 @@ class SDLoRAModel(DehazeModel):
             logger.warning(f'Still cannot save {save_path}. Just ignore it.')
 
     def save(self, epoch, current_iter):
-        self._save_lora_network(current_iter)
+        self._save_trainable_network(current_iter)
         self.save_training_state(epoch, current_iter)
