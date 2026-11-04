@@ -68,7 +68,7 @@ train:
 
   optim_g:
     type: AdamW
-    lr: !!float 2e-4
+    lr: !!float 5e-5  # 002e-v2：解冻全秩适配对 lr 敏感，2e-4 损坏热启动
     weight_decay: 0
     betas: [0.9, 0.999]
 

@@ -47,7 +47,7 @@ network_g:
 
 # path
 path:
-  pretrain_network_g: experiments/002e_SDLoRA_OWH-Mixed_unfreezeBF16_10k_B4G2/models/net_g_latest.pth
+  pretrain_network_g: experiments/002e_SDLoRA_OWH-Mixed_unfreezeBF16_10k_B4G2/models/net_g_6000.pth  # 提前终止，无 latest
   param_key_g: params_ema
   strict_load_g: false  # checkpoint 只含 LoRA 参数
 
