@@ -76,9 +76,9 @@ class SDLoRADehaze(nn.Module):
         self.vae = AutoencoderKL.from_pretrained(sd_path, subfolder='vae', torch_dtype=vae_dtype)
         self.vae.requires_grad_(False)
 
-        # full fp32 UNet when partially unfreezing: mixing frozen fp16 blocks
-        # with trainable fp32 blocks would break dtype alignment at boundaries
-        unet_dtype = torch.float32 if unfreeze_up_blocks else torch.float16
+        # partially unfreezing needs a wider-mantissa dtype than fp16 for stable
+        # full-rank training: bf16 (fp32 was 5x slower in practice)
+        unet_dtype = torch.bfloat16 if unfreeze_up_blocks else torch.float16
         self.unet_dtype = unet_dtype
         self.unet = UNet2DConditionModel.from_pretrained(sd_path, subfolder='unet', torch_dtype=unet_dtype)
         self.unet.requires_grad_(False)
@@ -93,10 +93,6 @@ class SDLoRADehaze(nn.Module):
             # requires_grad filter together with the LoRA params.
             self.unet.up_blocks.requires_grad_(True)
             self.unet.conv_out.requires_grad_(True)
-            for param in self.unet.up_blocks.parameters():
-                param.data = param.data.float()
-            for param in self.unet.conv_out.parameters():
-                param.data = param.data.float()
         if gradient_checkpointing:
             self.unet.enable_gradient_checkpointing()
 

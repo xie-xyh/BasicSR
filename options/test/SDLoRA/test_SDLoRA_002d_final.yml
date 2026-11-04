@@ -1,0 +1,66 @@
+# 002_SDLoRA 测试配置：Dense 主测 + Mist/Moderate 泛化观察
+# 启动：
+#   python basicsr/test.py -opt options/test/SDLoRA/test_SDLoRA_owh_dense.yml
+
+# general settings
+name: 002d_eval_final
+model_type: SDLoRAModel
+scale: 1
+num_gpu: 1  # 测试单卡即可
+
+# dataset and data loader settings
+datasets:
+  test_1:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  test_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  test_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: SDLoRADehaze
+  sd_path: experiments/pretrained_models/sd21base
+  lora_rank: 16
+  lora_targets: [to_q, to_k, to_v, to_out.0]
+  lora_conv_targets: [conv1, conv2, conv_shortcut]
+  fixed_timestep: 999
+  prediction: x0  # 必须与训练配置一致
+  vae_fp32: false
+  gradient_checkpointing: false
+
+# path
+path:
+  pretrain_network_g: experiments/002d_SDLoRA_OWH-Mixed_convlora_20k_B4G2/models/net_g_latest.pth
+  param_key_g: params_ema
+  strict_load_g: false  # checkpoint 只含 LoRA 参数
+
+# validation settings
+val:
+  save_img: true
+  suffix: ~  # 结果图直接以实验名后缀保存
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
