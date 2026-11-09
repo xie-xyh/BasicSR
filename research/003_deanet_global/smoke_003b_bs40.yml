@@ -1,0 +1,79 @@
+# 冒烟：003a 单卡可行性 + 显存/速度探测（bs=40，Gradient loss）
+name: smoke_003b_bs40
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+manual_seed: 0
+
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 256
+    use_hflip: true
+    use_rot: true
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 40
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+
+network_g:
+  type: DEANet
+  base_dim: 32
+
+path:
+  pretrain_network_g: ~
+  strict_load_g: true
+
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 2.5e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [100]
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+  total_iter: 100
+  warmup_iter: -1
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.1
+    reduction: mean
+
+val:
+  val_freq: 10000  # 冒烟不测验证
+  save_img: false
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+
+logger:
+  print_freq: 10
+  save_checkpoint_freq: 10000
+  use_tb_logger: false
+
+dist_params:
+  backend: nccl
+  port: 29511
