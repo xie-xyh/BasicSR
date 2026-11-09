@@ -10,9 +10,11 @@ version_file = 'basicsr/version.py'
 
 
 def readme():
-    with open('README.md', encoding='utf-8') as f:
-        content = f.read()
-    return content
+    for name in ('README.md', 'README_CN.md'):
+        if os.path.exists(name):
+            with open(name, encoding='utf-8') as f:
+                return f.read()
+    return ''
 
 
 def get_git_hash():
