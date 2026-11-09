@@ -315,6 +315,7 @@ python basicsr/test.py  -opt /tmp/smoke_test.yml       # 测试应正常加载 c
 - **被删内容的线索**：若某篇论文代码引用了 `basicsr.ops`、`video_*`、`stylegan2_*`、`realesrgan*` 等，说明它依赖已裁剪模块，需要先从 git 历史恢复（`git checkout <commit> -- <path>`）或改用保留的等价物。
 - **SD-LoRA 去雾（SDLoRADehaze/SDLoRAModel）**：SD 权重从 `sd_path`（默认 `experiments/pretrained_models/sd21base`，下载见 `research/002_sdlora/download_sd21base.sh`）加载；checkpoint 只含 LoRA 参数（MB 级），加载/续训必须 `strict_load_g: false`；输入需 pad 到 8 的倍数（SDLoRAModel.test 已处理）；`fixed_timestep` 勿用 999（ᾱ≈0.005 导致 x0 重建放大 ~14.6 倍、纯像素监督不收敛，实测见 research/002_sdlora/RESEARCH_LOG.md），用 250 或 `prediction: x0`；OWH 各子集图片尺寸不齐，训练集需先用 `scripts/data_preparation/filter_min_size.py` 按 gt_size 过滤。
 - **临时素材勿放 /tmp**：`/tmp` 会被系统定期清理，冒烟数据集等需持久的小样本放 `research/` 下。
+- **冒烟/探针记录不留存**：冒烟测试（smoke_*）与短期探针（probe_*、sanity_*）产生的 `experiments/` 训练记录在验证通过、结论写入 `research/` 研究日志后即可删除，无需保留 checkpoint 与可视化；正式实验目录遵循 §4 命名约定，散落的 `*_nohup.log` 与目录内 train log 重复，可一并清理。
 
 ## 10. 与 BasicSR-Tutorial-v0.5.pdf 章节对照
 
