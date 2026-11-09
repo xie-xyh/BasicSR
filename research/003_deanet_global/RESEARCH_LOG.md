@@ -32,4 +32,13 @@
 ### 2026-11-09 19:55 — 正式配置 + 预检启动
 
 - 正式配置：`options/train/DEANet/train_DEANet_003a_l1fft.yml`（003a，FFT weight 0.5）、`train_DEANet_003b_l1grad.yml`（003b，Gradient weight 0.1）；其余字段与 001 逐项对齐。
-- 预检（双卡并发，`--force_yml name=preflight_003a/003b train:total_iter=100 val:val_freq=100`）：训练段正常，100 iter × ~1.2 s（双卡并发略慢于独占的 1.14 s），l_pix/l_fft/l_grad 数值正常无 NaN；正在跑三数据集验证（2711 张/实验）。
+### 2026-11-09 20:12 — 预检通过，正式训练启动（双卡）
+
+- 预检（各 100 iter + 三数据集验证 + 可视化/保存）全链路通过；预检产物（experiments/tb_logger/swanlog 本地记录）已清理；SwanLab 云端残留两条 preflight 记录，忽略。
+- 配置已 commit 并 push 占号（commit 36f3584）：`003a_DEANet_OWH-Mixed_L1FFT_30k_B80G1`（GPU0）、`003b_DEANet_OWH-Mixed_L1Grad_30k_B80G1`（GPU1）。
+- 正式启动（nohup + disown，ssh 断连不中断；nohup 日志在 `experiments/003a_nohup.log` / `003b_nohup.log`）：
+  - 003a pid 2791691：iter 100 时 l_pix 0.161 / l_fft 0.0145，1.185 s/iter，ETA ~8.6h；
+  - 003b pid 2791692：iter 100 时 l_pix 0.152 / l_grad 0.0221，1.25 s/iter，ETA ~9.1h；
+  - 双卡显存均 46.8 GiB / 49 GB、利用率 99%。预计 2026-11-10 05:00–05:30 完成。
+- 监听：会话内 cron 每 30 分钟检查一次（进程存活、loss 曲线、显存、验证指标），异常时记录并处理（OOM → 降 bs 至 72 + lr 2.25e-4 重跑，或 `--auto_resume` 续训）。
+
