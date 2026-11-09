@@ -64,10 +64,12 @@ basicsr/
 ├── models/
 │   ├── base_model.py         # 模型基类：优化器/scheduler/EMA/保存/加载/resume
 │   ├── sr_model.py           # SRModel —— 单图像复原模型的直接模板
-│   ├── dehaze_model.py       # DehazeModel（= SRModel + 可选 CR 对比损失，negative=有雾输入）
+│   ├── dehaze_model.py       # DehazeModel（= SRModel + 可选 CR 对比损失（negative=有雾输入）
+│   │                         # + 可选 fft_opt 频域损失 / gradient_opt 梯度损失，test 时 pad 到 4 的倍数）
 │   ├── sdlora_model.py       # SDLoRAModel（= DehazeModel + mod-8 测试填充 + LoRA-only 检查点/EMA）
 │   └── lr_scheduler.py       # CosineAnnealingRestartLR 等
-├── losses/                   # basic_loss.py (L1/L2/MSE/Gradient/Perceptual), contrastive_loss.py (DEA-Net CR 损失), gan_loss.py, loss_util.py
+├── losses/                   # basic_loss.py (L1/MSE/Charbonnier/Perceptual), spectral_loss.py (FFT 频域),
+                              # gradient_loss.py (Sobel 梯度), contrastive_loss.py (DEA-Net CR 损失), gan_loss.py, loss_util.py
 ├── metrics/                  # psnr_ssim.py (PSNR/SSIM), no_ref.py (FADE/NIQE/BRISQUE 无参考指标), metric_util.py
 └── utils/                    # registry.py, logger.py, options.py, file_client.py,
                               # img_util.py, color_util.py, matlab_functions.py, dist_util.py 等
