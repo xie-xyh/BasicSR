@@ -123,3 +123,10 @@
   注：003a 在 Moderate 上与 001 持平，FFT loss 收益集中在 Dense/Mist；003b（梯度）三子集全面提升，泛化更好。
 - 收敛性（Dense PSNR 末端轨迹）：003a 27k 24.162 / 28k 24.163 / 29k 24.160 / 30k 24.159；003b 同形（28k 24.170 / 29k 24.172 见顶）。最后 2-3k 已平台化——在当前 cosine-to-zero 调度下**已收敛**，同一 schedule 延长无效（lr≈0）；若想要更多增益需重启更长 schedule（如 60k cosine），预期量级 +0.05~0.15。
 - loss 占比（训练末端）：l_pix ≈ 0.040，FFTLoss 原始值 ≈ 0.011（weight 0.5 → l_fft ≈ 0.0057，约占总损失 12-14%）；GradientLoss 原始值 ≈ 0.09（weight 0.1 → 占比 ~18%）。
+
+### 2026-11-10 14:05 — 003c 训练启动（组合 loss + 512px + 60k，单卡）
+
+- 配置 `options/train/DEANet/train_DEANet_003c_l1fftgrad_512.yml`：L1 + FFTLoss(1.0) + GradientLoss(0.2) 组合，gt_size 512，bs=20，60k iter，单卡 GPU0（CUDA_VISIBLE_DEVICES=0，nohup+disown）。实验名 `003c_DEANet_OWH-Mixed512_L1FFTGrad_60k_B20G1`。
+- 启动时间 2026-11-10 13:57，python 训练进程 pid 3274791（conda run 外壳 3274790）。已 push 占号（a051617）。
+- 启动验证（~8 分钟观察）：iter 递增正常，约 1.15 s/iter，eta ≈ 18.9h；loss 无 NaN 且正常下降（iter 300: l_pix 1.3541e-01 / l_fft 1.8020e-02 / l_grad 2.8396e-02）；GPU0 显存稳定 46553 MiB（≈45.5 GiB，与冒烟预估一致），无 OOM。GPU1 为另一实验，未触碰。
+- 已挂 cron 定时巡检（每半小时 29/59 分）：监控进程存活 / NaN / 显存，OOM 自动降 bs=16 续训，完成后自动删除。
