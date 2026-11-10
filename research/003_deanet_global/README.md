@@ -89,6 +89,7 @@ loss 量级参考（冒烟，随机噪声数据，weight=1.0）：l_pix ≈ 0.6�
 ## 5. 待办
 
 - [x] 实现 FFT 频域 loss（`basicsr/losses/spectral_loss.py`）+ Gradient loss（`basicsr/losses/gradient_loss.py`），DehazeModel 接 `fft_opt`/`gradient_opt`
-- [ ] 写 003a/003b 训练配置（options/train/DEANet/），占号 push 后开训
+- [x] 003a/003b 训练与正式评估（2026-11-10 完成，结论见 RESEARCH_LOG）
+- [ ] 003c（组合 loss + 512px + 60k）：配置已就绪（`options/train/DEANet/train_DEANet_003c_l1fftgrad_512.yml`），待开训
 - [ ] 实现 DEANetV2：瓶颈层插全局注意力块（等 loss 组结论）
 - [ ] 区分失败类型：信息缺失型 vs 低频可恢复型，分别统计占比

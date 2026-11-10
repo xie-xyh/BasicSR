@@ -1,0 +1,133 @@
+# 003c：DEA-Net 组合辅助损失 + 512px 大裁剪 + 60k 长程训练
+# 与 003a/003b 的关系：FFT 0.5→1.0、Grad 0.1→0.2（适度上调）、gt_size 256→512、iter 30k→60k
+# 注意：该实验叠加了三个变量，归因粒度较粗（loss 组合收益已由 003a/003b 单独验证）
+# 冒烟实测（2026-11-10）：512px 单卡 bs16 峰值 28.5 GiB、bs20 峰值 45.5 GiB、bs24 OOM → 取 bs20
+# 启动（nohup 防断连）：CUDA_VISIBLE_DEVICES=<gpu> nohup python basicsr/train.py -opt <本文件> > experiments/003c_nohup.log 2>&1 &
+
+# general settings
+name: 003c_DEANet_OWH-Mixed512_L1FFTGrad_60k_B20G1
+model_type: DehazeModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear      # 原始未过滤目录（用代码过滤替代 Mixed_ge512 软链接副本）
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 512
+    filter_min_size: true  # 只保留宽高均 >= 512 的配对（实测 24381→20399，与 Mixed_ge512 一致）
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 20  # 512px 实测峰值 45.5 GiB；bs24 OOM
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 与前序实验相同：按子集分开监控
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANet
+  base_dim: 32
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4  # 有效 batch 20（vs 001 的 80），lr 相应下调（非严格线性，取保守值）
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [60000]
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 60000  # 003a/003b 在 30k 末端已平台化；此处更长 schedule 检验"未收敛"假设
+  warmup_iter: -1  # no warm up
+
+  # losses：L1 + FFT + Gradient 组合，辅助 loss 权重适度上调
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0   # 003a 为 0.5（当时占比 ~13%）；上调至 ~25%
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2   # 003b 为 0.1（占比 ~18%）；上调至 ~30%
+    reduction: mean
+
+# validation settings（iter 数翻倍，val_freq 同步放宽，控制验证开销占比）
+val:
+  val_freq: 2000
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e3
+  use_tb_logger: true
+  use_swanlab: true
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29512
