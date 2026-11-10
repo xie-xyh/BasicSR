@@ -1,9 +1,11 @@
+from os import path as osp
+
 from torch.utils import data as data
 from torchvision.transforms.functional import normalize
 
 from basicsr.data.data_util import paired_paths_from_folder, paired_paths_from_lmdb, paired_paths_from_meta_info_file
 from basicsr.data.transforms import augment, paired_random_crop
-from basicsr.utils import FileClient, bgr2ycbcr, imfrombytes, img2tensor
+from basicsr.utils import FileClient, bgr2ycbcr, get_root_logger, imfrombytes, img2tensor
 from basicsr.utils.registry import DATASET_REGISTRY
 
 
@@ -59,6 +61,35 @@ class PairedImageDataset(data.Dataset):
                                                           self.opt['meta_info_file'], self.filename_tmpl)
         else:
             self.paths = paired_paths_from_folder([self.lq_folder, self.gt_folder], ['lq', 'gt'], self.filename_tmpl)
+
+        # optionally drop pairs smaller than gt_size (in-code alternative to
+        # scripts/data_preparation/filter_min_size.py); only meaningful for the
+        # training phase where paired_random_crop requires gt_size
+        if opt.get('filter_min_size', False) and opt.get('gt_size') is not None:
+            self.paths = self._filter_by_min_size(self.paths, opt['gt_size'])
+
+    @staticmethod
+    def _filter_by_min_size(paths, min_size):
+        """Keep only pairs with min(width, height) >= min_size.
+
+        Reads image headers only (fast). Falls back to keeping everything for
+        lmdb/meta-info modes where paths are not readable files.
+        """
+        from PIL import Image
+        logger = get_root_logger()
+        keep, drop = [], 0
+        for p in paths:
+            lq_path, gt_path = p['lq_path'], p['gt_path']
+            if not (osp.isfile(lq_path) and osp.isfile(gt_path)):
+                keep.append(p)
+                continue
+            w, h = Image.open(lq_path).size
+            if min(w, h) >= min_size:
+                keep.append(p)
+            else:
+                drop += 1
+        logger.info(f'filter_min_size: kept {len(keep)} pairs, dropped {drop} pairs with min side < {min_size}.')
+        return keep
 
     def __getitem__(self, index):
         if self.file_client is None:

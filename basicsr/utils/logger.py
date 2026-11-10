@@ -122,6 +122,29 @@ def init_tb_logger(log_dir):
     return tb_logger
 
 
+_swanlab_finished = True  # no active run by default
+
+
+@master_only
+def finish_swanlab_logger():
+    """Finish the swanlab run if one is active (safe to call repeatedly).
+
+    Without this, an interrupted or crashed run stays in a non-finished state
+    on the dashboard. Registered via atexit at init time so uncaught
+    exceptions (e.g. OOM) also close the run; explicit calls at the end of
+    training close it immediately.
+    """
+    global _swanlab_finished
+    if _swanlab_finished:
+        return
+    try:
+        import swanlab
+        swanlab.finish()
+    except Exception:
+        pass
+    _swanlab_finished = True
+
+
 @master_only
 def init_swanlab_logger(opt):
     """SwanLab logger: sync tensorboard metrics (scalars and images) to SwanLab.
@@ -153,6 +176,12 @@ def init_swanlab_logger(opt):
     swanlab.init(**init_kwargs)
     # sync the torch tensorboard logger; call before SummaryWriter is created
     swanlab.sync_tensorboard_torch()
+    # close the run on exit (normal end or uncaught exception like OOM),
+    # otherwise the dashboard keeps the run in a non-finished state
+    global _swanlab_finished
+    _swanlab_finished = False
+    import atexit
+    atexit.register(finish_swanlab_logger)
 
     logger.info(f'Use swanlab logger with mode={mode}; project={project or experiment_name}.')
 
