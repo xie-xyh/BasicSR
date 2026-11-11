@@ -1,0 +1,135 @@
+# 004a：DEANetV3（LFM 低频内容自适应调制块）——003d 失败归因后的改进方向
+# 与 003c 的唯一变量是瓶颈全局模块：DEANet level3 的 2 个 FGB 位置换成 LowFreqModBlock
+# （FFT 软掩码只取低频带 + 内容自适应 FiLM 调制，无归一化、零初始化）。
+# 设计依据：research/003d_deanetv2/README.md §7；模块文档：research/004_lowfreq/README.md
+# 冒烟实测（2026-11-11）：512px 单卡 bs20 峰值 44.6 GiB ≈ 003c 的 45.5 GiB → 取 bs20，与 003c 严格对齐
+# 启动（nohup 防断连）：CUDA_VISIBLE_DEVICES=<gpu> nohup python basicsr/train.py -opt <本文件> > experiments/004a_nohup.log 2>&1 &
+
+# general settings
+name: 004a_DEANetV3-LFM_OWH-Mixed512_L1FFTGrad_60k_B20G1
+model_type: DehazeModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear      # 原始未过滤目录（用代码过滤替代 Mixed_ge512 软链接副本）
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 512
+    filter_min_size: true  # 只保留宽高均 >= 512 的配对（实测 24381→20399，与 Mixed_ge512 一致）
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 20  # 512px 实测峰值 44.6 GiB，与 003c（45.5 GiB @ bs20）一致
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 与前序实验相同：按子集分开监控
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANetV3
+  base_dim: 32
+  global_block: lfm
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4  # 与 003c 完全一致
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [60000]
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 60000
+  warmup_iter: -1  # no warm up
+
+  # losses：与 003c 完全一致
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: 2000
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e3
+  use_tb_logger: true
+  use_swanlab: true
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29514
