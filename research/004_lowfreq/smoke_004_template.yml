@@ -1,0 +1,87 @@
+# 冒烟配置模板：合成数据 6 iter 全链路验证（dataset→model→loss→save→validation）
+name: smoke_004_ARCH
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+manual_seed: 0
+
+datasets:
+  train:
+    name: smoke-train
+    type: PairedImageDataset
+    dataroot_gt: /tmp/smoke/train/GT
+    dataroot_lq: /tmp/smoke/train/LQ
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 64
+    use_hflip: false
+    use_rot: false
+    num_worker_per_gpu: 0
+    batch_size_per_gpu: 2
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+  val:
+    name: smoke-val
+    type: PairedImageDataset
+    dataroot_gt: /tmp/smoke/val/GT
+    dataroot_lq: /tmp/smoke/val/LQ
+    io_backend:
+      type: disk
+
+network_g:
+  type: DEANetV3
+  base_dim: 32
+  global_block: ARCH
+
+path:
+  pretrain_network_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [6]
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+  total_iter: 6
+  warmup_iter: -1
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2
+    reduction: mean
+
+val:
+  val_freq: 3
+  save_img: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+logger:
+  print_freq: 1
+  save_checkpoint_freq: 3
+  use_tb_logger: false
+  use_swanlab: false
+
+dist_params:
+  backend: nccl
+  port: 29599
