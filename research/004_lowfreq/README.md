@@ -82,4 +82,5 @@ Restormer 式 MDTA 通道自注意力 + GDFN 门控 FFN，输出投影零初始�
 
 | 时间 | 事件 |
 |---|---|
-| 2026-11-11 17:50 | 设计+实现+单元/冒烟验证完成，004a/004b 配置就绪待启动（编号已占，commit 后 push） |
+| 2026-11-11 17:50 | 设计+实现+单元/冒烟验证完成，004a/004b 配置就绪（编号已占并 push，commit db46d77） |
+| 2026-11-11 17:51 | 004a/004b 双卡启动（004a GPU0 pid 170415，004b GPU1 pid 170416；nohup 日志 experiments/004a_nohup.log / 004b_nohup.log）。iter 100：004a 1.28 s/iter（ETA ~19h）、004b 0.99 s/iter（ETA ~15h），l_pix ~0.14/l_fft ~0.021/l_grad ~0.031 正常；显存 48.4/45.1 GiB（004a 余量较小，OOM 预案：降 bs16 + --auto_resume）。会话内 cron 每 30 分钟巡检 |
