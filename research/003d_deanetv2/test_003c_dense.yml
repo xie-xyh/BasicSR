@@ -1,0 +1,51 @@
+# 003c 最终评估（最优 checkpoint net_g_56000）：与 results/001_dense_eval 同口径全量评估
+# 用法：CUDA_VISIBLE_DEVICES=1 python basicsr/test.py -opt research/003d_deanetv2/test_003c_dense.yml
+name: 003c_dense_eval
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+
+datasets:
+  test_1:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  test_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  test_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+network_g:
+  type: DEANet
+  base_dim: 32
+
+path:
+  param_key_g: params_ema
+  pretrain_network_g: experiments/003c_DEANet_OWH-Mixed512_L1FFTGrad_60k_B20G1/models/net_g_56000.pth
+  strict_load_g: true
+
+val:
+  save_img: true
+  suffix: ~
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false

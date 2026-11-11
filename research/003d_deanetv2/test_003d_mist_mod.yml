@@ -1,0 +1,44 @@
+# 003d 评估补跑：仅 Mist/Moderate（Dense 已在 test_003d_dense.yml 中完成）
+# 用法：CUDA_VISIBLE_DEVICES=1 python basicsr/test.py -opt research/003d_deanetv2/test_003d_mist_mod.yml
+name: 003d_dense_eval
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+
+datasets:
+  test_1:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  test_2:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+network_g:
+  type: DEANetV2
+  base_dim: 32
+
+path:
+  param_key_g: params_ema
+  pretrain_network_g: experiments/003d_DEANetV2_OWH-Mixed512_L1FFTGrad_60k_B16G1/models/net_g_54000.pth
+  strict_load_g: true
+
+val:
+  save_img: true
+  suffix: ~
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
