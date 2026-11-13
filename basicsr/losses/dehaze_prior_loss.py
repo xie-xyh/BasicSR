@@ -16,22 +16,48 @@ from basicsr.utils.registry import LOSS_REGISTRY
 
 @LOSS_REGISTRY.register()
 class DarkChannelLoss(nn.Module):
-    """Dark channel prior loss: mean of min-pooled min-channel map.
+    """Dark channel prior loss with a floor: relu(mean(dark) - floor).
+
+    The raw (unbounded) version lets the optimizer push the dark channel
+    negative, i.e. over-darken/re-color the output to cheat the metric
+    (observed in the 005a probe: cyan cast, FADE cheated to 0.91). The floor
+    stops the pressure once the dark channel is already low enough.
 
     Args:
         loss_weight (float): Loss weight.
         patch (int): Min-pooling window. Default: 7.
+        floor (float): Dark-channel floor (0-1 scale). Default: 0.1.
     """
 
-    def __init__(self, loss_weight=1.0, patch=7):
+    def __init__(self, loss_weight=1.0, patch=7, floor=0.1):
         super(DarkChannelLoss, self).__init__()
         self.loss_weight = loss_weight
         self.patch = patch
+        self.floor = floor
 
     def forward(self, x):
         dark = x.min(dim=1, keepdim=True)[0]
         dark = -F.max_pool2d(-dark, self.patch, stride=1, padding=self.patch // 2)
-        return dark.mean() * self.loss_weight
+        return F.relu(dark.mean() - self.floor) * self.loss_weight
+
+
+@LOSS_REGISTRY.register()
+class ColorAnchorLoss(nn.Module):
+    """Per-channel mean anchor to a reference (e.g. frozen backbone output).
+
+    Keeps the adapter's global color drift bounded while leaving local /
+    spatially-varying corrections free. FreqDAModel feeds (output, z_ref).
+
+    Args:
+        loss_weight (float): Loss weight.
+    """
+
+    def __init__(self, loss_weight=1.0):
+        super(ColorAnchorLoss, self).__init__()
+        self.loss_weight = loss_weight
+
+    def forward(self, x, ref):
+        return (x.mean(dim=(2, 3)) - ref.mean(dim=(2, 3))).abs().mean() * self.loss_weight
 
 
 @LOSS_REGISTRY.register()

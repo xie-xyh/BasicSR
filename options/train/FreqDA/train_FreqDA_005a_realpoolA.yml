@@ -73,8 +73,9 @@ train:
   # 自监督物理先验（无 GT）
   dcp_opt:
     type: DarkChannelLoss
-    loss_weight: 0.1    # 原始值 ~0.5 → 贡献 ~0.05
+    loss_weight: 0.05   # 005a 首跑教训：0.1 无下界版本把输出压成青色调并骗过 FADE；改 hinge 版 + 降权
     patch: 7
+    floor: 0.1          # 暗通道低于 0.1 后不再施压（防过暗）
   dispersion_opt:
     type: DispersionFloorLoss
     loss_weight: 1.0    # 原始值 ~0.06 → 贡献 ~0.06
@@ -82,6 +83,9 @@ train:
   tv_opt:
     type: TVLoss
     loss_weight: 0.2    # 作用于 R_H 输出（初始为 0）
+  color_anchor_opt:
+    type: ColorAnchorLoss
+    loss_weight: 1.0    # 全局色调锚定骨架输出，防适配器整体改色；局部空间变化修正不受限
 
 # validation settings
 val:

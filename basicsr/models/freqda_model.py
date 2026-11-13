@@ -43,6 +43,11 @@ class FreqDAModel(DehazeModel):
         else:
             self.cri_tv = None
 
+        if train_opt.get('color_anchor_opt'):
+            self.cri_anchor = build_loss(train_opt['color_anchor_opt']).to(self.device)
+        else:
+            self.cri_anchor = None
+
     def optimize_parameters(self, current_iter):
         self.optimizer_g.zero_grad()
         self.output = self.net_g(self.lq)
@@ -62,6 +67,10 @@ class FreqDAModel(DehazeModel):
             l_tv = self.cri_tv(self.net_g.last_rh)
             l_total += l_tv
             loss_dict['l_tv'] = l_tv
+        if self.cri_anchor:
+            l_anchor = self.cri_anchor(self.output, self.net_g.last_z.detach())
+            l_total += l_anchor
+            loss_dict['l_anchor'] = l_anchor
 
         l_total.backward()
         self.optimizer_g.step()

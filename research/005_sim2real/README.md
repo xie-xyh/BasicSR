@@ -139,3 +139,12 @@ y  = z + R_L(x) + R_H(x_H)
 | 005d（后续） | 池 A vs B(RTTS) vs A+B | 域匹配价值 |
 
 判据：real-test FADE 主（基线 2.416）+ 感知面板辅助（§5 已知其反向特性，仅作参考）+ 合成防遗忘 + R_L 校正图目视（可解释性副产品：应呈现偏蓝大气光校正）。
+
+## 8. 实验记录
+
+| 时间 | 事件 |
+|---|---|
+| 2026-11-13 19:17 | Pool A 建成（`datasets/OWH-RealPoolA/`：train 1858 / val 400；剔除 17 张 ORB≥20 泄漏候选；暗通道过滤仅剔 1 张——池内图普遍有雾） |
+| 2026-11-13 19:22 | **005a v1 探针翻车（记录在案）**：DCP 无下界版本 10 分钟内把输出压成青色调、l_dcp 变负、FADE 被骗到 0.91（`probe/005a_val1000_check.jpg` 为证，实验目录归档 `experiments/005a_probe_v1_dcp_overflow_archived/`）。教训：无 GT 统计先验必须带下界/锚定，防"指标作弊" |
+| 2026-11-13 19:27 | v2 修复：DarkChannelLoss 改 hinge 版（floor 0.1）+ 降权 0.05 + 新增 ColorAnchorLoss（逐通道均值锚定骨架输出，1.0）；探针进程清理（pkill 误伤一次，已清场重启） |
+| 2026-11-13 19:28 | **005a v2 正式启动**（GPU0，pid 2945192，5k iter 预计 ~20 分钟）：iter 1000 时 l_dcp 0.015（hinge 正常）、l_anchor 2e-4、l_tv 1.7e-5、l_disp 0.019 量级全部正常；cron 监控（含收尾评估管道）已挂 |

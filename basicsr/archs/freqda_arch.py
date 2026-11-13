@@ -77,4 +77,5 @@ class FreqDA(nn.Module):
 
         r_h = self.high_adapter(x_h)
         self.last_rh = r_h  # consumed by FreqDAModel for the TV loss
+        self.last_z = z     # frozen backbone output, for the color-anchor loss
         return z + r_l + r_h
