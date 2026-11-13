@@ -1,0 +1,25 @@
+# 004a 骨架在 Pool A 验证集上的 FADE/NIQE 参照（005a val 曲线的对照零点）
+name: 004a_realval_eval
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+datasets:
+  test_1:
+    name: OWH-RealPoolA-val
+    type: SingleImageDataset
+    dataroot_lq: datasets/OWH-RealPoolA/val
+    io_backend:
+      type: disk
+network_g:
+  type: DEANetV3
+  base_dim: 32
+  global_block: lfm
+path:
+  param_key_g: params_ema
+  pretrain_network_g: experiments/004a_DEANetV3-LFM_OWH-Mixed512_L1FFTGrad_60k_B20G1/models/net_g_60000.pth
+  strict_load_g: true
+val:
+  save_img: false
+  metrics:
+    fade: {type: calculate_fade, better: lower}
+    niqe: {type: calculate_niqe, better: lower}
