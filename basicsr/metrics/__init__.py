@@ -1,7 +1,14 @@
 from copy import deepcopy
 
 from basicsr.utils.registry import METRIC_REGISTRY
-from .no_ref import calculate_brisque, calculate_fade, calculate_niqe
+from .no_ref import (
+    calculate_brisque,
+    calculate_clipiqa,
+    calculate_fade,
+    calculate_maniqa,
+    calculate_musiq,
+    calculate_niqe,
+)
 from .psnr_ssim import calculate_psnr, calculate_ssim
 
 __all__ = ['calculate_psnr', 'calculate_ssim', 'calculate_fade', 'calculate_niqe', 'calculate_brisque']
