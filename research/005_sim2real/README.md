@@ -169,3 +169,4 @@ y  = z + R_L(x) + R_H(x_H)
 - iter 1000：l_anchor 原始值 ~0.117（适配器确实在大幅动作）、l_dcp 已被 hinge 压到 0、l_disp 0、l_tv 正常；val FADE **1.1250**（val 池参照 2.2236，接近减半）、NIQE 4.5142 持平；
 - **但目检发现轻度青绿色偏回潮**（`probe/005b_val1000_check.jpg`，比 v1 轻但可见）——anchor 0.1 放得过头，DCP 压红通道的副作用再现；
 - 判读：v1（anchor 1.0，不动）与 005b（anchor 0.1，偏色）框定了约束区间的两端，下一发取中间值 anchor 0.3，并考虑给离散度 loss 降权排除其推色嫌疑。
+- **005b 训练完成**（21:12，15 分钟）：val FADE 终点 **0.6885**（仍下降中，未饱和），NIQE 4.4966；real-test 六指标 + Dense 防遗忘评估在 GPU1 并行收尾中。**005c（anchor 0.3）已在 GPU0 启动**，单变量只动 anchor。
