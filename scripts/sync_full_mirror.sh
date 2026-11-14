@@ -5,7 +5,7 @@
 set -uo pipefail
 
 LOCAL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-REMOTE="basicsr2:/home/xieyuhang/xyy/Learn/BasicSR/"
+REMOTE="basicsr2:/home/xieyuhang/Learn/BasicSR/"
 
 attempt=1
 max=1000

@@ -16,7 +16,7 @@
 set -euo pipefail
 
 REMOTE_HOST="${SYNC_REMOTE_HOST:-basicsr2}"
-REMOTE_ROOT="${SYNC_REMOTE_ROOT:-/home/xieyuhang/xyy/Learn/BasicSR}"
+REMOTE_ROOT="${SYNC_REMOTE_ROOT:-/home/xieyuhang/Learn/BasicSR}"
 LOCAL_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 MODE="${1:-push}"
