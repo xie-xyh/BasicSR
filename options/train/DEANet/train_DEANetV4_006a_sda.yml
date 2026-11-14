@@ -1,0 +1,143 @@
+# 006a：DEANetV4-SDA 冻结探针——Hihaze SDA（空间退化适配器）移植验证
+# 设计文档：research/006_hihaze/README.md
+# 结构：冻结 004a（DEANetV3-LFM）骨架 + SDAEncoder（多尺度雾密度特征）
+#        零初始化注入 mix2 后（P1）/ up3 前（P2）/ 输出残差（OUT），初始恒等 004a
+# 训练范式同 005 FreqDA（冻结骨架只训适配器），但用配对 GT 监督（T_d/T_r/T_s + L1/FFT/Grad）
+# 数据/验证/loss 权重与 004a（003c 配方）严格对齐，只改：网络、lr 1e-3（新模块）、20k 短程
+# 启动（nohup 防断连）：CUDA_VISIBLE_DEVICES=<gpu> nohup python basicsr/train.py -opt <本文件> > experiments/006a_nohup.log 2>&1 &
+
+# general settings
+name: 006a_DEANetV4-SDA_OWH-Mixed512_L1FFTGrad_20k_B20G1
+model_type: SDAModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear      # 与 004a 相同：代码内过滤替代 Mixed_ge512 软链接副本
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 512
+    filter_min_size: true  # 只保留宽高均 >= 512 的配对（24381→20399，与 004a 一致）
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 20  # 与 004a 对齐（冻结骨架后显存远低于 44.6 GiB，但保持同口径比较）
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 与 004a 相同：按子集分开监控
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANetV4
+  backbone_ckpt: experiments/004a_DEANetV3-LFM_OWH-Mixed512_L1FFTGrad_60k_B20G1/models/net_g_60000.pth
+  base_dim: 32
+  global_block: lfm
+  sda_dims: [16, 32, 64]
+
+# path（骨架由 arch 内部加载；适配器从零初始化开始，此处不需要 pretrain）
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-3  # 新模块从零学起，取适配器训练常用 lr（同 005 FreqDA）；骨架冻结不受其影响
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [20000]
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 20000
+  warmup_iter: -1  # no warm up
+
+  # losses：pixel/fft/grad 与 003c/004a 完全一致；sda 为新增的辅助监督
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2
+    reduction: mean
+  sda_opt:
+    loss_weight: 1.0   # Smooth L1（三尺度求和）；targets 量纲 [0,1]/[-1,1]，实测初始 ~0.05
+    eps_str: !!float 1e-3
+    tau: 0.03
+    kappa: 0.01
+
+# validation settings
+val:
+  val_freq: 1000  # 探针缩短到 20k，加密验证点观察早期信号
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 2e3
+  use_tb_logger: true
+  use_swanlab: true
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29517
