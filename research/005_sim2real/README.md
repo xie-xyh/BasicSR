@@ -144,7 +144,8 @@ y  = z + R_L(x) + R_H(x_H)
 
 | 时间 | 事件 |
 |---|---|
-| 2026-11-13 19:17 | Pool A 建成（`datasets/OWH-RealPoolA/`：train 1858 / val 400；剔除 17 张 ORB≥20 泄漏候选；暗通道过滤仅剔 1 张——池内图普遍有雾） |
+| 2026-11-13 19:17 | Pool A 建成（`datasets/OWI/`：train 1858 / val 400；剔除 17 张 ORB≥20 泄漏候选；暗通道过滤仅剔 1 张——池内图普遍有雾） |
+| 2026-11-14 | **池重建（重要修正）**：发现两来源（train/hazy 与 natural_test）存在 186 个同名文件，原构建按 basename 建链导致 138 张被覆盖丢失、且 47 张同图同时落入 train 和 val（val 的 12% 被污染）——005a/b/c 的 val FADE 因此有轻微乐观偏差（real-test 为独立测试集，不受影响）。已修复：加 `th_/nt_` 前缀保证唯一名并重建（train 1858 / val 400 / 交集 0）；全库引用统一更名为 `datasets/OWI`（OWI 为该数据集名，与 OWH 区分） |
 | 2026-11-13 19:22 | **005a v1 探针翻车（记录在案）**：DCP 无下界版本 10 分钟内把输出压成青色调、l_dcp 变负、FADE 被骗到 0.91（`probe/005a_val1000_check.jpg` 为证，实验目录归档 `experiments/005a_probe_v1_dcp_overflow_archived/`）。教训：无 GT 统计先验必须带下界/锚定，防"指标作弊" |
 | 2026-11-13 19:27 | v2 修复：DarkChannelLoss 改 hinge 版（floor 0.1）+ 降权 0.05 + 新增 ColorAnchorLoss（逐通道均值锚定骨架输出，1.0）；探针进程清理（pkill 误伤一次，已清场重启） |
 | 2026-11-13 19:28 | **005a v2 正式启动**（GPU0，pid 2945192，5k iter 预计 ~20 分钟）：iter 1000 时 l_dcp 0.015（hinge 正常）、l_anchor 2e-4、l_tv 1.7e-5、l_disp 0.019 量级全部正常；cron 监控（含收尾评估管道）已挂 |

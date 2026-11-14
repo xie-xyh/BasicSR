@@ -1,7 +1,7 @@
 # Build the domain-matched real-haze training pool (Pool A) from OverwaterHaze-ACCV2020.
 # Steps: collect train/hazy + natural_test -> exclude ORB>=20 leakage candidates vs
 # real-test (from probe/orb_verify.npy) -> drop near-clear images (dark-channel floor)
-# -> hold out 400 val -> symlink tree at datasets/OWH-RealPoolA/{train,val}.
+# -> hold out 400 val -> symlink tree at datasets/OWI/{train,val}.
 # Usage: python research/005_sim2real/tools/build_domain_pool.py
 
 import os
@@ -11,7 +11,7 @@ import cv2
 import numpy as np
 
 SRC = '/home/yxy/xyy/datasets/OverwaterHaze-ACCV2020'
-OUT = 'datasets/OWH-RealPoolA'
+OUT = 'datasets/OWI'
 DARK_TH = 0.20        # 暗通道均值下限（清晰图通常 <0.15，留安全余量）
 N_VAL = 400
 SEED = 0
@@ -34,14 +34,16 @@ def main():
     print(f'ORB>=20 剔除名单: {len(excl)} 张')
 
     files = []
-    for sub in ('train/hazy', 'test/natural_test'):
+    # 前缀保证全局唯一名（两来源存在 186 个同名文件，原名会互相覆盖并污染 val）
+    for sub, prefix in (('train/hazy', 'th'), ('test/natural_test', 'nt')):
         subdir = os.path.join(SRC, sub)
-        files += sorted(os.path.join(subdir, x) for x in os.listdir(subdir) if x.endswith('.jpg'))
+        files += sorted((os.path.join(subdir, x), f'{prefix}_{x}')
+                        for x in os.listdir(subdir) if x.endswith('.jpg'))
     print(f'原始候选: {len(files)}')
 
     kept, dropped_leak, dropped_clear = [], 0, 0
     report = []
-    for f in files:
+    for f, uname in files:
         if f in excl:
             dropped_leak += 1
             continue
@@ -53,7 +55,7 @@ def main():
         if dc < DARK_TH:
             dropped_clear += 1
             continue
-        kept.append((f, dc))
+        kept.append((f, uname, dc))
         report.append((os.path.relpath(f, SRC), f'{dc:.4f}'))
     print(f'剔除泄漏 {dropped_leak}，剔除过清/损坏 {dropped_clear}，保留 {len(kept)}')
 
@@ -64,9 +66,9 @@ def main():
     for split in ('train', 'val'):
         os.makedirs(os.path.join(OUT, split), exist_ok=True)
     n_train = n_val = 0
-    for i, (f, dc) in enumerate(kept):
+    for i, (f, uname, dc) in enumerate(kept):
         split = 'val' if i in val_idx else 'train'
-        dst = os.path.join(OUT, split, os.path.basename(f))
+        dst = os.path.join(OUT, split, uname)
         if os.path.exists(dst):
             os.remove(dst)
         os.symlink(os.path.abspath(f), dst)

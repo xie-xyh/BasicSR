@@ -4,7 +4,7 @@
 # 启动：CUDA_VISIBLE_DEVICES=<gpu> nohup python basicsr/train.py -opt <本文件> > experiments/005a_nohup.log 2>&1 &
 
 # general settings
-name: 005a_FreqDA_OWH-RealPoolA_DCPDisp_5k_B16G1
+name: 005a_FreqDA_OWI_DCPDisp_5k_B16G1
 model_type: FreqDAModel
 scale: 1
 num_gpu: 1
@@ -13,9 +13,9 @@ manual_seed: 0
 # dataset and data loader settings
 datasets:
   train:
-    name: OWH-RealPoolA-train
+    name: OWI-train
     type: RealHazyDataset
-    dataroot_lq: datasets/OWH-RealPoolA/train   # 1858 张域内真实雾图（已去重/过滤）
+    dataroot_lq: datasets/OWI/train   # 1858 张域内真实雾图（已去重/过滤）
     io_backend:
       type: disk
     crop_size: 256
@@ -31,9 +31,9 @@ datasets:
   # （防遗忘检查放在训练结束后一次性评估：Dense-test PSNR 对比 004a 基线 24.86；
   #   框架对所有 val 数据集共用 metrics 段，无 GT 数据集不能配 psnr，故不混挂）
   val:
-    name: OWH-RealPoolA-val
+    name: OWI-val
     type: SingleImageDataset
-    dataroot_lq: datasets/OWH-RealPoolA/val
+    dataroot_lq: datasets/OWI/val
     io_backend:
       type: disk
 

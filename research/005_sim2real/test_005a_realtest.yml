@@ -20,7 +20,7 @@ network_g:
 
 path:
   param_key_g: params_ema
-  pretrain_network_g: experiments/005a_FreqDA_OWH-RealPoolA_DCPDisp_5k_B16G1/models/net_g_5000.pth
+  pretrain_network_g: experiments/005a_FreqDA_OWI_DCPDisp_5k_B16G1/models/net_g_5000.pth
   strict_load_g: true
 
 val:

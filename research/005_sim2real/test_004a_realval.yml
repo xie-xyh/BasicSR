@@ -5,9 +5,9 @@ scale: 1
 num_gpu: 1
 datasets:
   test_1:
-    name: OWH-RealPoolA-val
+    name: OWI-val
     type: SingleImageDataset
-    dataroot_lq: datasets/OWH-RealPoolA/val
+    dataroot_lq: datasets/OWI/val
     io_backend:
       type: disk
 network_g:
