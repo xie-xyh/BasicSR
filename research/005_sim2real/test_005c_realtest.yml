@@ -1,0 +1,48 @@
+# Step 0：004a 在 OWH real-test（500 张真实雾图，无 GT）上的无参考指标基线
+# 指标面板：FADE/NIQE/BRISQUE（越低越好）+ MUSIQ/MANIQA/CLIP-IQA（越高越好）
+# 用法：HF_ENDPOINT=https://hf-mirror.com CUDA_VISIBLE_DEVICES=1 python basicsr/test.py -opt research/005_sim2real/test_004a_realtest.yml
+name: 005c_realtest_eval
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+
+datasets:
+  test_1:
+    name: OWH-real-test
+    type: SingleImageDataset
+    dataroot_lq: datasets/OWH/real-test
+    io_backend:
+      type: disk
+
+network_g:
+  type: FreqDA
+  backbone_ckpt: experiments/004a_DEANetV3-LFM_OWH-Mixed512_L1FFTGrad_60k_B20G1/models/net_g_60000.pth
+
+path:
+  param_key_g: params_ema
+  pretrain_network_g: experiments/005c_FreqDA_OWH-RealPoolA_lr1e3-anch03_5k_B16G1/models/net_g_5000.pth
+  strict_load_g: true
+
+val:
+  save_img: true
+  suffix: ~
+  pbar: true
+  metrics:
+    fade:
+      type: calculate_fade
+      better: lower
+    niqe:
+      type: calculate_niqe
+      better: lower
+    brisque:
+      type: calculate_brisque
+      better: lower
+    musiq:
+      type: calculate_musiq
+      better: higher
+    maniqa:
+      type: calculate_maniqa
+      better: higher
+    clipiqa:
+      type: calculate_clipiqa
+      better: higher
