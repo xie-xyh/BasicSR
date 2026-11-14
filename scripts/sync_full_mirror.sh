@@ -11,7 +11,7 @@ attempt=1
 max=1000
 cd "${LOCAL_ROOT}"
 while true; do
-  if rsync -a --partial --append-verify --timeout=300 --info=progress2 \
+  if rsync -a --partial --append-verify --timeout=300 --info=progress2 "$@" \
       -e "ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=10" \
       ./ "${REMOTE}"; then
     echo "RSYNC_ALL_DONE"
