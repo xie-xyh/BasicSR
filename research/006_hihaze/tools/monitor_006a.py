@@ -39,11 +39,13 @@ RE_METRIC = re.compile(r'# (\w+): ([\d.]+)\s+Best: [\d.]+ @ (\d+) iter')
 def parse(log_path):
     iters, vals = [], {}  # vals: dataset -> {iter: {metric: value}}
     cur_ds = None
+    last_iter = None  # 验证块前的最后一个训练 iter，作为该验证的迭代数
     with open(log_path) as f:
         for line in f:
             m = RE_ITER.match(line)
             if m:
-                iters.append(dict(ts=m.group(1), iter=int(m.group(2).replace(',', '')),
+                last_iter = int(m.group(2).replace(',', ''))
+                iters.append(dict(ts=m.group(1), iter=last_iter,
                                   sec=float(m.group(3)), l_pix=float(m.group(4)),
                                   l_fft=float(m.group(5)), l_grad=float(m.group(6)),
                                   l_sda=float(m.group(7))))
@@ -54,9 +56,8 @@ def parse(log_path):
                 vals.setdefault(cur_ds, {})
                 continue
             m = RE_METRIC.search(line)
-            if m and cur_ds:
-                it = int(m.group(3))
-                vals[cur_ds].setdefault(it, {})[m.group(1)] = float(m.group(2))
+            if m and cur_ds and last_iter is not None:
+                vals[cur_ds].setdefault(last_iter, {})[m.group(1)] = float(m.group(2))
     return iters, vals
 
 
@@ -103,7 +104,8 @@ def main():
         print(f'[monitor] 尚无训练行 | 日志 {stall_min:.0f} 分钟前更新')
 
     for ds, (bpsnr, bssim) in BASELINE.items():
-        recs = vals.get(ds, {})
+        recs = {it: m for it, m in vals.get(ds, {}).items()
+                if 'psnr' in m and 'ssim' in m}  # 验证写入中途可能只有半个记录
         if not recs:
             print(f'[monitor] {ds}: 尚无验证')
             continue

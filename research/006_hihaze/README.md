@@ -68,6 +68,8 @@ DEANetV3-LFM 骨架（冻结，加载 004a params_ema，strict）
 | 2026-11-14 | 设计定稿（P1/P2/OUT 注入点；P3 LFM 联动留二期）；arch/model/config 实现完成，单元+冒烟+显存验证通过 |
 | 2026-11-14 23:28 | 提交 ec62e80/ef7349d/2f4f93a 并 push origin 占号；006a 启动（GPU0 pid 4135238，nohup 日志 experiments/006a_nohup.log）。iter 100：0.96 s/iter（ETA ~5h）、显存 25.6 GiB、l_pix 0.024/l_sda 0.139（从 004a 收敛态起步，pixel loss 起点即低）；数据集过滤 20399 对确认 |
 | 2026-11-14 | 可视化工具 tools/export_sda_maps.py 完成并验证（real-test/042 出图 input/output/T_d/T_r/T_s 拼图；当前为未训练 head 的占位图，训练后重跑才有机理意义） |
+| 2026-11-15 00:15 | 监控工具 monitor_006a.py 上线（日志解析→metrics_006a.csv+趋势摘要+告警），cron 每 30 分钟巡检。首个验证点 @1000：Dense 24.8694(+0.009)/Mist 30.9568(−0.023)/Moderate 28.0060(−0.014)——零初始化起点如期贴 004a 基线 |
+| 2026-11-15 00:45 | @2000：Dense 24.8691(+0.009)/Mist 30.9644(−0.016)/Moderate 28.0117(−0.008)，l_sda 0.15→0.128 缓降。Dense 维持 +0.009 微弱正信号，Mist/Moderate 小幅低于基线（适配器尚在零初始化附近，趋势待 @5000 确认） |
 
 ## 8. 结果与结论
 
