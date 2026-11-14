@@ -8,3 +8,6 @@ OWH-Moderate-test,2000,28.0117,0.9412
 OWH-Dense-test,3000,24.8722,0.9006
 OWH-Mist-test,3000,30.9716,0.9724
 OWH-Moderate-test,3000,28.0183,0.9411
+OWH-Dense-test,4000,24.8671,0.9005
+OWH-Mist-test,4000,30.9731,0.9724
+OWH-Moderate-test,4000,28.0150,0.9411
