@@ -51,6 +51,10 @@ basicsr/
 │   ├── rrdbnet_arch.py       # RRDBNet (ESRGAN 的 Generator)
 │   ├── swinir_arch.py        # SwinIR (Transformer 骨干)
 │   ├── deanet_arch.py        # DEANet 去雾网络（差分卷积 DEConv + CGA 注意力，WACV 2024）
+│   ├── deanet_v2_arch.py     # DEANetV2（瓶颈插 2 个 FreqGlobalBlock 静态频域滤波，003d 负结果）
+│   ├── deanet_v3_arch.py     # DEANetV3（瓶颈全局块换内容自适应：LFM 低频 FiLM 有效 / MDTA 负结果）
+│   ├── deanet_v4_arch.py     # DEANetV4（冻结 004a + SDA 雾密度适配器，006a；arch 内加载 backbone_ckpt）
+│   ├── freqda_arch.py        # FreqDA（冻结 004a + 频率解耦低秩适配器，005 自监督域适配）
 │   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
 │   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）
 │   ├── discriminator_arch.py # UNetDiscriminatorSN (GAN 训练用)
@@ -67,6 +71,8 @@ basicsr/
 │   ├── dehaze_model.py       # DehazeModel（= SRModel + 可选 CR 对比损失（negative=有雾输入）
 │   │                         # + 可选 fft_opt 频域损失 / gradient_opt 梯度损失，test 时 pad 到 4 的倍数）
 │   ├── sdlora_model.py       # SDLoRAModel（= DehazeModel + mod-8 测试填充 + LoRA-only 检查点/EMA）
+│   ├── freqda_model.py       # FreqDAModel（= DehazeModel + 无 GT 物理先验自监督损失 DCP/色散/TV/颜色锚）
+│   ├── sda_model.py          # SDAModel（= DehazeModel + SDA 辅助监督 T_d/T_r/T_s，配对 GT，006a）
 │   └── lr_scheduler.py       # CosineAnnealingRestartLR 等
 ├── losses/                   # basic_loss.py (L1/MSE/Charbonnier/Perceptual), spectral_loss.py (FFT 频域),
                               # gradient_loss.py (Sobel 梯度), contrastive_loss.py (DEA-Net CR 损失), gan_loss.py, loss_util.py
@@ -74,7 +80,9 @@ basicsr/
 └── utils/                    # registry.py, logger.py, options.py, file_client.py,
                               # img_util.py, color_util.py, matlab_functions.py, dist_util.py 等
 options/train/SRResNet_SRGAN/   # SR 训练配置模板（train_MSRResNet_x{2,3,4}.yml）
-options/train/DEANet/           # DEA-Net 去雾训练配置（train_DEANet_mixed 混合 + dense/mist/moderate 分开）
+options/train/DEANet/           # DEA-Net 去雾训练配置（train_DEANet_mixed 混合 + dense/mist/moderate 分开；
+                                # 003/004 结构对照系列 + train_DEANetV4_006a_sda SDA 冻结探针）
+options/train/FreqDA/           # FreqDA 自监督域适配训练配置（005 系列，冻结 004a 骨架）
 options/train/SDLoRA/           # SDLoRA 单步扩散去雾训练配置（002 基线，Dense 子集 LoRA 适配）
 options/test/SRResNet_SRGAN/    # SR 测试配置模板
 options/test/DEANet/            # DEA-Net 去雾测试配置（按子集分别输出指标）
