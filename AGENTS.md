@@ -54,6 +54,7 @@ basicsr/
 │   ├── deanet_v2_arch.py     # DEANetV2（瓶颈插 2 个 FreqGlobalBlock 静态频域滤波，003d 负结果）
 │   ├── deanet_v3_arch.py     # DEANetV3（瓶颈全局块换内容自适应：LFM 低频 FiLM 有效 / MDTA 负结果）
 │   ├── deanet_v4_arch.py     # DEANetV4（冻结 004a + SDA 雾密度适配器，006a；arch 内加载 backbone_ckpt）
+│   ├── deanet_v5_arch.py     # DEANetV5（LFM 堆栈参数化：lfm_positions/mod_size/cutoff，007 全局容量系列）
 │   ├── freqda_arch.py        # FreqDA（冻结 004a + 频率解耦低秩适配器，005 自监督域适配）
 │   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
 │   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）

@@ -12,14 +12,13 @@
 - 退出码恒为 0，供 cron 巡检安全调用。
 """
 
+import argparse
 import os
 import re
 import sys
 import time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-LOG = os.path.join(ROOT, 'experiments/006a_nohup.log')
-CSV = os.path.join(ROOT, 'research/006_hihaze/metrics_006a.csv')
 
 # 004a 最终全量评估基线（params_ema）
 BASELINE = {
@@ -62,6 +61,13 @@ def parse(log_path):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log', default=os.path.join(ROOT, 'experiments/006a_nohup.log'))
+    parser.add_argument('--csv', default=os.path.join(ROOT, 'research/006_hihaze/metrics_006a.csv'))
+    parser.add_argument('--total', type=int, default=20000)
+    parser.add_argument('--tag', default='006a', help='仅用于摘要展示与告警文本')
+    args = parser.parse_args()
+    LOG, CSV = args.log, args.csv
     if not os.path.exists(LOG):
         print(f'[monitor] 日志不存在: {LOG}')
         return
@@ -98,7 +104,7 @@ def main():
         spd = sum(r['sec'] for r in iters[-10:]) / min(10, len(iters))
         l_sda = sum(r['l_sda'] for r in recent) / len(recent)
         l_pix = sum(r['l_pix'] for r in recent) / len(recent)
-        print(f'[monitor] iter {last["iter"]}/20000 | {spd:.2f} s/iter | '
+        print(f'[monitor:{args.tag}] iter {last["iter"]}/{args.total} | {spd:.2f} s/iter | '
               f'l_pix~{l_pix:.4f} l_sda~{l_sda:.4f} | 日志 {stall_min:.0f} 分钟前更新')
     else:
         print(f'[monitor] 尚无训练行 | 日志 {stall_min:.0f} 分钟前更新')
@@ -114,7 +120,7 @@ def main():
         print(f'[monitor] {ds} @{it}: PSNR {p:.4f} ({p - bpsnr:+.4f} vs 004a) '
               f'SSIM {s:.4f} ({s - bssim:+.4f})')
     if new_rows:
-        print(f'[monitor] 新增 {len(new_rows)} 条验证记录 → metrics_006a.csv')
+        print(f'[monitor:{args.tag}] 新增 {len(new_rows)} 条验证记录 → {os.path.basename(CSV)}')
 
     # --- 异常信号 ---
     with open(LOG, errors='ignore') as f:
