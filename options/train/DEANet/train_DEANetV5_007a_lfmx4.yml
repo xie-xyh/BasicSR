@@ -1,0 +1,139 @@
+# 007a：DEANetV5-LFMx4——加厚全局低频调制通路（感受野/全局容量方向）
+# 设计文档：research/007_rf_capacity/README.md
+# 依据：004a 的 LFM 是唯一机理验证通过的全局模块（DC~0.02 残差 −4.9%），但全局通路太薄
+#       （2 块、16×16 调制网格）；007a 将 level3 的 LFM 从 2 块（[2,5]）增至 4 块（[2,4,6,8]），
+#       其余与 004a 完全一致（单变量：LFM 数量）
+# 协议：30k 短程筛选，与 004a 同期轨迹对比（@4000/6000/8000 = 18.57/20.26/21.26）
+# 冒烟实测（2026-11-16）：512px bs20 峰值 45.9 GiB、1.18 s/iter → ETA ~11h（含验证）
+# 启动（nohup 防断连）：CUDA_VISIBLE_DEVICES=<gpu> nohup python basicsr/train.py -opt <本文件> > experiments/007a_nohup.log 2>&1 &
+
+# general settings
+name: 007a_DEANetV5-LFMx4_OWH-Mixed512_L1FFTGrad_30k_B20G1
+model_type: DehazeModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear      # 与 003c/004a 相同：代码过滤替代 Mixed_ge512
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 512
+    filter_min_size: true  # 只保留宽高均 >= 512 的配对（24381→20399，与 004a 一致）
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 20  # 512px 实测峰值 45.9 GiB（004a 为 44.6），48G 单卡可跑
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 与 003c/004a 相同：按子集分开监控
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANetV5
+  base_dim: 32
+  lfm_positions: [2, 4, 6, 8]   # 007a 唯一改动变量：LFM 2→4 块（004a 为 [2,5]）
+  mod_size: 16
+  cutoff: 0.08
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4  # 与 003c/004a 完全一致
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [30000]  # 短程筛选：30k（004a 为 60k）
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 30000
+  warmup_iter: -1  # no warm up
+
+  # losses：与 003c/004a 完全一致
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: 1000  # 加密轨迹点，便于与 004a 同期对比
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 2e3
+  use_tb_logger: true
+  use_swanlab: true
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29519
