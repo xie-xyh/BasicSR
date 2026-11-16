@@ -29,8 +29,8 @@ BASELINE = {
 
 RE_ITER = re.compile(
     r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d+ INFO: .*iter:\s+([\d,]+), lr:\([\d.e,+-]+\)\].*?'
-    r'time \(data\): ([\d.]+).*l_pix: ([\d.eE+-]+) l_fft: ([\d.eE+-]+) '
-    r'l_grad: ([\d.eE+-]+) l_sda: ([\d.eE+-]+)')
+    r'time \(data\): ([\d.]+)')
+RE_LOSS = re.compile(r'(l_\w+): ([\d.eE+-]+)')
 RE_VAL = re.compile(r'INFO: Validation (\S+)')
 RE_METRIC = re.compile(r'# (\w+): ([\d.]+)\s+Best: [\d.]+ @ (\d+) iter')
 
@@ -44,10 +44,9 @@ def parse(log_path):
             m = RE_ITER.match(line)
             if m:
                 last_iter = int(m.group(2).replace(',', ''))
+                losses = {k: float(v) for k, v in RE_LOSS.findall(line)}
                 iters.append(dict(ts=m.group(1), iter=last_iter,
-                                  sec=float(m.group(3)), l_pix=float(m.group(4)),
-                                  l_fft=float(m.group(5)), l_grad=float(m.group(6)),
-                                  l_sda=float(m.group(7))))
+                                  sec=float(m.group(3)), losses=losses))
                 continue
             m = RE_VAL.search(line)
             if m:
@@ -102,10 +101,11 @@ def main():
         last = iters[-1]
         recent = iters[-5:]
         spd = sum(r['sec'] for r in iters[-10:]) / min(10, len(iters))
-        l_sda = sum(r['l_sda'] for r in recent) / len(recent)
-        l_pix = sum(r['l_pix'] for r in recent) / len(recent)
+        loss_str = ' '.join(
+            f'{k}~{sum(r["losses"].get(k, 0) for r in recent) / len(recent):.4f}'
+            for k in recent[-1]['losses'])
         print(f'[monitor:{args.tag}] iter {last["iter"]}/{args.total} | {spd:.2f} s/iter | '
-              f'l_pix~{l_pix:.4f} l_sda~{l_sda:.4f} | 日志 {stall_min:.0f} 分钟前更新')
+              f'{loss_str} | 日志 {stall_min:.0f} 分钟前更新')
     else:
         print(f'[monitor] 尚无训练行 | 日志 {stall_min:.0f} 分钟前更新')
 
