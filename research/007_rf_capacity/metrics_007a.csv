@@ -2,3 +2,6 @@ dataset,iter,psnr,ssim
 OWH-Dense-test,1000,12.2873,0.4615
 OWH-Mist-test,1000,12.4236,0.5680
 OWH-Moderate-test,1000,12.4250,0.5017
+OWH-Dense-test,2000,15.9446,0.7426
+OWH-Mist-test,2000,18.8181,0.8716
+OWH-Moderate-test,2000,17.1551,0.8045
