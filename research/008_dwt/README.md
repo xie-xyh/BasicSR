@@ -56,6 +56,7 @@ WaveletUp:   1×1 conv（in→4·out）→ IWT（无损逆变换）→ ReLU
 |---|---|
 | 2026-11-17 | 设计定稿（baseline 落 004a；直接 60k 同调度协议）；arch/config 实现完成，单元+显存+冒烟验证通过 |
 | 2026-11-17 16:05 | 提交 bbe2fbb/b21437b/e0a22cb 并 push origin 占号。**启动波折**：首次启动放 GPU1 在首个训练 iter OOM（实测训练峰值含 FFT loss/EMA 高于纯 fwd+bwd 探测，GPU1 另有他用户 490 MiB 占用）；转 GPU0 时发现 007a 续训（pid 32736）仍在 @28000 验证阶段（此前误判为已结束），已撤回并挂后台看护任务，待 007a 结束（ETA ~50 min）后自动在 GPU0 启动 008a；监控 cron 每 30 分钟巡检 |
+| 2026-11-17 17:16 | 007a 续训完成（30000 iter 终点，SwanLab 上传收尾）；看护任务检测到退出后自动在 GPU0 启动 008a（nohup 日志 experiments/008a_nohup.log）。iter 100：1.182 s/iter（ETA ~17.7h）、显存 48.2 GiB（与 007a 同水平）、l_pix 0.146（与 004a 初期 ~0.14 一致，起点正常）。同期 GPU1 他用户占用升至 7.4 GiB，印证 GPU0 排队是正确选择 |
 
 ## 6. 结果与结论
 
