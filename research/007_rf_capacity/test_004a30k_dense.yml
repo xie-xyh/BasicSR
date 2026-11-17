@@ -1,0 +1,38 @@
+# 004a @30000 对照评估（60k 调度中点 checkpoint，与 007a@30000 完全同预算对照用）
+# 用法：CUDA_VISIBLE_DEVICES=1 python basicsr/test.py -opt research/007_rf_capacity/test_004a30k_dense.yml
+name: 004a30k_dense_eval
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+
+datasets:
+  test_1:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+
+network_g:
+  type: DEANetV3
+  base_dim: 32
+  global_block: lfm
+
+path:
+  param_key_g: params_ema
+  pretrain_network_g: experiments/004a_DEANetV3-LFM_OWH-Mixed512_L1FFTGrad_60k_B20G1/models/net_g_30000.pth
+  strict_load_g: true
+
+val:
+  save_img: true
+  suffix: ~
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false

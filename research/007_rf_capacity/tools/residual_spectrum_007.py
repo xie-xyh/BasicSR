@@ -19,9 +19,11 @@ MODELS = {
     'hazy (input)': ('datasets/OWH/Dense/test/hazy', '{id}.jpg'),
     '003c (L1+FFT+Grad)': (
         'results/003c_dense_eval/visualization/OWH-Dense-test', '{id}_003c_dense_eval.png'),
-    '004a (V3-LFM x2)': (
+    '004a@60k (V3-LFM x2)': (
         'results/004a_dense_eval/visualization/OWH-Dense-test', '{id}_004a_dense_eval.png'),
-    '007a (V5-LFM x4)': (
+    '004a@30k (V3-LFM x2)': (
+        'results/004a30k_dense_eval/visualization/OWH-Dense-test', '{id}_004a30k_dense_eval.png'),
+    '007a@30k (V5-LFM x4)': (
         'results/007a_dense_eval/visualization/OWH-Dense-test', '{id}_007a_dense_eval.png'),
 }
 
