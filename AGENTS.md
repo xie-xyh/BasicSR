@@ -57,6 +57,7 @@ basicsr/
 │   ├── deanet_v5_arch.py     # DEANetV5（LFM 堆栈参数化：lfm_positions/mod_size/cutoff，007 全局容量系列）
 │   ├── deanet_v6_arch.py     # DEANetV6（V5 骨架 + down2/down3/up1/up2 换正交 Haar DWT/IWT 无损重采样，
 │   │                         # 008 高频保真系列；[2,5]-ms16 时除采样算子外与 004a 一致）
+│   ├── deanet_v7_arch.py     # DEANetV7（低频分支 LowFreqBranchBlock + 门控融合，009a；零初始化恒等）
 │   ├── freqda_arch.py        # FreqDA（冻结 004a + 频率解耦低秩适配器，005 自监督域适配）
 │   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
 │   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）
