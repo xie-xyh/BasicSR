@@ -1,0 +1,55 @@
+# 007a 中断点评估（net_g_26000，GPU0 硬件故障中断于 iter 26600，此为最近完整验证点 checkpoint）
+# 与 004a 全量评估同口径（三子集、params_ema、test.py）
+# 用法：CUDA_VISIBLE_DEVICES=1 python basicsr/test.py -opt research/007_rf_capacity/test_007a_dense.yml
+name: 007a_dense_eval
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+
+datasets:
+  test_1:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  test_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  test_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+network_g:
+  type: DEANetV5
+  base_dim: 32
+  lfm_positions: [2, 4, 6, 8]
+  mod_size: 16
+  cutoff: 0.08
+
+path:
+  param_key_g: params_ema
+  pretrain_network_g: experiments/007a_DEANetV5-LFMx4_OWH-Mixed512_L1FFTGrad_30k_B20G1/models/net_g_26000.pth
+  strict_load_g: true
+
+val:
+  save_img: true
+  suffix: ~
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
