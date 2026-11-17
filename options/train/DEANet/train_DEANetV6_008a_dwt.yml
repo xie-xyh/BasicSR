@@ -1,0 +1,141 @@
+# 008a：DEANetV6-DWT——编码/解码重采样换成无损 Haar 小波对（高频保真方向）
+# 设计文档：research/008_dwt/README.md
+# 依据：004 系列残差频谱显示 >0.50 Nyquist 频段修复率仅 63%（DC~0.02 为 96%），细节恢复欠服务；
+#       嫌疑之一是 down2/down3（stride-2 卷积）与 up1/up2（转置卷积）的有损重采样。
+#       008a 仅替换这四处为 Haar DWT/IWT（正交、无损），其余与 004a 完全一致（单变量：重采样算子）。
+#       baseline 落在 004a（LFM×2, [2,5]）而非 007a（LFM×4）：007a 未判活且 LFM×4 无 60k 参照，
+#       落在 004a 上对照组现成（24.86@60k 全轨迹），只需跑本实验一个。
+# 协议：直接 60k 全量（periods=[60000]、val_freq 2000，与 004a 严格同调度同期比较，不走 30k 筛选）
+# 冒烟实测（2026-11-17）：512px bs20 峰值 45.4 GiB、1.26 s/iter（004a：44.6 GiB、1.28 s/iter）→ ETA ~21h
+# 启动（nohup 防断连）：CUDA_VISIBLE_DEVICES=1 nohup python basicsr/train.py -opt <本文件> > experiments/008a_nohup.log 2>&1 &
+
+# general settings
+name: 008a_DEANetV6-DWT_OWH-Mixed512_L1FFTGrad_60k_B20G1
+model_type: DehazeModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear      # 与 003c/004a 相同：代码过滤替代 Mixed_ge512
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 512
+    filter_min_size: true  # 只保留宽高均 >= 512 的配对（24381→20399，与 004a 一致）
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 20  # 512px 实测峰值 45.4 GiB（004a 为 44.6），48G 单卡可跑
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 与 003c/004a 相同：按子集分开监控
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANetV6
+  base_dim: 32
+  lfm_positions: [2, 5]   # 与 004a 同构；008a 唯一变量：down2/down3/up1/up2 换 Haar DWT/IWT
+  mod_size: 16
+  cutoff: 0.08
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4  # 与 003c/004a 完全一致
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [60000]  # 与 004a 严格同调度（007a 的 30k 筛选教训：异调度同期比较无效）
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 60000
+  warmup_iter: -1  # no warm up
+
+  # losses：与 003c/004a 完全一致
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: 2000  # 与 004a 一致，轨迹点可直接对照 ref_004a_dense_trajectory.csv
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 2e3
+  use_tb_logger: true
+  use_swanlab: true
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29521
