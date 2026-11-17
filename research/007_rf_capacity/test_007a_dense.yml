@@ -38,7 +38,7 @@ network_g:
 
 path:
   param_key_g: params_ema
-  pretrain_network_g: experiments/007a_DEANetV5-LFMx4_OWH-Mixed512_L1FFTGrad_30k_B20G1/models/net_g_26000.pth
+  pretrain_network_g: experiments/007a_DEANetV5-LFMx4_OWH-Mixed512_L1FFTGrad_30k_B20G1/models/net_g_30000.pth
   strict_load_g: true
 
 val:
