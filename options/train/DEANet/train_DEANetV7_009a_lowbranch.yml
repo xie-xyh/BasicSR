@@ -1,0 +1,136 @@
+# 009a：DEANetV7-LowBranch——低频分支 + 门控融合（频分处理方向）
+# 设计文档：research/009_freqbranch/README.md（新会话启动实验请先读该文档 §6 启动清单）
+# 与 004a 的唯一变量：level3 的两个 LowFreqModBlock 换成 LowFreqBranchBlock
+#   （FFT 软掩码分频 → 32×32 粗网格卷积分支 → 逐像素门控加性融合；零初始化起点恒等）
+# 数据/loss/lr/EMA/seed/调度与 004a 严格一致（60k 全量，支持同期轨迹对比）
+# 启动（nohup 防断连）：CUDA_VISIBLE_DEVICES=<gpu> nohup python basicsr/train.py -opt <本文件> > experiments/009a_nohup.log 2>&1 &
+
+# general settings
+name: 009a_DEANetV7-LowBranch_OWH-Mixed512_L1FFTGrad_60k_B20G1
+model_type: DehazeModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear      # 与 003c/004a 相同：代码过滤替代 Mixed_ge512
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 512
+    filter_min_size: true  # 只保留宽高均 >= 512 的配对（24381→20399，与 004a 一致）
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 20  # bs12 实测 27.3 GiB → bs20 估 ~46 GiB；启动前必须先做 bs20 显存探测（见设计文档 §6）
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 与 003c/004a 相同：按子集分开监控
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: DEANetV7
+  base_dim: 32
+  branch_res: 32   # 低频分支粗处理网格（3×3 卷积在此网格上即为全局感受野）
+  n_convs: 3
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4  # 与 003c/004a 完全一致
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [60000]  # 与 004a 完全一致（同期对比有效的前提；勿改 30k，007a 教训见 §6.2）
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 60000
+  warmup_iter: -1  # no warm up
+
+  # losses：与 003c/004a 完全一致
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: 2000  # 与 004a 一致（参照轨迹 ref_004a_dense_trajectory.csv 即此间隔）
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e3  # 与 004a 一致（同 iter checkpoint 供同预算频谱对照，007a 教训）
+  use_tb_logger: true
+  use_swanlab: true
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29523
