@@ -66,7 +66,7 @@ def main():
         img = cv2.imread(f)
         h, w = img.shape[:2]
         pad_h, pad_w = (4 - h % 4) % 4, (4 - w % 4) % 4
-        x = img2tensor(img, bgr2rgb=True, float32=True).unsqueeze(0).to(device)
+        x = img2tensor(img, bgr2rgb=True, float32=True).unsqueeze(0).to(device) / 255.0
         if pad_h or pad_w:
             x = torch.nn.functional.pad(x, (0, pad_w, 0, pad_h), mode='reflect')
         _, preds = net.sda_encoder(x)
