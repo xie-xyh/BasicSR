@@ -1,0 +1,52 @@
+# 011a 全量评估模板（训练完成后使用；ckpt 迭代数按实际选择）
+# 用法：CUDA_VISIBLE_DEVICES=<gpu> python basicsr/test.py -opt research/010_wavelet/test_011a_dense.yml
+name: 011a_dense_eval
+model_type: DehazeModel
+scale: 1
+num_gpu: 1
+
+datasets:
+  test_1:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  test_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  test_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+network_g:
+  type: WaveletUNet
+  widths: [32, 64, 128, 256]
+  feat: 32
+
+path:
+  param_key_g: params_ema
+  pretrain_network_g: experiments/011a_WaveletUNet_OWH-Mixed512_L1FFTGrad_60k_B20G1/models/net_g_60000.pth
+  strict_load_g: true
+
+val:
+  save_img: true
+  suffix: ~
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false

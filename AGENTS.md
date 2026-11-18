@@ -58,6 +58,8 @@ basicsr/
 │   ├── deanet_v6_arch.py     # DEANetV6（V5 骨架 + down2/down3/up1/up2 换正交 Haar DWT/IWT 无损重采样，
 │   │                         # 008 高频保真系列；[2,5]-ms16 时除采样算子外与 004a 一致）
 │   ├── deanet_v7_arch.py     # DEANetV7（低频分支 LowFreqBranchBlock + 门控融合，009a；零初始化恒等）
+│   ├── wavelet_unet_arch.py  # WaveletUNet（四级 U-Net + Haar 无损重采样 + 金字塔池化瓶颈
+│   │                         # + 图像空间小波分解输出头，011a；4.692M）
 │   ├── wavelet_dehaze_arch.py # WaveletDehazeNet（两级 Haar 分解 + 底图分支 + 有界倍率纹理恢复
 │   │                         # + DEConv 邻域修正，010a；0.136M 轻量，复用 008_dwt 的 Haar 工具）
 │   ├── lmhaze_arch.py        # LMHaze / MoE-Mamba（四向 SSM + 14 专家分组 Top-K + U-Net，011a；
@@ -83,6 +85,7 @@ basicsr/
 │   ├── freqda_model.py       # FreqDAModel（= DehazeModel + 无 GT 物理先验自监督损失 DCP/色散/TV/颜色锚）
 │   ├── sda_model.py          # SDAModel（= DehazeModel + SDA 辅助监督 T_d/T_r/T_s，配对 GT，006a）
 │   ├── wavelet_model.py      # WaveletDehazeModel（= DehazeModel + 子带分解监督 base/coarse/fine 三路 L1，010b）
+│   ├── wavelet_unet_model.py # WaveletUNetModel（= DehazeModel + LL1/detail1 子带监督，011a）
 │   ├── lmhaze_model.py       # LMHazeModel（= DehazeModel + 可选 logit、MixUp、mod-8 填充、梯度裁剪）
 │   └── lr_scheduler.py       # CosineAnnealingRestartLR / CosineAnnealingRestartCyclicLR 等
 ├── losses/                   # basic_loss.py (L1/MSE/Charbonnier/Perceptual), spectral_loss.py (FFT 频域),
