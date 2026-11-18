@@ -29,3 +29,10 @@ torch>=1.7
 torchvision
 tqdm
 yapf
+
+# LMHaze / MoE-Mamba（options/train/LMHaze/）。按原项目固定版本；
+# 无 CUDA 扩展时网络可用纯 PyTorch 扫描做冒烟，但正式训练必须安装这两项 CUDA 依赖。
+einops
+timm
+causal-conv1d==1.0.0
+mamba-ssm==1.0.1

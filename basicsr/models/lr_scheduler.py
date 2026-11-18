@@ -94,3 +94,30 @@ class CosineAnnealingRestartLR(_LRScheduler):
             (1 + math.cos(math.pi * ((self.last_epoch - nearest_restart) / current_period)))
             for base_lr in self.base_lrs
         ]
+
+
+class CosineAnnealingRestartCyclicLR(_LRScheduler):
+    """Cosine annealing restarts with an independent minimum LR per cycle."""
+
+    def __init__(self, optimizer, periods, restart_weights=(1, ), eta_mins=(0, ), last_epoch=-1):
+        self.periods = periods
+        self.restart_weights = restart_weights
+        self.eta_mins = eta_mins
+        if not len(self.periods) == len(self.restart_weights) == len(self.eta_mins):
+            raise ValueError('periods, restart_weights and eta_mins should have the same length.')
+        self.cumulative_period = [sum(self.periods[0:i + 1]) for i in range(len(self.periods))]
+        super().__init__(optimizer, last_epoch)
+
+    def get_lr(self):
+        idx = get_position_from_periods(self.last_epoch, self.cumulative_period)
+        if idx is None:
+            raise ValueError(f'Iteration {self.last_epoch} exceeds the configured scheduler periods.')
+        current_weight = self.restart_weights[idx]
+        nearest_restart = 0 if idx == 0 else self.cumulative_period[idx - 1]
+        current_period = self.periods[idx]
+        eta_min = self.eta_mins[idx]
+        return [
+            eta_min + current_weight * 0.5 * (base_lr - eta_min) *
+            (1 + math.cos(math.pi * ((self.last_epoch - nearest_restart) / current_period)))
+            for base_lr in self.base_lrs
+        ]
