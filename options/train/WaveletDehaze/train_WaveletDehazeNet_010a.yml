@@ -1,0 +1,135 @@
+# 010a：WaveletDehazeNet——物理分解预测目标（底图分支 + 有界倍率纹理恢复 + 邻域修正）
+# 设计文档：research/010_wavelet/README.md（含启动清单与判据）
+# 全新架构（非 004a 单变量改动）：两级 Haar 分解 → LL2 底图修复 + 纹理 D×gain + w×corr
+# 数据/loss/lr/EMA/seed/调度与 004a 严格一致（60k 全量）
+# 实测（2026-11-17）：bs20 @512px 峰值 3.3 GiB、0.05 s/iter → 60k ETA ~1h（含验证）
+# 启动（nohup 防断连）：CUDA_VISIBLE_DEVICES=<gpu> nohup python basicsr/train.py -opt <本文件> > experiments/010a_nohup.log 2>&1 &
+
+# general settings
+name: 010a_WaveletDehazeNet_OWH-Mixed512_L1FFTGrad_60k_B20G1
+model_type: DehazeModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 512
+    filter_min_size: true  # 只保留宽高均 >= 512 的配对（24381→20399，与 004a 一致）
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 20  # 实测 3.3 GiB @ bs20，余量极大（容量不足时可加宽 feat 再探测）
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 与 003c/004a 相同：按子集分开监控
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: WaveletDehazeNet
+  feat: 32        # 分支共享空间特征宽度；欠拟合时优先加宽（64）并重测显存
+  corr_scale: 0.1  # 邻域修正固定小系数（防模块三喧宾夺主）
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 1e-4  # 与 003c/004a 完全一致
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [60000]  # 与 004a 完全一致（007a 教训：勿改调度长度）
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 60000
+  warmup_iter: -1  # no warm up
+
+  # losses：与 003c/004a 完全一致
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2
+    reduction: mean
+
+# validation settings
+val:
+  val_freq: 2000  # 与 004a 一致
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e3
+  use_tb_logger: true
+  use_swanlab: true
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29525
