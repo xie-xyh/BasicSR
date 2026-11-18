@@ -22,6 +22,7 @@ from torch.nn import functional as F
 
 from basicsr.utils.registry import ARCH_REGISTRY
 
+from .deanet_v3_arch import LowFreqModBlock
 from .deanet_v6_arch import HaarDWT, HaarIWT, WaveletDown, WaveletUp
 
 
@@ -64,7 +65,7 @@ class WaveletUNet(nn.Module):
         feat (int): Output-head feature width (decoder level-1 channels).
     """
 
-    def __init__(self, widths=(32, 64, 128, 256), feat=32):
+    def __init__(self, widths=(32, 64, 128, 256), feat=32, use_lfm=True):
         super(WaveletUNet, self).__init__()
         w1, w2, w3, w4 = widths
         self.dwt1 = HaarDWT(3)
@@ -78,8 +79,9 @@ class WaveletUNet(nn.Module):
         self.enc3 = nn.Sequential(ResBlock(w3), ResBlock(w3))
         self.down3 = WaveletDown(w3, w4)
 
-        # bottleneck：全局雾幕上下文
+        # bottleneck：全局雾幕上下文 + LFM 低频全局调制（011b 新增，针对 DC~0.02 短板）
         self.bottleneck = nn.Sequential(ResBlock(w4), PyramidPool(w4), ResBlock(w4))
+        self.lfm = LowFreqModBlock(w4) if use_lfm else None
 
         # decoder
         self.up3 = WaveletUp(w4, w3)
@@ -106,6 +108,8 @@ class WaveletUNet(nn.Module):
         f2 = self.enc2(self.down1(f1))            # w2, 1/4
         f3 = self.enc3(self.down2(f2))            # w3, 1/8
         fb = self.bottleneck(self.down3(f3))      # w4, 1/16
+        if self.lfm is not None:
+            fb = self.lfm(fb)
 
         d3 = self.dec3(torch.cat([self._match_size(self.up3(fb), f3), f3], dim=1))
         d2 = self.dec2(torch.cat([self._match_size(self.up2(d3), f2), f2], dim=1))

@@ -1,0 +1,143 @@
+# 011a：WaveletUNet——真四级 U-Net + Haar 无损重采样 + 金字塔池化瓶颈 + 图像空间小波分解输出头
+# 设计文档：research/011_wavelet_unet/README.md（含严格理论推导）
+# 与 004a 同数据/loss/调度；lr 2e-4 + warmup 500 沿用 010b
+# 实测：4.692M 参数，bs20@512px 峰值 8.4 GiB、0.16 s/iter → 60k ETA ~3h
+# 设计文档：research/010_wavelet/README.md（含启动清单与判据）
+# 全新架构（非 004a 单变量改动）：两级 Haar 分解 → LL2 底图修复 + 纹理 D×gain + w×corr
+# 数据/loss/lr/EMA/seed/调度与 004a 严格一致（60k 全量）
+# 实测（2026-11-17）：bs20 @512px 峰值 3.3 GiB、0.05 s/iter → 60k ETA ~1h（含验证）
+# 启动（nohup 防断连）：CUDA_VISIBLE_DEVICES=<gpu> nohup python basicsr/train.py -opt <本文件> > experiments/010a_nohup.log 2>&1 &
+
+# general settings
+name: 011b_WaveletUNet-LFM_OWH-Mixed512_L1FFTGrad_60k_B20G1
+model_type: WaveletUNetModel
+scale: 1  # 去雾是同等尺寸映射；PairedImageDataset 的成对裁剪依赖该字段
+num_gpu: 1
+manual_seed: 0
+
+# dataset and data loader settings
+datasets:
+  train:
+    name: OWH-Mixed
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    filename_tmpl: '{}'
+    io_backend:
+      type: disk
+    gt_size: 512
+    filter_min_size: true  # 只保留宽高均 >= 512 的配对（24381→20399，与 004a 一致）
+    use_hflip: true
+    use_rot: true
+
+    # data loader
+    num_worker_per_gpu: 8
+    batch_size_per_gpu: 20  # 实测 3.3 GiB @ bs20，余量极大（容量不足时可加宽 feat 再探测）
+    dataset_enlarge_ratio: 1
+    prefetch_mode: ~
+
+  # 与 003c/004a 相同：按子集分开监控
+  val:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  val_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  val_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+# network structures
+network_g:
+  type: WaveletUNet
+  widths: [32, 64, 128, 256]   # 四级 encoder 通道数
+  feat: 32                     # 输出头/decoder level1 通道数
+  use_lfm: true                # 011b：瓶颈加 LFM（低频全局调制，针对 DC~0.02 短板）
+
+# path
+path:
+  pretrain_network_g: ~
+  param_key_g: params
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  ema_decay: 0.999
+  optim_g:
+    type: Adam
+    lr: !!float 2e-4  # 010b：小网络提高 lr（1e-4→2e-4）
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: CosineAnnealingRestartLR
+    periods: [60000]  # 与 004a 完全一致（007a 教训：勿改调度长度）
+    restart_weights: [1]
+    eta_min: !!float 1e-6
+
+  total_iter: 60000
+  warmup_iter: 500  # 010b：高 lr 配 warmup
+
+  # losses：与 003c/004a 完全一致
+  pixel_opt:
+    type: L1Loss
+    loss_weight: 1.0
+    reduction: mean
+  fft_opt:
+    type: FFTLoss
+    loss_weight: 1.0
+    reduction: mean
+  gradient_opt:
+    type: GradientLoss
+    loss_weight: 0.2
+    reduction: mean
+  subband_opt:      # 011a：LL1 底图 + detail1 纹理两路直接 L1 监督
+    loss_weight: 1.0
+    w_base: 1.0
+    w_detail: 1.0
+
+# validation settings
+val:
+  val_freq: 2000  # 与 004a 一致
+  save_img: true
+
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+
+# logging settings
+logger:
+  print_freq: 100
+  save_checkpoint_freq: !!float 1e3
+  use_tb_logger: true
+  use_swanlab: true
+  swanlab:
+    project: dehaze
+    mode: online
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29530
