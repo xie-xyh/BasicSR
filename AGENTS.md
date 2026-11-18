@@ -35,7 +35,7 @@ bash scripts/dist_train.sh <num_gpus> <config>.yml
 python basicsr/test.py -opt options/test/SRResNet_SRGAN/test_MSRResNet_x4.yml
 ```
 
-每个实验在 `experiments/<config里的name>/` 下生成：`models/`（`net_g_<iter>.pth`）、`training_states/`（`<iter>.state`）、`visualization/`（val 结果图）、log 文件与配置副本。
+每个实验在 `experiments/<config里的name>/` 下生成：`models/`（`net_g_<iter>.pth`）、`training_states/`（`<iter>.state`）、`visualization/`（val 结果图）、log 文件与配置副本。训练正常结束并完成最终验证后，自动清理编号模型、全部训练状态与训练验证图，保留 `*_latest.pth`；异常中断或最终模型缺失时不清理，以便续训。
 
 ## 3. 代码架构
 

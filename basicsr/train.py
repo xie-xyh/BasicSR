@@ -1,6 +1,8 @@
 import datetime
 import logging
 import math
+import os
+import shutil
 import time
 import torch
 from os import path as osp
@@ -86,6 +88,42 @@ def load_resume_state(opt):
         resume_state = torch.load(resume_state_path, map_location=lambda storage, loc: storage.cuda(device_id))
         check_resume(opt, resume_state['iter'])
     return resume_state
+
+
+def cleanup_training_artifacts(opt, logger):
+    if opt['rank'] != 0:
+        return
+
+    latest_model_path = osp.join(opt['path']['models'], 'net_g_latest.pth')
+    if not osp.isfile(latest_model_path):
+        logger.warning(f'Skip cleaning training artifacts because {latest_model_path} does not exist.')
+        return
+
+    removed_counts = {'models': 0, 'training_states': 0}
+    for key in removed_counts:
+        dir_path = opt['path'].get(key)
+        if not dir_path or not osp.isdir(dir_path):
+            continue
+        suffix = 'pth' if key == 'models' else 'state'
+        for file_path in scandir(dir_path, suffix=suffix, recursive=False, full_path=True):
+            if key == 'models' and osp.basename(file_path).endswith('_latest.pth'):
+                continue
+            try:
+                os.remove(file_path)
+                removed_counts[key] += 1
+            except OSError as e:
+                logger.warning(f'Failed to remove {file_path}: {e}')
+
+    visualization_path = opt['path'].get('visualization')
+    if visualization_path and osp.isdir(visualization_path):
+        try:
+            shutil.rmtree(visualization_path)
+        except OSError as e:
+            logger.warning(f'Failed to remove {visualization_path}: {e}')
+
+    logger.info('Cleaned up intermediate training artifacts: '
+                f'{removed_counts["models"]} models, {removed_counts["training_states"]} training states, '
+                'and validation images. Latest models are kept.')
 
 
 def train_pipeline(root_path):
@@ -206,6 +244,7 @@ def train_pipeline(root_path):
     if opt.get('val') is not None:
         for val_loader in val_loaders:
             model.validation(val_loader, current_iter, tb_logger, opt['val']['save_img'])
+    cleanup_training_artifacts(opt, logger)
     if tb_logger:
         tb_logger.close()
     finish_swanlab_logger()
