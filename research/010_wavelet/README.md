@@ -79,6 +79,12 @@ IWT 两级重建回 RGB（mod-4 测试填充由 DehazeModel.test 处理）
 4. 监控：`python research/006_hihaze/tools/monitor_006a.py --log experiments/010a_nohup.log --csv research/010_wavelet/metrics_010a.csv --total 60000 --tag 010a`（幂等）；建议挂 30 分钟 cron，止损按 §4；
 5. 完成后按 §5 收尾。
 
+## 6.5 实验记录
+
+| 时间 | 事件 |
+|---|---|
+| 2026-11-18 14:14 | 010a 启动（GPU0 pid 2607672，日志 experiments/010a_nohup.log）。iter 900：0.08 s/iter（ETA ~1h20m）、l_pix 0.118（从头训练正常起点）；监控 cron 每 30 分钟巡检（含全量评估/频谱/倍率图自动收尾） |
+
 ## 7. 验证记录
 
 - 2026-11-18 单元测试：512²/536×800/128² fwd+bwd 通过；参数量 0.136M；倍率图有界且平滑（init 时 gain ∈ [0.91, 1.09]）；HaarDWT/IWT 复用 008_dwt 工具（其重建误差 ~5e-7 已验证）。
