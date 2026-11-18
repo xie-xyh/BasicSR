@@ -82,6 +82,7 @@ basicsr/
 │   ├── sdlora_model.py       # SDLoRAModel（= DehazeModel + mod-8 测试填充 + LoRA-only 检查点/EMA）
 │   ├── freqda_model.py       # FreqDAModel（= DehazeModel + 无 GT 物理先验自监督损失 DCP/色散/TV/颜色锚）
 │   ├── sda_model.py          # SDAModel（= DehazeModel + SDA 辅助监督 T_d/T_r/T_s，配对 GT，006a）
+│   ├── wavelet_model.py      # WaveletDehazeModel（= DehazeModel + 子带分解监督 base/coarse/fine 三路 L1，010b）
 │   ├── lmhaze_model.py       # LMHazeModel（= DehazeModel + 可选 logit、MixUp、mod-8 填充、梯度裁剪）
 │   └── lr_scheduler.py       # CosineAnnealingRestartLR / CosineAnnealingRestartCyclicLR 等
 ├── losses/                   # basic_loss.py (L1/MSE/Charbonnier/Perceptual), spectral_loss.py (FFT 频域),
