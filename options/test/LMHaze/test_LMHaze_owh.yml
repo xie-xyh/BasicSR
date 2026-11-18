@@ -1,0 +1,67 @@
+# LMHaze OWH 三子集测试
+# 启动：bash scripts/test_lmhaze_owh.sh 0
+
+name: 011a_LMHaze_OWH_eval
+model_type: LMHazeModel
+scale: 1
+num_gpu: 1
+manual_seed: 100
+
+datasets:
+  test_1:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  test_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  test_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+network_g:
+  type: LMHaze
+  inp_channels: 3
+  out_channels: 3
+  dim: 48
+  num_blocks: [4, 6, 6, 8]
+  num_refinement_blocks: 4
+  mlp_ratio: 2
+  bias: false
+  dual_pixel_task: false
+  num_experts: 14
+  expert_groups: [[0, 5, 3], [5, 8, 2], [8, 11, 1], [11, 14, 1]]
+  use_internal_router: true
+  router_dim: 64
+
+path:
+  pretrain_network_g: experiments/011a_LMHaze_OWH-Mixed_L1_150k_B1G2/models/net_g_latest.pth
+  param_key_g: params_ema
+  strict_load_g: true
+
+val:
+  save_img: true
+  suffix: ~
+  pbar: true
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
