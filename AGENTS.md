@@ -60,6 +60,8 @@ basicsr/
 │   ├── deanet_v7_arch.py     # DEANetV7（低频分支 LowFreqBranchBlock + 门控融合，009a；零初始化恒等）
 │   ├── wavelet_dehaze_arch.py # WaveletDehazeNet（两级 Haar 分解 + 底图分支 + 有界倍率纹理恢复
 │   │                         # + DEConv 邻域修正，010a；0.136M 轻量，复用 008_dwt 的 Haar 工具）
+│   ├── lmhaze_arch.py        # LMHaze / MoE-Mamba（四向 SSM + 14 专家分组 Top-K + U-Net，011a；
+│   │                         # OWH 使用可学习图像路由器，也兼容外部 14 维 logit；依赖 mamba-ssm）
 │   ├── freqda_arch.py        # FreqDA（冻结 004a + 频率解耦低秩适配器，005 自监督域适配）
 │   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
 │   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）
@@ -67,6 +69,7 @@ basicsr/
 │   └── vgg_arch.py           # VGGFeatureExtractor (感知/对比损失用)
 ├── data/
 │   ├── paired_image_dataset.py   # 成对数据集（hazy/GT 训练与测试）
+│   ├── paired_logit_dataset.py   # 成对数据集 + 每幅 LQ 的 .npy 路由向量（LMHaze 外部 logit 可选）
 │   ├── single_image_dataset.py   # 仅 LQ（无 GT 的推理/测试）
 │   ├── transforms.py             # augment, paired_random_crop 等数据增强
 │   ├── data_util.py / data_sampler.py / prefetch_dataloader.py
@@ -79,7 +82,8 @@ basicsr/
 │   ├── sdlora_model.py       # SDLoRAModel（= DehazeModel + mod-8 测试填充 + LoRA-only 检查点/EMA）
 │   ├── freqda_model.py       # FreqDAModel（= DehazeModel + 无 GT 物理先验自监督损失 DCP/色散/TV/颜色锚）
 │   ├── sda_model.py          # SDAModel（= DehazeModel + SDA 辅助监督 T_d/T_r/T_s，配对 GT，006a）
-│   └── lr_scheduler.py       # CosineAnnealingRestartLR 等
+│   ├── lmhaze_model.py       # LMHazeModel（= DehazeModel + 可选 logit、MixUp、mod-8 填充、梯度裁剪）
+│   └── lr_scheduler.py       # CosineAnnealingRestartLR / CosineAnnealingRestartCyclicLR 等
 ├── losses/                   # basic_loss.py (L1/MSE/Charbonnier/Perceptual), spectral_loss.py (FFT 频域),
                               # gradient_loss.py (Sobel 梯度), contrastive_loss.py (DEA-Net CR 损失), gan_loss.py, loss_util.py
 ├── metrics/                  # psnr_ssim.py (PSNR/SSIM), no_ref.py (FADE/NIQE/BRISQUE 无参考指标), metric_util.py
@@ -91,9 +95,11 @@ options/train/DEANet/           # DEA-Net 去雾训练配置（train_DEANet_mixe
                                 # + train_DEANetV5_007a_lfmx4 LFM 加厚 + train_DEANetV6_008a_dwt 小波重采样）
 options/train/FreqDA/           # FreqDA 自监督域适配训练配置（005 系列，冻结 004a 骨架）
 options/train/SDLoRA/           # SDLoRA 单步扩散去雾训练配置（002 基线，Dense 子集 LoRA 适配）
+options/train/LMHaze/           # LMHaze OWH 全量配对训练配置（011a，150k，内部可学习路由器）
 options/test/SRResNet_SRGAN/    # SR 测试配置模板
 options/test/DEANet/            # DEA-Net 去雾测试配置（按子集分别输出指标）
 options/test/SDLoRA/            # SDLoRA 去雾测试配置（Dense 主测 + Mist/Moderate 泛化观察）
+options/test/LMHaze/            # LMHaze OWH 三子集测试配置
 inference/                      # inference_esrgan.py / inference_swinir.py 单图推理范例
 scripts/data_preparation/       # extract_subimages.py, create_lmdb.py, generate_meta_info.py,
                                 # filter_min_size.py（按最小边长过滤成对数据集，生成软链接副本）
@@ -333,6 +339,7 @@ python basicsr/test.py  -opt /tmp/smoke_test.yml       # 测试应正常加载 c
 - **SwanLab**：`use_swanlab: true` 同步 tensorboard 指标到 SwanLab（依赖 `swanlab[dashboard]`）；本地看板用 `swanlab watch swanlog` 查看；云端模式先 `swanlab login` 再设 `mode: online`。
 - **被删内容的线索**：若某篇论文代码引用了 `basicsr.ops`、`video_*`、`stylegan2_*`、`realesrgan*` 等，说明它依赖已裁剪模块，需要先从 git 历史恢复（`git checkout <commit> -- <path>`）或改用保留的等价物。
 - **SD-LoRA 去雾（SDLoRADehaze/SDLoRAModel）**：SD 权重从 `sd_path`（默认 `experiments/pretrained_models/sd21base`，下载见 `research/002_sdlora/download_sd21base.sh`）加载；checkpoint 只含 LoRA 参数（MB 级），加载/续训必须 `strict_load_g: false`；输入需 pad 到 8 的倍数（SDLoRAModel.test 已处理）；`fixed_timestep` 勿用 999（ᾱ≈0.005 导致 x0 重建放大 ~14.6 倍、纯像素监督不收敛，实测见 research/002_sdlora/RESEARCH_LOG.md），用 250 或 `prediction: x0`；OWH 各子集图片尺寸不齐，训练集需先用 `scripts/data_preparation/filter_min_size.py` 按 gt_size 过滤。
+- **LMHaze / MoE-Mamba**：正式训练需安装 `causal-conv1d==1.0.0` 与 `mamba-ssm==1.0.1`（无扩展时仅建议用纯 PyTorch fallback 冒烟）；OWH 配置不需要外部 logit，网络内部路由器输出 14 维向量并对 Top-K 专家加权。原仓库预处理仅输出 5 维、不能直接驱动其 14 专家网络；若已有合法的外部 14 维 `.npy`，可换用 `PairedLogitDataset` 并配置 `dataroot_logit`。MoE 的 DDP 训练须保留 `find_unused_parameters: true`。
 - **临时素材勿放 /tmp**：`/tmp` 会被系统定期清理，冒烟数据集等需持久的小样本放 `research/` 下。
 - **训练集尺寸过滤可代码内完成**：`PairedImageDataset` 支持 `filter_min_size: true`（按 gt_size 在构建时过滤小图，仅读 header，24k 对约 2.5s），与 `scripts/data_preparation/filter_min_size.py` 的软链接副本等价（Mixed 512 过滤两者均为 20399 对）；val/test 阶段无 gt_size 不触发。
 - **SwanLab 收尾**：训练正常结束或异常退出（如 OOM）时框架会自动 `swanlab.finish()`（`basicsr/utils/logger.py::finish_swanlab_logger`，init 时 atexit 注册 + train.py 末尾显式调用），看板不会再挂着"运行中"。
