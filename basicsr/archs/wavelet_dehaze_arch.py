@@ -130,4 +130,6 @@ class WaveletDehazeNet(nn.Module):
 
         ll1_rec = self.iwt2(self._pack_subbands(base_rec, det2_rec))
         out = self.iwt1(self._pack_subbands(ll1_rec, det1_rec), out_size=(H, W))
+        # 子带分解监督（010b）：供 WaveletDehazeModel 计算各分支的直接 L1
+        self.aux = (base_rec, det2_rec, det1_rec)
         return out
