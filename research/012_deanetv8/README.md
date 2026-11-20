@@ -193,3 +193,4 @@ DEA-Net+LFM 在 60k 同预算下三个子集领先 +1.21/+1.71/+1.41 dB，011k �
 ### 稳定性教训（计入设计约束）
 
 exp 参数化的门控必须带取值钳制：无钳制的 `x·exp(−s)` 在 s<0 时是正反馈放大器。后续凡使用指数门一律 `clamp(s, 0, 4)`。fc 坍缩贴边（fc2→0.02）未直接导致发散，但若重启后再次贴边且验证受损，下一轮把 fc_min 提到 0.04 或对边界预测器用 0.1× 学习率。
+| 2026-11-20 22:34 | 修复后重启（GPU0），新 SwanLab run：[probe_012b_candidate](https://swanlab.cn/@xieyh/dehaze/runs/j9ouoiud)；注意 GPU1 上有无关的 013a_owhregion 实验在跑（非本序列任务，未触碰），本探针只用 GPU0 |
