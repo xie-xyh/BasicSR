@@ -169,7 +169,10 @@ class DEANetV8(DEANetV3):
 
         s3 = None
         if 'mix1' in self.skip_gate_levels:
-            s3 = self.skip_suppress3(torch.cat([x_down3, veil2], dim=1))
+            # clamp to [0, 4]: suppression-only (gate in [e^-4, 1]); an unclamped
+            # exp gate diverged at iter ~3.2k in the 012b probe (s < 0 gives a
+            # runaway amplify->larger-gradient positive feedback)
+            s3 = torch.clamp(self.skip_suppress3(torch.cat([x_down3, veil2], dim=1)), min=0.0, max=4.0)
             x_down3 = x_down3 * torch.exp(-s3)
         x_level3_mix = self.mix1(x_down3, h)
 
@@ -183,7 +186,7 @@ class DEANetV8(DEANetV3):
                                                 align_corners=False))
         s2 = None
         if 'mix2' in self.skip_gate_levels:
-            s2 = self.skip_suppress2(torch.cat([x_down2, veil_l2], dim=1))
+            s2 = torch.clamp(self.skip_suppress2(torch.cat([x_down2, veil_l2], dim=1)), min=0.0, max=4.0)
             x_down2 = x_down2 * torch.exp(-s2)
         x_level2_mix = self.mix2(x_down2, x_up1)
         if 'mix2' in self.inject_levels:
