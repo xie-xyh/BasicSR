@@ -1,0 +1,20 @@
+batch_size:
+  desc: ''
+  sort: 3
+  value: 16
+manual_seed:
+  desc: ''
+  sort: 1
+  value: 0
+network_g:
+  desc: ''
+  sort: 0
+  value:
+    base_dim: 32
+    branch_res: 32
+    n_convs: 3
+    type: DEANetV7
+training_budget:
+  desc: ''
+  sort: 2
+  value: 8000
