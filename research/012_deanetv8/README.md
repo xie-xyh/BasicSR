@@ -133,3 +133,4 @@ DEA-Net+LFM 在 60k 同预算下三个子集领先 +1.21/+1.71/+1.41 dB，011k �
 | 时间 | 事件 |
 |---|---|
 | 2026-11-20 ~15:00 | 011p 完成（exit 0），定案 DEA+LFM 为 012 系列主干基线；012a 双臂（control=DEANetV3-LFM / branch=DEANetV7，各 8k，seed 0，batch 16）分别在 GPU0/GPU1 启动 |
+| 2026-11-20 14:49 | 两臂经 swanlab_bridge 接入 SwanLab（训练配置 use_swanlab:false，外部同步不改训练）：[对照组](https://swanlab.cn/@xieyh/dehaze/runs/jijacr88)、[分支组](https://swanlab.cn/@xieyh/dehaze/runs/nk3zqqbk)，历史标量已回填，每 30 秒增量同步 |
