@@ -65,18 +65,23 @@ class PairedImageDataset(data.Dataset):
         # optionally drop pairs smaller than gt_size (in-code alternative to
         # scripts/data_preparation/filter_min_size.py); only meaningful for the
         # training phase where paired_random_crop requires gt_size
-        if opt.get('filter_min_size', False) and opt.get('gt_size') is not None:
+        size = opt.get('gt_size')
+        if opt.get('phase') == 'train' and isinstance(size, (tuple, list)) and size[0] != size[1] \
+                and opt.get('use_rot', False):
+            raise ValueError('Set use_rot=false for rectangular training crops.')
+        if opt.get('filter_min_size', False) and size is not None:
             self.paths = self._filter_by_min_size(self.paths, opt['gt_size'])
 
     @staticmethod
     def _filter_by_min_size(paths, min_size):
-        """Keep only pairs with min(width, height) >= min_size.
+        """Keep only pairs that fit the requested crop size.
 
         Reads image headers only (fast). Falls back to keeping everything for
         lmdb/meta-info modes where paths are not readable files.
         """
         from PIL import Image
         logger = get_root_logger()
+        patch_h, patch_w = (min_size, min_size) if isinstance(min_size, int) else min_size
         keep, drop = [], 0
         for p in paths:
             lq_path, gt_path = p['lq_path'], p['gt_path']
@@ -84,11 +89,11 @@ class PairedImageDataset(data.Dataset):
                 keep.append(p)
                 continue
             w, h = Image.open(lq_path).size
-            if min(w, h) >= min_size:
+            if h >= patch_h and w >= patch_w:
                 keep.append(p)
             else:
                 drop += 1
-        logger.info(f'filter_min_size: kept {len(keep)} pairs, dropped {drop} pairs with min side < {min_size}.')
+        logger.info(f'filter_min_size: kept {len(keep)} pairs, dropped {drop} pairs smaller than {patch_w}x{patch_h}.')
         return keep
 
     def __getitem__(self, index):
