@@ -22,3 +22,4 @@ OWHRegionUNet 是完全自研的四尺度去雾主干（RestorationBlock 门控�
 |---|---|
 | 2026-11-21 09:35 | 013b 加宽探针启动（GPU0），对照 013a 同步骤轨迹；013a 继续在 GPU1 跑 60k（22k/60k） |
 | 2026-11-21 09:37 | 013b SwanLab 同步：[probe_013b_wide](https://swanlab.cn/@xieyh/dehaze/runs/tl3srtbu) |
+| 2026-11-21 14:15 | **GPU0 硬件故障**：nvidia-smi 报 "GPU requires reset"（utilization 读数 N/A），013b 在 iter 2,900 后日志停摆、进程空转，已终止；训练状态保全在 2000.state。013a（GPU1）不受影响。013b 等 GPU0 恢复或 013a 完成后从 2000 续训（--auto_resume） |
