@@ -64,6 +64,9 @@ basicsr/
 │   │                         # + DEConv 邻域修正，010a；0.136M 轻量，复用 008_dwt 的 Haar 工具）
 │   ├── lmhaze_arch.py        # LMHaze / MoE-Mamba（四向 SSM + 14 专家分组 Top-K + U-Net，011a；
 │   │                         # OWH 使用可学习图像路由器，也兼容外部 14 维 logit；依赖 mamba-ssm）
+│   ├── owh_lfm_unet_arch.py  # OWHRegionUNet / OWHLFMUNet（四尺度 U-Net + RestorationBlock 门控块
+│   │                         # + HazeConditionedFusion 分频带跳连增益 + RegionContext 区域注意力瓶颈
+│   │                         # + DetailRefinement 条形核细节修复，013 系列；widths/depths 可参数化）
 │   ├── freqda_arch.py        # FreqDA（冻结 004a + 频率解耦低秩适配器，005 自监督域适配）
 │   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
 │   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）
