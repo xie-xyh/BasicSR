@@ -20,4 +20,5 @@ OWHRegionUNet 是完全自研的四尺度去雾主干（RestorationBlock 门控�
 
 | 时间 | 事件 |
 |---|---|
-| 2026-11-21 10:20 | 013b 加宽探针启动（GPU0），对照 013a 同步骤轨迹；013a 继续在 GPU1 跑 60k（22k/60k） |
+| 2026-11-21 09:35 | 013b 加宽探针启动（GPU0），对照 013a 同步骤轨迹；013a 继续在 GPU1 跑 60k（22k/60k） |
+| 2026-11-21 09:37 | 013b SwanLab 同步：[probe_013b_wide](https://swanlab.cn/@xieyh/dehaze/runs/tl3srtbu) |

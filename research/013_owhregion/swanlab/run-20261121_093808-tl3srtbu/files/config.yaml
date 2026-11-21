@@ -1,0 +1,23 @@
+batch_size:
+  desc: ''
+  sort: 3
+  value: 16
+manual_seed:
+  desc: ''
+  sort: 1
+  value: 0
+network_g:
+  desc: ''
+  sort: 0
+  value:
+    activation_checkpointing: true
+    type: OWHRegionUNet
+    widths:
+    - 64
+    - 128
+    - 224
+    - 320
+training_budget:
+  desc: ''
+  sort: 2
+  value: 8000
