@@ -51,3 +51,4 @@ OWHRegionUNet 是完全自研的四尺度去雾主干（RestorationBlock 门控�
 | 2026-11-26 18:30 | 013b 两条 probe 记录迁移到独立 SwanLab 项目 `dehaze-probes`（链接已更新），正式 `dehaze` 只保留 013a；本地 probe 训练与 TensorBoard 分别归入 `experiments/probes/`、`tb_logger/probes/` |
 | 2026-11-26 20:50 | 013c 在 GPU0 从头启动 8k：[g4lmbclu](https://swanlab.cn/@xieyh/dehaze-probes/runs/g4lmbclu)；013b 首次使用 `--auto_resume` 时因框架只查 `experiments/<name>`、未查 probe 的 `experiments_root` 而误从头启动，已仅终止该误启动进程，原始 2000 步目录从归档恢复；误启动 SwanLab `u4ddjx8p` 不用于结果 |
 | 2026-11-26 20:52 | 013b 在 GPU1 以显式 `path:resume_state=.../2000.state` 正确续训：[fu6yz0pk](https://swanlab.cn/@xieyh/dehaze-probes/runs/fu6yz0pk)；日志确认从 epoch 1、iter 2000 恢复。两组均使用同版提交 `461c04e`、独立 probe 输出与 TensorBoard 目录 |
+| 2026-11-27 00:06 | 修复 `--auto_resume` 忽略 `path.experiments_root` 的框架问题（`d01dc0b`）：改用解析后的 `path.training_states`；013b/013c 均实测正确定位各自最新 6000.state。当前运行进程不重载代码，不受影响 |
