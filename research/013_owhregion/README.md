@@ -30,6 +30,8 @@ OWHRegionUNet 是完全自研的四尺度去雾主干（RestorationBlock 门控�
 
 6k 全量 283 对 CPU 对照推翻了 4k 前 8 张小样本的初步优先级：013c−013b 的 PSNR 差为 Dense −0.0766、Mist −0.0544、Moderate −0.1627 dB；Dense SSIM −0.00270（95% 配对区间 −0.00395 至 −0.00141），Mist/Moderate SSIM 区间跨零。差异约 89%–98% 落在低频，因此将低频头也放到更强的 013b 基座上，使下一轮两个候选共享同一基线：
 
+8k 全量对照维持这一判断：013c−013b 的 PSNR 差为 Dense −0.1717（区间 −0.3227 至 −0.0261）、Mist +0.0349（区间跨零）、Moderate −0.1707 dB；Dense SSIM −0.00280、Moderate SSIM −0.00230，区间均不跨零。013b 胜在 Dense/Moderate，Mist 两者基本持平，因此后续以 013b 加宽主干作为共同基线；频段差值仍主要在低频。
+
 - 013d：013b + `low_frequency_head`（9.408M），以 16×16 网格读取末端解码特征与雾图，零初始化预测空间平滑 RGB 修正；只增加低频头，其余与 013b 一致。
 - 013e：013b + 全 3×3 空间表达块（11.286M），检验加宽与全卷积能否叠加；只增加 `spatial_expression`，其余与 013b 一致。
 - 备选：纯加深 `depths=(3,4,5)`，以及在 013c 上加入 `SmoothResidualFFTLoss`；013c@4k 重新定标的 `smooth_weight=0.255442`，新增梯度约为 RGB L1 的 25%。
