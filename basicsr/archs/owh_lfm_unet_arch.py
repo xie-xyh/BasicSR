@@ -24,6 +24,18 @@ class RestorationBlock(nn.Module):
         return x + self.scale * self.project(update)
 
 
+class FullConvRestorationBlock(nn.Module):
+    def __init__(self, channels):
+        super().__init__()
+        self.spatial = nn.Sequential(
+            nn.Conv2d(channels, channels, 3, padding=1), nn.GELU(),
+            nn.Conv2d(channels, channels, 3, padding=1))
+        self.scale = nn.Parameter(torch.full((channels, 1, 1), 0.1))
+
+    def forward(self, x):
+        return x + self.scale * self.spatial(x)
+
+
 def stage(channels, depth):
     return nn.Sequential(*(RestorationBlock(channels, 3 if i % 2 == 0 else 5)
                            for i in range(depth)))
@@ -170,10 +182,13 @@ class HazeConditionedFusion(nn.Module):
 class OWHRegionUNet(OWHLFMUNet):
     """Single OWH design with regional attention, LFM and scene-conditioned skips."""
     def __init__(self, widths=(48, 96, 176, 320), depths=(2, 3, 4), detail_mode="strip",
-                 activation_checkpointing=False):
+                 activation_checkpointing=False, spatial_expression=False):
         super().__init__(widths=widths, depths=depths, detail_mode=detail_mode,
                          activation_checkpointing=activation_checkpointing)
         self.fuse = nn.ModuleList(HazeConditionedFusion(c) for c in reversed(widths[:-1]))
         layers = list(self.middle.children())
         layers.insert(2, RegionContext(widths[-1]))
         self.middle = nn.Sequential(*layers)
+        if spatial_expression:
+            self.middle[-1][-1] = FullConvRestorationBlock(widths[-1])
+            self.dec[0][-1] = FullConvRestorationBlock(widths[-2])
