@@ -1,0 +1,32 @@
+{
+  "OWH-Dense-internal-v2": {
+    "n": 94,
+    "both_gain": 39,
+    "only_low_gain": 11,
+    "only_mid_gain": 20,
+    "neither_gain": 24,
+    "effect_correlation": 0.4827587588286286,
+    "oracle_gain_over_baseline": 0.43835536998622543,
+    "oracle_gain_over_mid": 0.29158660507608614
+  },
+  "OWH-Mist-internal-v2": {
+    "n": 94,
+    "both_gain": 38,
+    "only_low_gain": 15,
+    "only_mid_gain": 14,
+    "neither_gain": 27,
+    "effect_correlation": 0.3461029456775096,
+    "oracle_gain_over_baseline": 0.9884240386387644,
+    "oracle_gain_over_mid": 0.6532625394032111
+  },
+  "OWH-Moderate-internal-v2": {
+    "n": 95,
+    "both_gain": 45,
+    "only_low_gain": 2,
+    "only_mid_gain": 19,
+    "neither_gain": 29,
+    "effect_correlation": 0.7750271291815843,
+    "oracle_gain_over_baseline": 0.637003161844522,
+    "oracle_gain_over_mid": 0.22786927016532038
+  }
+}

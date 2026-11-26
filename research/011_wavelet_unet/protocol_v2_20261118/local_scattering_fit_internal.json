@@ -1,0 +1,777 @@
+{
+  "summary": {
+    "Dense": {
+      "1": 26.490485190244392,
+      "4": 33.33913545750474,
+      "8": 38.88622972634599
+    },
+    "Mist": {
+      "1": 27.507788629383736,
+      "4": 32.6098002560244,
+      "8": 37.34528224902241
+    },
+    "Moderate": {
+      "1": 27.0677559329714,
+      "4": 32.675387427445116,
+      "8": 37.26490185745867
+    }
+  },
+  "rows": [
+    {
+      "split": "Dense",
+      "image": "Dense_00127.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 27.973714380497515,
+      "median_transmission": 0.30405426485948106
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_00127.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 30.302309969886238,
+      "median_transmission": 0.17121548557096727
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_00127.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 35.88918244978985,
+      "median_transmission": 0.15200777831112317
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_01127.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 31.814850332594368,
+      "median_transmission": 0.13337014486598223
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_01127.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 35.66722230511128,
+      "median_transmission": 0.06822627563625318
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_01127.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 40.76625164379184,
+      "median_transmission": 0.04280103481109833
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_01481.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 27.833576438122755,
+      "median_transmission": 0.1189438095493818
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_01481.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 36.54078669628093,
+      "median_transmission": 0.048609033020786355
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_01481.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 41.561518425814874,
+      "median_transmission": 0.021654988540793667
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_02139.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 22.338615418653287,
+      "median_transmission": 0.36224766621830584
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_02139.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 30.511712677428623,
+      "median_transmission": 0.15170987432134939
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_02139.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 35.688990414796436,
+      "median_transmission": 0.13638289395725534
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_02892.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 24.333521641183115,
+      "median_transmission": 0.3227607695497975
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_02892.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 31.948786497771557,
+      "median_transmission": 0.07880603907110628
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_02892.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 37.36905483947881,
+      "median_transmission": 0.0654981438240594
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_03648.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 29.107027014108787,
+      "median_transmission": 0.2747222278721407
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_03648.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 33.37298888013346,
+      "median_transmission": 0.15473361967737714
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_03648.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 38.82681083829005,
+      "median_transmission": 0.16136482100356514
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_04774.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 24.564459337087385,
+      "median_transmission": 0.2513968123474073
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_04774.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 37.95267232668023,
+      "median_transmission": 0.4007648674018891
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_04774.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 41.35680388821981,
+      "median_transmission": 0.4075300525683815
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_05484.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 25.147393942366026,
+      "median_transmission": 0.4770329138248663
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_05484.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 33.305282034876015,
+      "median_transmission": 0.1638767700484082
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_05484.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 38.94564861440192,
+      "median_transmission": 0.07811063443105787
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_06478.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 21.508951496814873,
+      "median_transmission": 0.1248408661949134
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_06478.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 31.375819888964717,
+      "median_transmission": 0.11603279777969511
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_06478.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 33.4330528903517,
+      "median_transmission": 0.15896084335001523
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_07345.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 18.250499671524093,
+      "median_transmission": 0.35442391374425597
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_07345.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 30.46974559803096,
+      "median_transmission": 0.3931434686464367
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_07345.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 35.046576523243374,
+      "median_transmission": 0.422210758840155
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_08207.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 31.942836479216112,
+      "median_transmission": 0.06423852492120082
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_08207.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 35.679618175142586,
+      "median_transmission": 0.044450522181129035
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_08207.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 41.75197050536808,
+      "median_transmission": 0.030238390418496214
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_08841.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 35.05806721245794,
+      "median_transmission": 0.1961238570242208
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_08841.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 40.94219638733048,
+      "median_transmission": 0.09659357017094816
+    },
+    {
+      "split": "Dense",
+      "image": "Dense_08841.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 46.93500909387723,
+      "median_transmission": 0.08252714472001099
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_00031.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 31.915136647066955,
+      "median_transmission": 0.6049516303358721
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_00031.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 35.44026098514123,
+      "median_transmission": 0.5286947786886985
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_00031.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 38.95496649969501,
+      "median_transmission": 0.4929126167468081
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_00307.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 28.350337460262867,
+      "median_transmission": 0.554167305967535
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_00307.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 30.58700384327401,
+      "median_transmission": 0.4777964883659659
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_00307.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 36.578921453645805,
+      "median_transmission": 0.4476003219633216
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_01216.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 28.55312380938459,
+      "median_transmission": 0.5414969801089826
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_01216.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 31.886968078060036,
+      "median_transmission": 0.4595429006647296
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_01216.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 36.39372541066258,
+      "median_transmission": 0.44689080191649777
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_02913.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 29.759351946814796,
+      "median_transmission": 0.6306626749865121
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_02913.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 37.59565265666518,
+      "median_transmission": 0.492438743979553
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_02913.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 40.919292312262876,
+      "median_transmission": 0.48331289861702237
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_03700.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 28.877556069188888,
+      "median_transmission": 0.5099911575245591
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_03700.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 33.16866352793311,
+      "median_transmission": 0.39215523434094685
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_03700.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 38.11164304439902,
+      "median_transmission": 0.3722072789849139
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_04579.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 26.64793756570547,
+      "median_transmission": 0.5525180823108629
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_04579.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 35.58707457243927,
+      "median_transmission": 0.4946214927877629
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_04579.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 39.242511881971666,
+      "median_transmission": 0.4912036779836064
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_05213.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 29.85746678840875,
+      "median_transmission": 0.4969327931322332
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_05213.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 33.86770838101906,
+      "median_transmission": 0.3714356545419834
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_05213.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 39.430281638952856,
+      "median_transmission": 0.32987750817421047
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_06008.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 26.665239798504604,
+      "median_transmission": 0.6774293440079452
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_06008.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 29.56689826666409,
+      "median_transmission": 0.7090701998238964
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_06008.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 34.32040542126956,
+      "median_transmission": 0.7121877489422894
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_06813.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 19.894915112914518,
+      "median_transmission": 0.589692319951297
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_06813.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 32.152941453872636,
+      "median_transmission": 0.8345059618381978
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_06813.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 36.02133787467646,
+      "median_transmission": 0.6532678681543191
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_07750.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 23.942801722742757,
+      "median_transmission": 0.21979338145869076
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_07750.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 30.28640428415298,
+      "median_transmission": 0.23295278672513592
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_07750.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 33.96559907606129,
+      "median_transmission": 0.2487694963207387
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_08037.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 25.146692760141754,
+      "median_transmission": 0.4365041536055088
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_08037.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 33.06665905817617,
+      "median_transmission": 0.34985350150094535
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_08037.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 38.25785964522993,
+      "median_transmission": 0.38145115872331686
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_08832.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 19.478373087158175,
+      "median_transmission": 0.20264059310955956
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_08832.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 28.218818235626987,
+      "median_transmission": 0.3293822399235967
+    },
+    {
+      "split": "Mist",
+      "image": "Mist_08832.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 31.01495687546676,
+      "median_transmission": 0.4846667699789473
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_00050.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 29.541336557327874,
+      "median_transmission": 0.3695147445172098
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_00050.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 35.58012515601812,
+      "median_transmission": 0.2917973217830894
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_00050.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 40.05694776476602,
+      "median_transmission": 0.26069743230002884
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_01157.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 20.970638085479592,
+      "median_transmission": 0.25574177764417455
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_01157.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 30.30906031670444,
+      "median_transmission": 0.24191090094663534
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_01157.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 34.657294998302255,
+      "median_transmission": 0.16148779080131312
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_02764.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 24.191880009497652,
+      "median_transmission": 0.4193665077390581
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_02764.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 32.561626299946845,
+      "median_transmission": 0.21183584507821857
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_02764.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 37.10840475331337,
+      "median_transmission": 0.2508262539483882
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_03198.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 27.567062160503163,
+      "median_transmission": 0.23219746387053333
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_03198.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 32.813319373260015,
+      "median_transmission": 0.09121257631899293
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_03198.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 39.23618315623552,
+      "median_transmission": 0.10427429067602659
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_03636.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 27.70565986835272,
+      "median_transmission": 0.27385657960485044
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_03636.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 32.31324798780668,
+      "median_transmission": 0.1672761986054968
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_03636.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 38.04672871356145,
+      "median_transmission": 0.15952268202883507
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_04443.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 24.847032180995377,
+      "median_transmission": 0.38062717560660847
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_04443.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 33.455641486331345,
+      "median_transmission": 0.23266895693113376
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_04443.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 37.9160054611001,
+      "median_transmission": 0.23160346548495286
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_05202.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 27.41951396147209,
+      "median_transmission": 0.42225915089720684
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_05202.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 31.723593548772282,
+      "median_transmission": 0.21237357100143356
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_05202.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 37.421398961603956,
+      "median_transmission": 0.19947154238393705
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_05950.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 23.881008239219483,
+      "median_transmission": 0.4816425529106812
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_05950.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 32.789148554943395,
+      "median_transmission": 0.4573117279133928
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_05950.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 36.37451372328183,
+      "median_transmission": 0.46068797277420404
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_06717.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 35.06247912841986,
+      "median_transmission": 0.31375217822138163
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_06717.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 39.65003663997669,
+      "median_transmission": 0.30196688186437526
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_06717.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 43.301790026100306,
+      "median_transmission": 0.30124918947247775
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_07447.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 26.842341359005108,
+      "median_transmission": 0.19824700280891486
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_07447.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 33.29605140586417,
+      "median_transmission": 0.20175747831761107
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_07447.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 37.01669872955162,
+      "median_transmission": 0.21608300707217742
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_08127.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 27.2931705069377,
+      "median_transmission": 0.12808491036268882
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_08127.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 30.768516060734097,
+      "median_transmission": 0.07082019834408018
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_08127.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 34.592149229132445,
+      "median_transmission": 0.06181827753834988
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_09111.jpg",
+      "grid": 1,
+      "forward_fit_psnr": 26.01975957985988,
+      "median_transmission": 0.28563585922438295
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_09111.jpg",
+      "grid": 4,
+      "forward_fit_psnr": 31.89046216259754,
+      "median_transmission": 0.42069213788920645
+    },
+    {
+      "split": "Moderate",
+      "image": "Moderate_09111.jpg",
+      "grid": 8,
+      "forward_fit_psnr": 33.94996619673121,
+      "median_transmission": 0.4165938878613027
+    }
+  ]
+}

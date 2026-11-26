@@ -1,0 +1,12 @@
+query	reference	phash_hamming	thumb_rmse	aspect_ratio_delta
+Dense_02079.jpg	datasets/OWH/Moderate/test/clear/03113.jpg	6	73.739	0.02214
+Dense_02079.jpg	datasets/OWH/Moderate/test/clear/03329.jpg	4	36.349	0.04478
+Dense_02079.jpg	datasets/OWH/Moderate/test/clear/03361.jpg	4	40.41	0.02963
+Dense_03954.jpg	datasets/OWH/Dense/test/clear/03045.jpg	6	46.285	0.27559
+Dense_03954.jpg	datasets/OWH/Mist/test/clear/00948.jpg	6	34.342	0.09065
+Dense_03954.jpg	datasets/OWH/Mist/test/clear/03962.jpg	6	42.504	0.20148
+Dense_03954.jpg	datasets/OWH/Moderate/test/clear/03394.jpg	6	45.938	0.02963
+Mist_02229.jpg	datasets/OWH/Mist/test/clear/03155.jpg	4	51.709	0.0
+Mist_02229.jpg	datasets/OWH/Mist/test/clear/04249.jpg	6	52.917	0.00749
+Mist_02818.jpg	datasets/OWH/Dense/test/clear/03359.jpg	6	57.995	0.28325
+Moderate_02510.jpg	datasets/OWH/Moderate/test/clear/00396.jpg	4	25.05	0.11524

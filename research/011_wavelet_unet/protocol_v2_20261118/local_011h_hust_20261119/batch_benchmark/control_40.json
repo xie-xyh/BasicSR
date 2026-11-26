@@ -1,0 +1,10 @@
+{
+  "variant": "011h_hust_local_20261119_control_WaveletUNet_OWHscreened_60k_B20G1",
+  "batch": 40,
+  "patch": 512,
+  "steps": 80,
+  "images_per_second": 104.65061236922209,
+  "seconds_per_step": 0.38222423256229376,
+  "peak_allocated_gib": 17.178115844726562,
+  "peak_reserved_gib": 21.31640625
+}

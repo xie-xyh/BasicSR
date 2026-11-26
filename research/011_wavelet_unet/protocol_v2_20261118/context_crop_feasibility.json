@@ -1,0 +1,83 @@
+{
+  "512x512": {
+    "count": 19844,
+    "by_density": {
+      "Dense": 6614,
+      "Mist": 6551,
+      "Moderate": 6679
+    },
+    "pixels": 262144
+  },
+  "544x544": {
+    "count": 10019,
+    "by_density": {
+      "Dense": 3330,
+      "Mist": 3282,
+      "Moderate": 3407
+    },
+    "pixels": 295936
+  },
+  "576x576": {
+    "count": 8496,
+    "by_density": {
+      "Dense": 2827,
+      "Mist": 2773,
+      "Moderate": 2896
+    },
+    "pixels": 331776
+  },
+  "640x640": {
+    "count": 477,
+    "by_density": {
+      "Dense": 148,
+      "Mist": 162,
+      "Moderate": 167
+    },
+    "pixels": 409600
+  },
+  "704x704": {
+    "count": 402,
+    "by_density": {
+      "Dense": 124,
+      "Mist": 137,
+      "Moderate": 141
+    },
+    "pixels": 495616
+  },
+  "640x512": {
+    "count": 19730,
+    "by_density": {
+      "Dense": 6577,
+      "Mist": 6508,
+      "Moderate": 6645
+    },
+    "pixels": 327680
+  },
+  "704x512": {
+    "count": 19642,
+    "by_density": {
+      "Dense": 6549,
+      "Mist": 6477,
+      "Moderate": 6616
+    },
+    "pixels": 360448
+  },
+  "768x512": {
+    "count": 19477,
+    "by_density": {
+      "Dense": 6495,
+      "Mist": 6411,
+      "Moderate": 6571
+    },
+    "pixels": 393216
+  },
+  "512x704": {
+    "count": 404,
+    "by_density": {
+      "Dense": 126,
+      "Mist": 137,
+      "Moderate": 141
+    },
+    "pixels": 360448
+  }
+}

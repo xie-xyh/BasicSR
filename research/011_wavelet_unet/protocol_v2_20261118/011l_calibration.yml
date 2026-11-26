@@ -1,0 +1,120 @@
+datasets:
+  train:
+    batch_size_per_gpu: 20
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    dataset_enlarge_ratio: 1
+    filename_tmpl: '{}'
+    filter_min_size: true
+    gt_size: 512
+    io_backend:
+      type: disk
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/local_011h_hust_20261119/train_manifest.txt
+    name: OWH-Mixed
+    num_worker_per_gpu: 8
+    prefetch_mode: null
+    type: PairedImageDataset
+    use_hflip: true
+    use_rot: true
+  val:
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    io_backend:
+      type: disk
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/local_011h_hust_20261119/val_manifest.txt
+    name: OWH-Dense-internal-v2
+    type: PairedImageDataset
+  val_2:
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    io_backend:
+      type: disk
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/local_011h_hust_20261119/val_2_manifest.txt
+    name: OWH-Mist-internal-v2
+    type: PairedImageDataset
+  val_3:
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    io_backend:
+      type: disk
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/local_011h_hust_20261119/val_3_manifest.txt
+    name: OWH-Moderate-internal-v2
+    type: PairedImageDataset
+dist_params:
+  backend: nccl
+  port: 29530
+logger:
+  tb_logdir: tb_logger/probes
+  print_freq: 100
+  save_checkpoint_freq: 4000
+  swanlab:
+    mode: online
+    project: dehaze-probes
+    resume_id: null
+  use_swanlab: false
+  use_tb_logger: true
+manual_seed: 0
+model_type: WaveletCalibrationModel
+name: probe_011l_color_calibration_hust_v2
+network_g:
+  detail_stem: false
+  feat: 32
+  type: CalibratedWaveletUNet
+  use_lfm: true
+  widths:
+  - 64
+  - 96
+  - 160
+  - 256
+num_gpu: 1
+path:
+  experiments_root: experiments/probes
+  param_key_g: params_ema
+  pretrain_network_g: /home/yxy/xyy/Learn/BasicSR/experiments/011h_hust_local_20261119_candidate_WaveletUNet_OWHscreened_60k_B20G1/models/net_g_latest.pth
+  resume_state: null
+  strict_load_g: false
+scale: 1
+train:
+  ema_decay: 0.999
+  fft_opt:
+    loss_weight: 1.0
+    reduction: mean
+    type: FFTLoss
+  gradient_opt:
+    loss_weight: 0.2
+    reduction: mean
+    type: GradientLoss
+  optim_g:
+    betas:
+    - 0.9
+    - 0.99
+    lr: 0.0002
+    type: Adam
+    weight_decay: 0
+  pixel_opt:
+    loss_weight: 1.0
+    reduction: mean
+    type: L1Loss
+  scheduler:
+    eta_min: 1.0e-06
+    periods:
+    - 60000
+    restart_weights:
+    - 1
+    type: CosineAnnealingRestartLR
+  total_iter: 4000
+  warmup_iter: 500
+val:
+  metrics:
+    psnr:
+      better: higher
+      crop_border: 0
+      test_y_channel: false
+      type: calculate_psnr
+    ssim:
+      better: higher
+      crop_border: 0
+      test_y_channel: false
+      type: calculate_ssim
+  save_img: false
+  val_freq: 2000

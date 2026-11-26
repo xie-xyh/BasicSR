@@ -1,0 +1,13 @@
+{
+  "variant": "probe_011o_context_rectangle_hust_v2_8000iter",
+  "batch": 20,
+  "patch": [
+    512,
+    640
+  ],
+  "steps": 40,
+  "images_per_second": 53.54430651443223,
+  "seconds_per_step": 0.37352243967543475,
+  "peak_allocated_gib": 16.070834636688232,
+  "peak_reserved_gib": 19.359375
+}

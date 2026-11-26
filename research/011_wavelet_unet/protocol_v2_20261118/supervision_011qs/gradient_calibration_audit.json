@@ -1,0 +1,80 @@
+{
+  "OWH-Dense-internal-v2": {
+    "band": {
+      "n": 8,
+      "median": {
+        "gradient_norm_relative_to_l1": 0.24925854057073593,
+        "low_energy_share": 1.0,
+        "low_alignment": 0.6566827595233917,
+        "mid_energy_share": 5.598602754764174e-15,
+        "mid_alignment": -0.0019853655248880386,
+        "high_energy_share": 1.6411095979341692e-13,
+        "high_alignment": 0.0011536742385942489
+      }
+    },
+    "smooth": {
+      "n": 8,
+      "median": {
+        "gradient_norm_relative_to_l1": 0.2524367719888687,
+        "low_energy_share": 0.8427635431289673,
+        "low_alignment": 0.7734112739562988,
+        "mid_energy_share": 0.09459605813026428,
+        "mid_alignment": 0.3834701329469681,
+        "high_energy_share": 0.059750208631157875,
+        "high_alignment": 0.04845118150115013
+      }
+    }
+  },
+  "OWH-Mist-internal-v2": {
+    "band": {
+      "n": 8,
+      "median": {
+        "gradient_norm_relative_to_l1": 0.25328898429870605,
+        "low_energy_share": 1.0000000596046448,
+        "low_alignment": 0.6906894147396088,
+        "mid_energy_share": 5.553712549658538e-15,
+        "mid_alignment": -0.0038569246098631993,
+        "high_energy_share": 1.595595942698036e-13,
+        "high_alignment": -0.0003450162912486121
+      }
+    },
+    "smooth": {
+      "n": 8,
+      "median": {
+        "gradient_norm_relative_to_l1": 0.24968868494033813,
+        "low_energy_share": 0.8242550492286682,
+        "low_alignment": 0.7658750414848328,
+        "mid_energy_share": 0.10789956152439117,
+        "mid_alignment": 0.3890494108200073,
+        "high_energy_share": 0.06809745356440544,
+        "high_alignment": 0.10060271248221397
+      }
+    }
+  },
+  "OWH-Moderate-internal-v2": {
+    "band": {
+      "n": 8,
+      "median": {
+        "gradient_norm_relative_to_l1": 0.2506779879331589,
+        "low_energy_share": 0.9999999701976776,
+        "low_alignment": 0.685247004032135,
+        "mid_energy_share": 6.171388456554161e-15,
+        "mid_alignment": 0.0012086447386536747,
+        "high_energy_share": 1.746206938811959e-13,
+        "high_alignment": -0.0002110096684191376
+      }
+    },
+    "smooth": {
+      "n": 8,
+      "median": {
+        "gradient_norm_relative_to_l1": 0.24632249027490616,
+        "low_energy_share": 0.8025673031806946,
+        "low_alignment": 0.825776606798172,
+        "mid_energy_share": 0.13461662828922272,
+        "mid_alignment": 0.369905024766922,
+        "high_energy_share": 0.06105940043926239,
+        "high_alignment": 0.07694504037499428
+      }
+    }
+  }
+}

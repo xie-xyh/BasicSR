@@ -1,0 +1,160 @@
+{
+  "curves": {
+    "wavelet": [
+      {
+        "step": 2000,
+        "elapsed_seconds": 445.774,
+        "scores": {
+          "OWH-Dense-internal-v2": {
+            "psnr": 14.7352,
+            "ssim": 0.7816
+          },
+          "OWH-Mist-internal-v2": {
+            "psnr": 19.9891,
+            "ssim": 0.8947
+          },
+          "OWH-Moderate-internal-v2": {
+            "psnr": 15.6997,
+            "ssim": 0.8242
+          }
+        }
+      },
+      {
+        "step": 4000,
+        "elapsed_seconds": 934.835,
+        "scores": {
+          "OWH-Dense-internal-v2": {
+            "psnr": 17.8467,
+            "ssim": 0.8457
+          },
+          "OWH-Mist-internal-v2": {
+            "psnr": 22.3839,
+            "ssim": 0.9177
+          },
+          "OWH-Moderate-internal-v2": {
+            "psnr": 20.0422,
+            "ssim": 0.8906
+          }
+        }
+      }
+    ],
+    "dea": [
+      {
+        "step": 2000,
+        "elapsed_seconds": 1677.211,
+        "scores": {
+          "OWH-Dense-internal-v2": {
+            "psnr": 16.0844,
+            "ssim": 0.7755
+          },
+          "OWH-Mist-internal-v2": {
+            "psnr": 19.1958,
+            "ssim": 0.8883
+          },
+          "OWH-Moderate-internal-v2": {
+            "psnr": 16.513,
+            "ssim": 0.8173
+          }
+        }
+      },
+      {
+        "step": 4000,
+        "elapsed_seconds": 3405.076,
+        "scores": {
+          "OWH-Dense-internal-v2": {
+            "psnr": 18.7292,
+            "ssim": 0.8608
+          },
+          "OWH-Mist-internal-v2": {
+            "psnr": 23.9087,
+            "ssim": 0.9399
+          },
+          "OWH-Moderate-internal-v2": {
+            "psnr": 20.8313,
+            "ssim": 0.9036
+          }
+        }
+      },
+      {
+        "step": 6000,
+        "elapsed_seconds": 5111.291,
+        "scores": {
+          "OWH-Dense-internal-v2": {
+            "psnr": 20.4824,
+            "ssim": 0.8771
+          },
+          "OWH-Mist-internal-v2": {
+            "psnr": 25.5571,
+            "ssim": 0.9519
+          },
+          "OWH-Moderate-internal-v2": {
+            "psnr": 23.1997,
+            "ssim": 0.9193
+          }
+        }
+      },
+      {
+        "step": 8000,
+        "elapsed_seconds": 6808.838,
+        "scores": {
+          "OWH-Dense-internal-v2": {
+            "psnr": 21.501,
+            "ssim": 0.8846
+          },
+          "OWH-Mist-internal-v2": {
+            "psnr": 26.7048,
+            "ssim": 0.9574
+          },
+          "OWH-Moderate-internal-v2": {
+            "psnr": 24.4356,
+            "ssim": 0.9257
+          }
+        }
+      }
+    ]
+  },
+  "at_wavelet_checkpoints": [
+    {
+      "wavelet": {
+        "step": 2000,
+        "elapsed_seconds": 445.774,
+        "scores": {
+          "OWH-Dense-internal-v2": {
+            "psnr": 14.7352,
+            "ssim": 0.7816
+          },
+          "OWH-Mist-internal-v2": {
+            "psnr": 19.9891,
+            "ssim": 0.8947
+          },
+          "OWH-Moderate-internal-v2": {
+            "psnr": 15.6997,
+            "ssim": 0.8242
+          }
+        }
+      },
+      "dea_latest_available": null
+    },
+    {
+      "wavelet": {
+        "step": 4000,
+        "elapsed_seconds": 934.835,
+        "scores": {
+          "OWH-Dense-internal-v2": {
+            "psnr": 17.8467,
+            "ssim": 0.8457
+          },
+          "OWH-Mist-internal-v2": {
+            "psnr": 22.3839,
+            "ssim": 0.9177
+          },
+          "OWH-Moderate-internal-v2": {
+            "psnr": 20.0422,
+            "ssim": 0.8906
+          }
+        }
+      },
+      "dea_latest_available": null
+    }
+  ]
+}

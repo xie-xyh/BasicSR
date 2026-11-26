@@ -1,0 +1,13 @@
+{
+  "candidate_official.yml": "55ad2472a54a03876ac60ef286bb92ca6059c05f7359c7037e57c059e53c98e6",
+  "candidate_train.yml": "0889fbb5eae11f752818ab5588bbf16e0cc4bd7bcc4afe3c1453d987615bdc0b",
+  "control_official.yml": "b913b5c731e46e53b43908df8cf431b28ecd324042d91cb7f3a0d8f244e52a56",
+  "control_train.yml": "bbca52d039a2fe34fb57fb9c6a187673d0488fe25d51361c2337ea8a295d7968",
+  "train_manifest.txt": "7621104415059836d113f3f98d4539dd597ee37d975e57a527f1d45f277aec63",
+  "val_2_manifest.txt": "0ccdaf33a1d10d59a5ca9279367bb977132137d821512e93ebac7d135069365c",
+  "val_3_manifest.txt": "2965af7eb425353bc628702207c0bcc53e2558bc4693db02ba74d53bd2bcc060",
+  "val_manifest.txt": "43f0fe9ac538e178600f22c33776d186d30e2faf2f93b6b6a9ff5a7744358d14",
+  "research/011_wavelet_unet/protocol_v2_20261118/011b_width_control.yml": "ee5e13cca70bb171d7f93c18d43532276e7e832b3f55e776e317b2b48e561146",
+  "research/011_wavelet_unet/protocol_v2_20261118/011d_multiscale.yml": "1125cf1044fe9c7d5f974020091935a359e83f7d9c3c1191274d26e0157a208b",
+  "basicsr/archs/wavelet_unet_arch.py": "7b8c19e954925214b06ba5539249c02207a40a07708c25e1b997e51ff5f5984c"
+}

@@ -1,0 +1,191 @@
+{
+  "checkpoint": "experiments/probe_011i_coarse_candidate_hust_v2_8000iter/models/net_g_2000.pth",
+  "samples": {
+    "OWH-Dense-internal-v2": [
+      {
+        "image": "Dense_00127.jpg",
+        "ll_residual_rms": 0.15488925576210022,
+        "delta_psnr": 2.584201753405715
+      },
+      {
+        "image": "Dense_01127.jpg",
+        "ll_residual_rms": 0.06529819965362549,
+        "delta_psnr": 0.7228090404620815
+      },
+      {
+        "image": "Dense_01481.jpg",
+        "ll_residual_rms": 0.049778759479522705,
+        "delta_psnr": 0.6212197783213469
+      },
+      {
+        "image": "Dense_02139.jpg",
+        "ll_residual_rms": 0.13452887535095215,
+        "delta_psnr": 1.2659544860628813
+      },
+      {
+        "image": "Dense_02892.jpg",
+        "ll_residual_rms": 0.15254057943820953,
+        "delta_psnr": 1.8011118811725702
+      },
+      {
+        "image": "Dense_03648.jpg",
+        "ll_residual_rms": 0.09078209847211838,
+        "delta_psnr": 2.082517096364878
+      },
+      {
+        "image": "Dense_04774.jpg",
+        "ll_residual_rms": 0.05896151810884476,
+        "delta_psnr": 1.105950122320662
+      },
+      {
+        "image": "Dense_05484.jpg",
+        "ll_residual_rms": 0.14568252861499786,
+        "delta_psnr": 2.40139474511847
+      },
+      {
+        "image": "Dense_06478.jpg",
+        "ll_residual_rms": 0.10749002546072006,
+        "delta_psnr": 0.5420953534132469
+      },
+      {
+        "image": "Dense_07345.jpg",
+        "ll_residual_rms": 0.10456828773021698,
+        "delta_psnr": 0.8004859275036615
+      },
+      {
+        "image": "Dense_08207.jpg",
+        "ll_residual_rms": 0.09424855560064316,
+        "delta_psnr": 0.7468200355424557
+      },
+      {
+        "image": "Dense_08841.jpg",
+        "ll_residual_rms": 0.05980968102812767,
+        "delta_psnr": 0.5034302761696736
+      }
+    ],
+    "OWH-Mist-internal-v2": [
+      {
+        "image": "Mist_00031.jpg",
+        "ll_residual_rms": 0.08873894810676575,
+        "delta_psnr": -1.0571555135069666
+      },
+      {
+        "image": "Mist_00307.jpg",
+        "ll_residual_rms": 0.08965127170085907,
+        "delta_psnr": 2.40086162199718
+      },
+      {
+        "image": "Mist_01216.jpg",
+        "ll_residual_rms": 0.12381691485643387,
+        "delta_psnr": 3.140600236508522
+      },
+      {
+        "image": "Mist_02913.jpg",
+        "ll_residual_rms": 0.07134740054607391,
+        "delta_psnr": 0.7331533333657383
+      },
+      {
+        "image": "Mist_03700.jpg",
+        "ll_residual_rms": 0.11460912227630615,
+        "delta_psnr": 4.1762464898187055
+      },
+      {
+        "image": "Mist_04579.jpg",
+        "ll_residual_rms": 0.09848976135253906,
+        "delta_psnr": 1.7360247559058521
+      },
+      {
+        "image": "Mist_05213.jpg",
+        "ll_residual_rms": 0.10723734647035599,
+        "delta_psnr": 5.76206013026874
+      },
+      {
+        "image": "Mist_06008.jpg",
+        "ll_residual_rms": 0.07692000269889832,
+        "delta_psnr": 0.38852100715946136
+      },
+      {
+        "image": "Mist_06813.jpg",
+        "ll_residual_rms": 0.08462058007717133,
+        "delta_psnr": 1.2230115750044686
+      },
+      {
+        "image": "Mist_07750.jpg",
+        "ll_residual_rms": 0.11130046844482422,
+        "delta_psnr": 1.3855141562018645
+      },
+      {
+        "image": "Mist_08037.jpg",
+        "ll_residual_rms": 0.12842406332492828,
+        "delta_psnr": 2.8875075375862593
+      },
+      {
+        "image": "Mist_08832.jpg",
+        "ll_residual_rms": 0.08139563351869583,
+        "delta_psnr": 0.4671584310069701
+      }
+    ],
+    "OWH-Moderate-internal-v2": [
+      {
+        "image": "Moderate_00050.jpg",
+        "ll_residual_rms": 0.10079102963209152,
+        "delta_psnr": 2.4867341442299775
+      },
+      {
+        "image": "Moderate_01157.jpg",
+        "ll_residual_rms": 0.10031400620937347,
+        "delta_psnr": 0.7546904853361518
+      },
+      {
+        "image": "Moderate_02764.jpg",
+        "ll_residual_rms": 0.0880589708685875,
+        "delta_psnr": 1.0833231314675942
+      },
+      {
+        "image": "Moderate_03198.jpg",
+        "ll_residual_rms": 0.12902627885341644,
+        "delta_psnr": 2.399704364928871
+      },
+      {
+        "image": "Moderate_03636.jpg",
+        "ll_residual_rms": 0.1593388020992279,
+        "delta_psnr": 2.7949616077629535
+      },
+      {
+        "image": "Moderate_04443.jpg",
+        "ll_residual_rms": 0.09015307575464249,
+        "delta_psnr": 2.239533605034449
+      },
+      {
+        "image": "Moderate_05202.jpg",
+        "ll_residual_rms": 0.15264450013637543,
+        "delta_psnr": 2.5804647136323293
+      },
+      {
+        "image": "Moderate_05950.jpg",
+        "ll_residual_rms": 0.1454145312309265,
+        "delta_psnr": 2.8599867916488186
+      },
+      {
+        "image": "Moderate_06717.jpg",
+        "ll_residual_rms": 0.12311422824859619,
+        "delta_psnr": 3.9845496853030724
+      },
+      {
+        "image": "Moderate_07447.jpg",
+        "ll_residual_rms": 0.12800298631191254,
+        "delta_psnr": 1.8415298950053671
+      },
+      {
+        "image": "Moderate_08127.jpg",
+        "ll_residual_rms": 0.14844657480716705,
+        "delta_psnr": 1.4997629626308884
+      },
+      {
+        "image": "Moderate_09111.jpg",
+        "ll_residual_rms": 0.07395830005407333,
+        "delta_psnr": 0.5016325338187073
+      }
+    ]
+  }
+}

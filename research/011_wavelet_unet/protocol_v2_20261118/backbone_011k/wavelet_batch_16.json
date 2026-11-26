@@ -1,0 +1,10 @@
+{
+  "variant": "probe_011k_matched_wavelet_hust_v2_8000iter",
+  "batch": 16,
+  "patch": 512,
+  "steps": 6,
+  "images_per_second": 73.84190140500685,
+  "seconds_per_step": 0.21667914416563386,
+  "peak_allocated_gib": 10.268849849700928,
+  "peak_reserved_gib": 12.498046875
+}

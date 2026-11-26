@@ -1,0 +1,11 @@
+{
+  "folded_layers": 24,
+  "max_difference": 0.0,
+  "median_seconds_before": 0.3763154220068827,
+  "median_seconds_after": 0.3563863869931083,
+  "timed_shape": [
+    3,
+    256,
+    384
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "OWH-Dense-internal-v2": {
+    "images": 94,
+    "wins": 74,
+    "frequency_mse_reduction": {
+      "low_mse": 0.0022426047528582333,
+      "mid_mse": 0.0003208581945217941,
+      "high_mse": 8.776976494406944e-05
+    },
+    "low_share": 0.845872466205482,
+    "undershoot_share": 0.8318016734815499,
+    "gains_by_input_low_error_tercile": [
+      0.7735555509761382,
+      1.1688797964256663,
+      1.4451875833231955
+    ]
+  },
+  "OWH-Mist-internal-v2": {
+    "images": 94,
+    "wins": 74,
+    "frequency_mse_reduction": {
+      "low_mse": 0.0011212629390521794,
+      "mid_mse": 0.00013445232762040237,
+      "high_mse": 2.2674159146232437e-05
+    },
+    "low_share": 0.8770902796962713,
+    "undershoot_share": 0.7575014164863433,
+    "gains_by_input_low_error_tercile": [
+      1.898470072473308,
+      1.2629163746385774,
+      1.1018077784172455
+    ]
+  },
+  "OWH-Moderate-internal-v2": {
+    "images": 95,
+    "wins": 73,
+    "frequency_mse_reduction": {
+      "low_mse": 0.0014168191859611496,
+      "mid_mse": 0.0002601867986979189,
+      "high_mse": 4.7559284471489635e-05
+    },
+    "low_share": 0.821551501309916,
+    "undershoot_share": 0.8141006855603823,
+    "gains_by_input_low_error_tercile": [
+      1.183999866314309,
+      1.394022651038029,
+      1.149468660078921
+    ]
+  }
+}

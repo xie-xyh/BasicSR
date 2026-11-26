@@ -1,0 +1,86 @@
+{
+  "OWH-Dense-test": {
+    "images": 905,
+    "psnr": {
+      "control": 23.550669980668097,
+      "candidate": 24.147586871996445,
+      "delta": 0.5969168913283482,
+      "ci95": [
+        0.5115136887761987,
+        0.6738171687878194
+      ]
+    },
+    "ssim": {
+      "control": 0.8883849494964317,
+      "candidate": 0.8951698355733003,
+      "delta": 0.006784886076868668,
+      "ci95": [
+        0.006304972226581499,
+        0.007271350422284783
+      ]
+    },
+    "target_db": 27,
+    "reached": false,
+    "both_improved": 647,
+    "psnr_drops_over_one_db": 63,
+    "median_psnr_gain": 0.576461373112032,
+    "median_ssim_gain": 0.0058656624027092485,
+    "gap_to_target_db": 2.8524131280035547
+  },
+  "OWH-Mist-test": {
+    "images": 892,
+    "psnr": {
+      "control": 28.733623763018088,
+      "candidate": 29.59967783772177,
+      "delta": 0.8660540747036833,
+      "ci95": [
+        0.7341287223292837,
+        0.9964517272559874
+      ]
+    },
+    "ssim": {
+      "control": 0.9654968276562081,
+      "candidate": 0.9692906178362182,
+      "delta": 0.003793790180010026,
+      "ci95": [
+        0.0033638204216522114,
+        0.004271503848682618
+      ]
+    },
+    "target_db": 35,
+    "reached": false,
+    "both_improved": 612,
+    "psnr_drops_over_one_db": 131,
+    "median_psnr_gain": 0.7697432435953839,
+    "median_ssim_gain": 0.0029225404386485354,
+    "gap_to_target_db": 5.400322162278229
+  },
+  "OWH-Moderate-test": {
+    "images": 914,
+    "psnr": {
+      "control": 26.17144114577471,
+      "candidate": 27.11932883957071,
+      "delta": 0.9478876937959981,
+      "ci95": [
+        0.8514163344636168,
+        1.0473185816331125
+      ]
+    },
+    "ssim": {
+      "control": 0.9308391839668131,
+      "candidate": 0.9373680427957422,
+      "delta": 0.006528858828929063,
+      "ci95": [
+        0.006084837713630319,
+        0.006982517087969927
+      ]
+    },
+    "target_db": null,
+    "reached": null,
+    "both_improved": 705,
+    "psnr_drops_over_one_db": 67,
+    "median_psnr_gain": 0.8586320423549623,
+    "median_ssim_gain": 0.005595983179478237,
+    "gap_to_target_db": null
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "variant": "probe_011o_context_square_hust_v2_8000iter",
+  "batch": 20,
+  "patch": 512,
+  "steps": 40,
+  "images_per_second": 67.87247105217455,
+  "seconds_per_step": 0.29467027927457823,
+  "peak_allocated_gib": 12.875296592712402,
+  "peak_reserved_gib": 15.556640625
+}

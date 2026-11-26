@@ -1,0 +1,46 @@
+{
+  "train": {
+    "pairs": 23697,
+    "eligible_pairs": 19844,
+    "distinct_clear_hashes": 23565
+  },
+  "internal": {
+    "OWH-Dense-internal-v2": {
+      "pairs": 94,
+      "eligible_pairs": 94,
+      "distinct_clear_hashes": 94
+    },
+    "OWH-Mist-internal-v2": {
+      "pairs": 94,
+      "eligible_pairs": 94,
+      "distinct_clear_hashes": 94
+    },
+    "OWH-Moderate-internal-v2": {
+      "pairs": 95,
+      "eligible_pairs": 95,
+      "distinct_clear_hashes": 95
+    }
+  },
+  "official": {
+    "OWH-Dense-test": {
+      "pairs": 905,
+      "eligible_pairs": 905,
+      "distinct_clear_hashes": 905
+    },
+    "OWH-Mist-test": {
+      "pairs": 892,
+      "eligible_pairs": 892,
+      "distinct_clear_hashes": 892
+    },
+    "OWH-Moderate-test": {
+      "pairs": 914,
+      "eligible_pairs": 914,
+      "distinct_clear_hashes": 913
+    }
+  },
+  "exact_overlap": {
+    "train_internal": 0,
+    "train_official": 0,
+    "internal_official": 0
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "20000": {
+    "Dense": {
+      "observed": 22.977569801082012,
+      "zero_low": 28.104620025062026,
+      "zero_low_mid": 32.93395794907522,
+      "target": 27,
+      "conditional_band": "low",
+      "fraction_to_remove": 0.8900398753157823
+    },
+    "Mist": {
+      "observed": 27.504428189040006,
+      "zero_low": 33.55844375829363,
+      "zero_low_mid": 38.97644996851396,
+      "target": 35,
+      "conditional_band": "mid_after_zero_low",
+      "fraction_to_remove": 0.4053186520334151
+    }
+  },
+  "24000": {
+    "Dense": {
+      "observed": 23.3277583630683,
+      "zero_low": 28.30964610957014,
+      "zero_low_mid": 33.05285263756218,
+      "target": 27,
+      "conditional_band": "low",
+      "fraction_to_remove": 0.8568526332604698
+    },
+    "Mist": {
+      "observed": 28.090948051588946,
+      "zero_low": 33.949520506611336,
+      "zero_low_mid": 39.26374758184709,
+      "target": 35,
+      "conditional_band": "mid_after_zero_low",
+      "fraction_to_remove": 0.3116691211433569
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "steps": [
+    24000,
+    28000,
+    32000
+  ],
+  "splits": {
+    "OWH-Dense-internal-v2": {
+      "n": 94,
+      "wins": [
+        75,
+        77,
+        76
+      ],
+      "wins_all": 67,
+      "falls_all": 8,
+      "median_delta_32k": 0.8296332911630913
+    },
+    "OWH-Mist-internal-v2": {
+      "n": 94,
+      "wins": [
+        68,
+        72,
+        70
+      ],
+      "wins_all": 59,
+      "falls_all": 14,
+      "median_delta_32k": 0.8776314722520979
+    },
+    "OWH-Moderate-internal-v2": {
+      "n": 95,
+      "wins": [
+        83,
+        85,
+        82
+      ],
+      "wins_all": 75,
+      "falls_all": 6,
+      "median_delta_32k": 1.1813530564889767
+    }
+  }
+}

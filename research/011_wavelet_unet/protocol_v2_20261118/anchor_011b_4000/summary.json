@@ -1,0 +1,209 @@
+{
+  "OWH-Dense-internal-v2": {
+    "n": 94,
+    "psnr": {
+      "control": 17.699326131478074,
+      "candidate": 17.699326131478074,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "ssim": {
+      "control": 0.8393459702628298,
+      "candidate": 0.8393459702628298,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "grid_boundary_error": {
+      "control": 0.00010657209491055924,
+      "candidate": 0.00010657209491055924,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "low_mse": {
+      "control": 0.01954256072209735,
+      "candidate": 0.01954256072209735,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "mid_mse": {
+      "control": 0.0026988611493863413,
+      "candidate": 0.0026988611493863413,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "high_mse": {
+      "control": 0.0011681445586492819,
+      "candidate": 0.0011681445586492819,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    }
+  },
+  "OWH-Mist-internal-v2": {
+    "n": 94,
+    "psnr": {
+      "control": 22.00266516563744,
+      "candidate": 22.00266516563744,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "ssim": {
+      "control": 0.9137102637160515,
+      "candidate": 0.9137102637160515,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "grid_boundary_error": {
+      "control": 7.46377177990017e-05,
+      "candidate": 7.46377177990017e-05,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "low_mse": {
+      "control": 0.0076698773799358565,
+      "candidate": 0.0076698773799358565,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "mid_mse": {
+      "control": 0.0010728973096336418,
+      "candidate": 0.0010728973096336418,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    },
+    "high_mse": {
+      "control": 0.00047208725185938333,
+      "candidate": 0.00047208725185938333,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 94
+    }
+  },
+  "OWH-Moderate-internal-v2": {
+    "n": 95,
+    "psnr": {
+      "control": 19.660121252179923,
+      "candidate": 19.660121252179923,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 95
+    },
+    "ssim": {
+      "control": 0.8828931984736631,
+      "candidate": 0.8828931984736631,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 95
+    },
+    "grid_boundary_error": {
+      "control": 0.00011459059987230168,
+      "candidate": 0.00011459059987230168,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 95
+    },
+    "low_mse": {
+      "control": 0.013006357159084912,
+      "candidate": 0.013006357159084912,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 95
+    },
+    "mid_mse": {
+      "control": 0.0017888422126644643,
+      "candidate": 0.0017888422126644643,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 95
+    },
+    "high_mse": {
+      "control": 0.0006755113540641449,
+      "candidate": 0.0006755113540641449,
+      "delta": 0.0,
+      "median_delta": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "groups": 95
+    }
+  }
+}

@@ -20,7 +20,7 @@ datasets:
     batch_size_per_gpu: 16
     dataset_enlarge_ratio: 1
     prefetch_mode: null
-    meta_info_file: experiments/011_protocol_v2_20261118/confirm_011p_backbone_draft/train_manifest.txt
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/confirm_011p_backbone_draft/train_manifest.txt
   val:
     name: OWH-Dense-internal-v2
     type: PairedImageDataset
@@ -28,7 +28,7 @@ datasets:
       type: disk
     dataroot_gt: datasets/OWH/Mixed/train/clear
     dataroot_lq: datasets/OWH/Mixed/train/hazy
-    meta_info_file: experiments/011_protocol_v2_20261118/confirm_011p_backbone_draft/val_manifest.txt
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/confirm_011p_backbone_draft/val_manifest.txt
   val_2:
     name: OWH-Mist-internal-v2
     type: PairedImageDataset
@@ -36,7 +36,7 @@ datasets:
       type: disk
     dataroot_gt: datasets/OWH/Mixed/train/clear
     dataroot_lq: datasets/OWH/Mixed/train/hazy
-    meta_info_file: experiments/011_protocol_v2_20261118/confirm_011p_backbone_draft/val_2_manifest.txt
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/confirm_011p_backbone_draft/val_2_manifest.txt
   val_3:
     name: OWH-Moderate-internal-v2
     type: PairedImageDataset
@@ -44,7 +44,7 @@ datasets:
       type: disk
     dataroot_gt: datasets/OWH/Mixed/train/clear
     dataroot_lq: datasets/OWH/Mixed/train/hazy
-    meta_info_file: experiments/011_protocol_v2_20261118/confirm_011p_backbone_draft/val_3_manifest.txt
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/confirm_011p_backbone_draft/val_3_manifest.txt
 network_g:
   type: OWHRegionUNet
   widths:

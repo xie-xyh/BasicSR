@@ -1,0 +1,200 @@
+{
+  "Dense": {
+    "rows": [
+      {
+        "image": "Dense_00127.jpg",
+        "inverse_psnr": 8.598545475576723,
+        "tiles_with_t_below_pointone": 22
+      },
+      {
+        "image": "Dense_01127.jpg",
+        "inverse_psnr": 6.762366190897243,
+        "tiles_with_t_below_pointone": 39
+      },
+      {
+        "image": "Dense_01481.jpg",
+        "inverse_psnr": 11.409993853450384,
+        "tiles_with_t_below_pointone": 41
+      },
+      {
+        "image": "Dense_02139.jpg",
+        "inverse_psnr": 10.317550861265183,
+        "tiles_with_t_below_pointone": 28
+      },
+      {
+        "image": "Dense_02892.jpg",
+        "inverse_psnr": 8.713177889899072,
+        "tiles_with_t_below_pointone": 43
+      },
+      {
+        "image": "Dense_03648.jpg",
+        "inverse_psnr": 12.365375577162435,
+        "tiles_with_t_below_pointone": 20
+      },
+      {
+        "image": "Dense_04774.jpg",
+        "inverse_psnr": 28.316274663199184,
+        "tiles_with_t_below_pointone": 8
+      },
+      {
+        "image": "Dense_05484.jpg",
+        "inverse_psnr": 6.965083679442529,
+        "tiles_with_t_below_pointone": 34
+      },
+      {
+        "image": "Dense_06478.jpg",
+        "inverse_psnr": 11.158629148991032,
+        "tiles_with_t_below_pointone": 31
+      },
+      {
+        "image": "Dense_07345.jpg",
+        "inverse_psnr": 21.94053686182789,
+        "tiles_with_t_below_pointone": 11
+      },
+      {
+        "image": "Dense_08207.jpg",
+        "inverse_psnr": 4.543406299186162,
+        "tiles_with_t_below_pointone": 55
+      },
+      {
+        "image": "Dense_08841.jpg",
+        "inverse_psnr": 10.537464348832462,
+        "tiles_with_t_below_pointone": 36
+      }
+    ],
+    "median_inverse_psnr": 10.427507605048822,
+    "low_t_tiles": 368
+  },
+  "Mist": {
+    "rows": [
+      {
+        "image": "Mist_00031.jpg",
+        "inverse_psnr": 33.701185845700635,
+        "tiles_with_t_below_pointone": 0
+      },
+      {
+        "image": "Mist_00307.jpg",
+        "inverse_psnr": 18.986120572361447,
+        "tiles_with_t_below_pointone": 3
+      },
+      {
+        "image": "Mist_01216.jpg",
+        "inverse_psnr": 20.2387839464552,
+        "tiles_with_t_below_pointone": 3
+      },
+      {
+        "image": "Mist_02913.jpg",
+        "inverse_psnr": 21.693146195927042,
+        "tiles_with_t_below_pointone": 3
+      },
+      {
+        "image": "Mist_03700.jpg",
+        "inverse_psnr": 29.542609291789933,
+        "tiles_with_t_below_pointone": 0
+      },
+      {
+        "image": "Mist_04579.jpg",
+        "inverse_psnr": 33.31505678977548,
+        "tiles_with_t_below_pointone": 0
+      },
+      {
+        "image": "Mist_05213.jpg",
+        "inverse_psnr": 29.057997537240098,
+        "tiles_with_t_below_pointone": 1
+      },
+      {
+        "image": "Mist_06008.jpg",
+        "inverse_psnr": 30.439375789534637,
+        "tiles_with_t_below_pointone": 0
+      },
+      {
+        "image": "Mist_06813.jpg",
+        "inverse_psnr": 30.538471383621058,
+        "tiles_with_t_below_pointone": 0
+      },
+      {
+        "image": "Mist_07750.jpg",
+        "inverse_psnr": 16.176300961247694,
+        "tiles_with_t_below_pointone": 11
+      },
+      {
+        "image": "Mist_08037.jpg",
+        "inverse_psnr": 20.01309156286282,
+        "tiles_with_t_below_pointone": 2
+      },
+      {
+        "image": "Mist_08832.jpg",
+        "inverse_psnr": 17.192638873548297,
+        "tiles_with_t_below_pointone": 17
+      }
+    ],
+    "median_inverse_psnr": 25.37557186658357,
+    "low_t_tiles": 40
+  },
+  "Moderate": {
+    "rows": [
+      {
+        "image": "Moderate_00050.jpg",
+        "inverse_psnr": 19.84173659419676,
+        "tiles_with_t_below_pointone": 1
+      },
+      {
+        "image": "Moderate_01157.jpg",
+        "inverse_psnr": 17.50985961125663,
+        "tiles_with_t_below_pointone": 28
+      },
+      {
+        "image": "Moderate_02764.jpg",
+        "inverse_psnr": 18.413192108919326,
+        "tiles_with_t_below_pointone": 14
+      },
+      {
+        "image": "Moderate_03198.jpg",
+        "inverse_psnr": 12.503603661239065,
+        "tiles_with_t_below_pointone": 30
+      },
+      {
+        "image": "Moderate_03636.jpg",
+        "inverse_psnr": 14.127696182893693,
+        "tiles_with_t_below_pointone": 11
+      },
+      {
+        "image": "Moderate_04443.jpg",
+        "inverse_psnr": 18.438353263567713,
+        "tiles_with_t_below_pointone": 4
+      },
+      {
+        "image": "Moderate_05202.jpg",
+        "inverse_psnr": 8.852333846464067,
+        "tiles_with_t_below_pointone": 24
+      },
+      {
+        "image": "Moderate_05950.jpg",
+        "inverse_psnr": 29.243632344649587,
+        "tiles_with_t_below_pointone": 0
+      },
+      {
+        "image": "Moderate_06717.jpg",
+        "inverse_psnr": 19.616335712470946,
+        "tiles_with_t_below_pointone": 7
+      },
+      {
+        "image": "Moderate_07447.jpg",
+        "inverse_psnr": 20.453049577036438,
+        "tiles_with_t_below_pointone": 8
+      },
+      {
+        "image": "Moderate_08127.jpg",
+        "inverse_psnr": 9.181703947201372,
+        "tiles_with_t_below_pointone": 46
+      },
+      {
+        "image": "Moderate_09111.jpg",
+        "inverse_psnr": 14.108209768357291,
+        "tiles_with_t_below_pointone": 19
+      }
+    ],
+    "median_inverse_psnr": 17.961525860087978,
+    "low_t_tiles": 192
+  }
+}

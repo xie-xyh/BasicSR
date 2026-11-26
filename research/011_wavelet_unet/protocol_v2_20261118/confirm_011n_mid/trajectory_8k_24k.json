@@ -1,0 +1,105 @@
+{
+  "OWH-Dense-internal-v2": {
+    "n": 94,
+    "always_better": 31,
+    "always_worse": 18,
+    "always_worse_at_24k": {
+      "psnr": -0.8599460128792946,
+      "low_mse": 0.0007779323521699039,
+      "mid_mse": 0.00011454632472686653,
+      "high_mse": 1.7907012038621405e-05,
+      "overshoot_mse": 0.00031535895434192044,
+      "undershoot_mse": 0.00046115267590115155
+    },
+    "images_always_worse": [
+      "Dense_00836.jpg",
+      "Dense_01059.jpg",
+      "Dense_01588.jpg",
+      "Dense_02316.jpg",
+      "Dense_02883.jpg",
+      "Dense_03415.jpg",
+      "Dense_03733.jpg",
+      "Dense_04323.jpg",
+      "Dense_05013.jpg",
+      "Dense_06100.jpg",
+      "Dense_06404.jpg",
+      "Dense_06530.jpg",
+      "Dense_07129.jpg",
+      "Dense_07250.jpg",
+      "Dense_08106.jpg",
+      "Dense_08234.jpg",
+      "Dense_08581.jpg",
+      "Dense_08730.jpg"
+    ]
+  },
+  "OWH-Mist-internal-v2": {
+    "n": 94,
+    "always_better": 14,
+    "always_worse": 25,
+    "always_worse_at_24k": {
+      "psnr": -1.3119450649938629,
+      "low_mse": 0.0005934368082675621,
+      "mid_mse": 4.3283087411280354e-05,
+      "high_mse": 9.559814162570552e-06,
+      "overshoot_mse": 0.0003655227864146582,
+      "undershoot_mse": 0.0002574294427085988
+    },
+    "images_always_worse": [
+      "Mist_00275.jpg",
+      "Mist_00387.jpg",
+      "Mist_00684.jpg",
+      "Mist_01686.jpg",
+      "Mist_01959.jpg",
+      "Mist_02523.jpg",
+      "Mist_03189.jpg",
+      "Mist_03261.jpg",
+      "Mist_03794.jpg",
+      "Mist_05011.jpg",
+      "Mist_05014.jpg",
+      "Mist_05213.jpg",
+      "Mist_05494.jpg",
+      "Mist_05811.jpg",
+      "Mist_06583.jpg",
+      "Mist_06896.jpg",
+      "Mist_06905.jpg",
+      "Mist_07030.jpg",
+      "Mist_07088.jpg",
+      "Mist_07131.jpg",
+      "Mist_07377.jpg",
+      "Mist_08032.jpg",
+      "Mist_08037.jpg",
+      "Mist_08330.jpg",
+      "Mist_08741.jpg"
+    ]
+  },
+  "OWH-Moderate-internal-v2": {
+    "n": 95,
+    "always_better": 22,
+    "always_worse": 15,
+    "always_worse_at_24k": {
+      "psnr": -0.5876567093457813,
+      "low_mse": 0.00043069319898627874,
+      "mid_mse": 7.566340859099777e-05,
+      "high_mse": 1.5131849526719192e-05,
+      "overshoot_mse": 0.00013267801890227323,
+      "undershoot_mse": 0.00031022204930195583
+    },
+    "images_always_worse": [
+      "Moderate_00130.jpg",
+      "Moderate_02923.jpg",
+      "Moderate_03085.jpg",
+      "Moderate_03543.jpg",
+      "Moderate_03636.jpg",
+      "Moderate_03671.jpg",
+      "Moderate_04612.jpg",
+      "Moderate_04626.jpg",
+      "Moderate_06011.jpg",
+      "Moderate_06536.jpg",
+      "Moderate_06979.jpg",
+      "Moderate_07342.jpg",
+      "Moderate_07911.jpg",
+      "Moderate_08127.jpg",
+      "Moderate_09111.jpg"
+    ]
+  }
+}

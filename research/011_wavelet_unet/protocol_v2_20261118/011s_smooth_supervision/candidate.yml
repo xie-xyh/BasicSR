@@ -1,0 +1,125 @@
+datasets:
+  train:
+    batch_size_per_gpu: 20
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    dataset_enlarge_ratio: 1
+    filename_tmpl: '{}'
+    filter_min_size: true
+    gt_size: 512
+    io_backend:
+      type: disk
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/train.txt
+    name: OWH-Mixed
+    num_worker_per_gpu: 8
+    prefetch_mode: null
+    type: PairedImageDataset
+    use_hflip: true
+    use_rot: true
+  val:
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    io_backend:
+      type: disk
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/val_Dense.txt
+    name: OWH-Dense-internal-v2
+    type: PairedImageDataset
+  val_2:
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    io_backend:
+      type: disk
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/val_Mist.txt
+    name: OWH-Mist-internal-v2
+    type: PairedImageDataset
+  val_3:
+    dataroot_gt: datasets/OWH/Mixed/train/clear
+    dataroot_lq: datasets/OWH/Mixed/train/hazy
+    io_backend:
+      type: disk
+    meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/val_Moderate.txt
+    name: OWH-Moderate-internal-v2
+    type: PairedImageDataset
+dist_params:
+  backend: nccl
+  port: 29530
+logger:
+  tb_logdir: tb_logger/probes
+  print_freq: 100
+  save_checkpoint_freq: 2000
+  swanlab:
+    mode: online
+    project: dehaze-probes
+    resume_id: null
+  use_swanlab: false
+  use_tb_logger: true
+manual_seed: 0
+model_type: WaveletUNetModel
+name: probe_011s_smooth_weighted_hust_v2_8000iter
+network_g:
+  coarse_color_residual: false
+  detail_stem: false
+  feat: 32
+  type: WaveletUNet
+  use_lfm: true
+  widths:
+  - 64
+  - 96
+  - 160
+  - 256
+num_gpu: 1
+path:
+  experiments_root: experiments/probes
+  param_key_g: params
+  pretrain_network_g: null
+  resume_state: null
+  strict_load_g: true
+scale: 1
+train:
+  ema_decay: 0.999
+  fft_opt:
+    loss_weight: 1
+    smooth_weight: 0.26672
+    type: SmoothResidualFFTLoss
+  gradient_opt:
+    loss_weight: 0.2
+    reduction: mean
+    type: GradientLoss
+  optim_g:
+    betas:
+    - 0.9
+    - 0.99
+    lr: 0.0002
+    type: Adam
+    weight_decay: 0
+  pixel_opt:
+    loss_weight: 1.0
+    reduction: mean
+    type: L1Loss
+  scheduler:
+    eta_min: 1.0e-06
+    periods:
+    - 60000
+    restart_weights:
+    - 1
+    type: CosineAnnealingRestartLR
+  subband_opt:
+    loss_weight: 1.0
+    w_base: 1.0
+    w_detail: 1.0
+  total_iter: 8000
+  warmup_iter: 500
+val:
+  metrics:
+    psnr:
+      better: higher
+      crop_border: 0
+      test_y_channel: false
+      type: calculate_psnr
+    ssim:
+      better: higher
+      crop_border: 0
+      test_y_channel: false
+      type: calculate_ssim
+  save_img: false
+  val_freq: 2000

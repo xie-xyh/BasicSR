@@ -1,0 +1,10 @@
+{
+  "variant": "probe_011k_matched_dea_hust_v2_8000iter",
+  "batch": 16,
+  "patch": 512,
+  "steps": 6,
+  "images_per_second": 19.368593597588745,
+  "seconds_per_step": 0.8260795973328641,
+  "peak_allocated_gib": 34.902586460113525,
+  "peak_reserved_gib": 36.64453125
+}

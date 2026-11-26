@@ -1,0 +1,23 @@
+{
+  "OWH-Dense-internal-v2": {
+    "images": 94,
+    "independent_gain_db": -0.062187467499392635,
+    "toggle_gain_db": 4.616424546658242,
+    "helped_both": 47,
+    "branch_used_but_no_net_gain": 40
+  },
+  "OWH-Mist-internal-v2": {
+    "images": 94,
+    "independent_gain_db": 0.3190191559946393,
+    "toggle_gain_db": 3.490285886656271,
+    "helped_both": 42,
+    "branch_used_but_no_net_gain": 36
+  },
+  "OWH-Moderate-internal-v2": {
+    "images": 95,
+    "independent_gain_db": -0.08288469098801368,
+    "toggle_gain_db": 5.675787572520878,
+    "helped_both": 46,
+    "branch_used_but_no_net_gain": 46
+  }
+}
