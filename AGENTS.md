@@ -67,7 +67,8 @@ basicsr/
 │   ├── owh_lfm_unet_arch.py  # OWHRegionUNet / OWHLFMUNet（四尺度 U-Net + RestorationBlock 门控块
 │   │                         # + HazeConditionedFusion 分频带跳连增益 + RegionContext 区域注意力瓶颈
 │   │                         # + DetailRefinement 条形核细节修复，013 系列；widths/depths 可参数化，
-│   │                         # spatial_expression 将瓶颈与 1/4 解码末端各一块换为全 3×3 卷积）
+│   │                         # spatial_expression 将瓶颈与 1/4 解码末端各一块换为全 3×3 卷积；
+│   │                         # low_frequency_head 用末端特征与雾图预测零初始化 16×16 RGB 修正场）
 │   ├── freqda_arch.py        # FreqDA（冻结 004a + 频率解耦低秩适配器，005 自监督域适配）
 │   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
 │   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）

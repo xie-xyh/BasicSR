@@ -36,6 +36,25 @@ class FullConvRestorationBlock(nn.Module):
         return x + self.scale * self.spatial(x)
 
 
+class LowFrequencyRGBHead(nn.Module):
+    def __init__(self, channels, grid_size=16, hidden=64):
+        super().__init__()
+        self.grid_size = grid_size
+        self.predict = nn.Sequential(
+            nn.Conv2d(channels + 3, hidden, 3, padding=1), nn.GELU(),
+            nn.Conv2d(hidden, hidden, 3, padding=1), nn.GELU(),
+            nn.Conv2d(hidden, 3, 1))
+        nn.init.zeros_(self.predict[-1].weight)
+        nn.init.zeros_(self.predict[-1].bias)
+
+    def forward(self, features, image):
+        size = (self.grid_size, self.grid_size)
+        evidence = torch.cat((F.adaptive_avg_pool2d(features, size),
+                              F.adaptive_avg_pool2d(image, size)), dim=1)
+        correction = self.predict(evidence)
+        return F.interpolate(correction, size=image.shape[-2:], mode='bilinear', align_corners=False)
+
+
 def stage(channels, depth):
     return nn.Sequential(*(RestorationBlock(channels, 3 if i % 2 == 0 else 5)
                            for i in range(depth)))
@@ -104,6 +123,7 @@ class OWHLFMUNet(nn.Module):
         if detail_mode is not None:
             self.dec[1].add_module("detail", DetailRefinement(widths[1], detail_mode))
         self.rgb = nn.Conv2d(widths[0], 3, 3, padding=1)
+        self.low_frequency = None
 
     def run_stage(self, module, *inputs):
         if self.activation_checkpointing and self.training and torch.is_grad_enabled():
@@ -122,7 +142,10 @@ class OWHLFMUNet(nn.Module):
         x = self.run_stage(self.middle, x)
         for up, fuse, decode, skip in zip(self.up, self.fuse, self.dec, reversed(skips)):
             x = self.run_stage(decode, self.run_stage(fuse, up(x), skip))
-        return (padded + self.rgb(x))[:, :, :h, :w]
+        correction = self.rgb(x)
+        if self.low_frequency is not None:
+            correction = correction + self.low_frequency(x, padded)
+        return (padded + correction)[:, :, :h, :w]
 
 
 class RegionContext(nn.Module):
@@ -182,7 +205,7 @@ class HazeConditionedFusion(nn.Module):
 class OWHRegionUNet(OWHLFMUNet):
     """Single OWH design with regional attention, LFM and scene-conditioned skips."""
     def __init__(self, widths=(48, 96, 176, 320), depths=(2, 3, 4), detail_mode="strip",
-                 activation_checkpointing=False, spatial_expression=False):
+                 activation_checkpointing=False, spatial_expression=False, low_frequency_head=False):
         super().__init__(widths=widths, depths=depths, detail_mode=detail_mode,
                          activation_checkpointing=activation_checkpointing)
         self.fuse = nn.ModuleList(HazeConditionedFusion(c) for c in reversed(widths[:-1]))
@@ -192,3 +215,5 @@ class OWHRegionUNet(OWHLFMUNet):
         if spatial_expression:
             self.middle[-1][-1] = FullConvRestorationBlock(widths[-1])
             self.dec[0][-1] = FullConvRestorationBlock(widths[-2])
+        if low_frequency_head:
+            self.low_frequency = LowFrequencyRGBHead(widths[0])
