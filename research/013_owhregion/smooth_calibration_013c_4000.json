@@ -1,0 +1,20 @@
+{
+  "checkpoint": 4000,
+  "target_gradient_ratio": 0.25,
+  "subsets": {
+    "OWH-Dense-internal-v2": {
+      "n": 8,
+      "median_gradient_ratio": 0.9656574428081512
+    },
+    "OWH-Mist-internal-v2": {
+      "n": 8,
+      "median_gradient_ratio": 0.9904221594333649
+    },
+    "OWH-Moderate-internal-v2": {
+      "n": 8,
+      "median_gradient_ratio": 0.9733777642250061
+    }
+  },
+  "median_gradient_ratio": 0.9786952435970306,
+  "smooth_weight": 0.2554421324059641
+}
