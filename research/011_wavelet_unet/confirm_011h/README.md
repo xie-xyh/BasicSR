@@ -10,7 +10,7 @@
 ```bash
 bash research/011_wavelet_unet/tools/run_confirmatory.sh \
   research/011_wavelet_unet/confirm_011h \
-  experiments/011_protocol_v2_20261118/confirm_code_20261119 --check
+  . --check
 ```
 
 按仓库约定同步实验编号与配置后，将最后一个参数改成 `--run`。两组正常完成 60,000 步后才读取最终 EMA 做官方测试。结果写入 `official_60000`。
