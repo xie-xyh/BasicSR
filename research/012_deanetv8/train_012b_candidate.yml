@@ -49,6 +49,7 @@ network_g:
   type: DEANetV8
   base_dim: 32
 path:
+  experiments_root: experiments/probes
   pretrain_network_g: null
   param_key_g: params
   strict_load_g: true
@@ -98,12 +99,13 @@ val:
       test_y_channel: false
       better: higher
 logger:
+  tb_logdir: tb_logger/probes
   print_freq: 100
   save_checkpoint_freq: 2000
   use_tb_logger: true
   use_swanlab: false
   swanlab:
-    project: dehaze
+    project: dehaze-probes
     mode: online
     resume_id: null
 dist_params:
