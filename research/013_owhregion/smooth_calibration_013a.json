@@ -1,0 +1,22 @@
+{
+  "target_gradient_ratio": 0.25,
+  "subsets": {
+    "OWH-Dense-internal-v2": {
+      "n": 8,
+      "median_gradient_ratio": 0.9398558437824249,
+      "mean_gradient_ratio": 0.9420256018638611
+    },
+    "OWH-Mist-internal-v2": {
+      "n": 8,
+      "median_gradient_ratio": 0.9644472599029541,
+      "mean_gradient_ratio": 0.9606417044997215
+    },
+    "OWH-Moderate-internal-v2": {
+      "n": 8,
+      "median_gradient_ratio": 0.9216991662979126,
+      "mean_gradient_ratio": 0.9371618255972862
+    }
+  },
+  "median_gradient_ratio": 0.9509564638137817,
+  "smooth_weight": 0.26289321279481365
+}
