@@ -47,7 +47,11 @@ datasets:
     meta_info_file: research/011_wavelet_unet/protocol_v2_20261118/confirm_011p_backbone_draft/val_3_manifest.txt
 network_g:
   type: OWHRegionUNet
-  spatial_expression: true
+  widths:
+  - 64
+  - 128
+  - 224
+  - 320
   low_frequency_head: true
   activation_checkpointing: true
 path:
