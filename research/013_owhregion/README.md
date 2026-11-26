@@ -31,3 +31,5 @@ OWHRegionUNet 是完全自研的四尺度去雾主干（RestorationBlock 门控�
 | 2026-11-25 06:07 | 013a 完成 60k 训练与最终验证，保留 `net_g_latest.pth` |
 | 2026-11-26 18:11 | 将三段有效轨迹合并为单一 SwanLab 记录 [kfn2awlu](https://swanlab.cn/@xieyh/dehaze/runs/kfn2awlu)：100–36,000 取首次训练，36,100–44,000 取第一次续训，44,100–60,000 取最终续训，剔除重复和回滚区间；三条 loss 各 600 点且无缺口，验证指标完整。旧 run `ztx65lc8`、`25k5iuo3`、`i7ps5kmf` 已删除。实验目录同步清理代码快照、中间 checkpoint、原始 TensorBoard 与重试日志，仅保留最终模型、配置、合并日志和合并 SwanLab 本地记录 |
 | 2026-11-26 18:30 | 013b 两条 probe 记录迁移到独立 SwanLab 项目 `dehaze-probes`（链接已更新），正式 `dehaze` 只保留 013a；本地 probe 训练与 TensorBoard 分别归入 `experiments/probes/`、`tb_logger/probes/` |
+| 2026-11-26 20:50 | 013c 在 GPU0 从头启动 8k：[g4lmbclu](https://swanlab.cn/@xieyh/dehaze-probes/runs/g4lmbclu)；013b 首次使用 `--auto_resume` 时因框架只查 `experiments/<name>`、未查 probe 的 `experiments_root` 而误从头启动，已仅终止该误启动进程，原始 2000 步目录从归档恢复；误启动 SwanLab `u4ddjx8p` 不用于结果 |
+| 2026-11-26 20:52 | 013b 在 GPU1 以显式 `path:resume_state=.../2000.state` 正确续训：[fu6yz0pk](https://swanlab.cn/@xieyh/dehaze-probes/runs/fu6yz0pk)；日志确认从 epoch 1、iter 2000 恢复。两组均使用同版提交 `461c04e`、独立 probe 输出与 TensorBoard 目录 |
