@@ -1,0 +1,19 @@
+{
+  "date": "2026-11-26",
+  "network": "OWHRegionUNet",
+  "spatial_expression": true,
+  "parameters": 9244035,
+  "batch_size": 16,
+  "image_size": [512, 512],
+  "activation_checkpointing": true,
+  "warmup_steps": 1,
+  "timed_steps": 3,
+  "seconds_per_iter": 1.7456555536676508,
+  "peak_allocated_gib": 22.704269409179688,
+  "peak_reserved_gib": 26.6328125,
+  "gpu": 0,
+  "gpu_free_before_mib": 30469,
+  "smoke_train_iters": 6,
+  "default_checkpoint_strict_load": true,
+  "odd_size_forward_and_gradient": true
+}
