@@ -4,6 +4,18 @@ set -eu
 gpu=$1
 config=$2
 output=$3
+"$HOME/miniconda3/envs/basicsr/bin/python" - "$config" <<'PY'
+import sys
+import yaml
+
+with open(sys.argv[1]) as file:
+    config = yaml.safe_load(file)
+assert config['name'].startswith('probe_'), 'Probe config name must start with probe_.'
+assert config['path'].get('experiments_root') == 'experiments/probes'
+assert config['logger'].get('tb_logdir') == 'tb_logger/probes'
+assert (config['logger'].get('swanlab') or {}).get('project') == 'dehaze-probes'
+PY
+
 gpu_free=$(nvidia-smi -i "$gpu" --query-gpu=memory.free --format=csv,noheader,nounits)
 if (( gpu_free < 24000 )); then
     printf 'GPU %s 剩余 %s MiB，暂缓启动\n' "$gpu" "$gpu_free" >&2
@@ -13,7 +25,7 @@ mkdir "$output"
 sha256sum "$config" basicsr/archs/wavelet_unet_arch.py > "$output/source.sha256"
 revision=$(git rev-parse HEAD)
 printf '%s\n' "$revision" > "$output/revision.txt"
-bash "$(dirname "$0")/start_swanlab_bridge.sh" "$config" "$PWD/tb_logger" "$output/exit_code" "$output/swanlab"
+bash "$(dirname "$0")/start_swanlab_bridge.sh" "$config" "$PWD/tb_logger/probes" "$output/exit_code" "$output/swanlab"
 export OMP_NUM_THREADS=1 CUDA_VISIBLE_DEVICES="$gpu"
 setsid -f bash -c '
     config=$1

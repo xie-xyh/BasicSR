@@ -16,6 +16,8 @@ import yaml
 
 config = yaml.safe_load(Path(sys.argv[1]).read_text())
 logger = config['logger']
+if config['name'].startswith('probe_') and (logger.get('swanlab') or {}).get('project') != 'dehaze-probes':
+    raise SystemExit('Probe runs must use the dehaze-probes SwanLab project.')
 if not logger.get('use_tb_logger') or 'debug' in config['name']:
     raise SystemExit('TensorBoard logging is required for SwanLab tracking.')
 if logger.get('use_swanlab'):

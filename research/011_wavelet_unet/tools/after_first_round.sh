@@ -39,8 +39,8 @@ wait "$candidate_launch"
 
 printf '%s：评估 v1 的 8k EMA\n' "$(date -Is)"
 CUDA_VISIBLE_DEVICES=1 nice -n 5 python -u "$tools/paired_eval.py" \
-    "$current/011b_control.yml" experiments/probe_011b_control_owh_internal_v1_8000iter/models/net_g_latest.pth \
-    "$current/011c_detail_stem.yml" experiments/probe_011c_detail_stem_owh_internal_v1_8000iter/models/net_g_latest.pth \
+    "$current/011b_control.yml" experiments/probes/probe_011b_control_owh_internal_v1_8000iter/models/net_g_latest.pth \
+    "$current/011c_detail_stem.yml" experiments/probes/probe_011c_detail_stem_owh_internal_v1_8000iter/models/net_g_latest.pth \
     "$current/paired_8000" --phase-check
 
 wait_success "$next/run_011d_single_scale"
@@ -49,6 +49,6 @@ python "$tools/watch_training.py" "$next/run_011d_single_scale" "$next/run_011d_
 
 printf '%s：评估 v2 的 8k EMA\n' "$(date -Is)"
 CUDA_VISIBLE_DEVICES=0 nice -n 5 python -u "$tools/paired_eval.py" \
-    "$next/011d_single_scale.yml" experiments/probe_011d_single_scale_owh_internal_v2_8000iter/models/net_g_latest.pth \
-    "$next/011d_multiscale.yml" experiments/probe_011d_multiscale_owh_internal_v2_8000iter/models/net_g_latest.pth \
+    "$next/011d_single_scale.yml" experiments/probes/probe_011d_single_scale_owh_internal_v2_8000iter/models/net_g_latest.pth \
+    "$next/011d_multiscale.yml" experiments/probes/probe_011d_multiscale_owh_internal_v2_8000iter/models/net_g_latest.pth \
     "$next/paired_8000" --phase-check

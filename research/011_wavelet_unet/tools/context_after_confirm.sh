@@ -41,6 +41,6 @@ done
 
 python "$tools/watch_training.py" "$experiment"/run_{square,rectangle} --csv "$experiment/curves.csv"
 CUDA_VISIBLE_DEVICES="$gpu" python -u "$tools/paired_eval.py" \
-    "$experiment/square.yml" experiments/probe_011o_context_square_hust_v2_8000iter/models/net_g_latest.pth \
-    "$experiment/rectangle.yml" experiments/probe_011o_context_rectangle_hust_v2_8000iter/models/net_g_latest.pth \
+    "$experiment/square.yml" experiments/probes/probe_011o_context_square_hust_v2_8000iter/models/net_g_latest.pth \
+    "$experiment/rectangle.yml" experiments/probes/probe_011o_context_rectangle_hust_v2_8000iter/models/net_g_latest.pth \
     "$experiment/paired_8000" --mid-profile --correction-check --spatial-check

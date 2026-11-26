@@ -31,6 +31,6 @@ wait_file "$run/exit_code"
 [[ $(cat "$run/exit_code") == 0 ]]
 python "$tools/watch_training.py" "$protocol/run_011i_control" "$run" --csv "$protocol/mid_curves.csv"
 CUDA_VISIBLE_DEVICES=1 python -u "$tools/paired_eval.py" \
-    "$protocol/011i_control.yml" experiments/probe_011i_coarse_control_hust_v2_8000iter/models/net_g_latest.pth \
-    "$protocol/011j_mid_band.yml" experiments/probe_011j_mid_band_hust_v2_8000iter/models/net_g_latest.pth \
+    "$protocol/011i_control.yml" experiments/probes/probe_011i_coarse_control_hust_v2_8000iter/models/net_g_latest.pth \
+    "$protocol/011j_mid_band.yml" experiments/probes/probe_011j_mid_band_hust_v2_8000iter/models/net_g_latest.pth \
     "$protocol/paired_mid_8000" --mid-profile --correction-check --spatial-check

@@ -28,6 +28,6 @@ done
 
 python "$tools/watch_training.py" "$protocol"/run_011i_{control,candidate} --csv "$protocol/coarse_curves.csv"
 CUDA_VISIBLE_DEVICES=1 python -u "$tools/paired_eval.py" \
-    "$protocol/011i_control.yml" experiments/probe_011i_coarse_control_hust_v2_8000iter/models/net_g_latest.pth \
-    "$protocol/011i_candidate.yml" experiments/probe_011i_coarse_candidate_hust_v2_8000iter/models/net_g_latest.pth \
+    "$protocol/011i_control.yml" experiments/probes/probe_011i_coarse_control_hust_v2_8000iter/models/net_g_latest.pth \
+    "$protocol/011i_candidate.yml" experiments/probes/probe_011i_coarse_candidate_hust_v2_8000iter/models/net_g_latest.pth \
     "$protocol/paired_coarse_8000" --correction-check --spatial-check

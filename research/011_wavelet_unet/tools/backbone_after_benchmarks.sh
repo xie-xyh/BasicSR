@@ -63,6 +63,6 @@ for arm in dea wavelet; do
 done
 python "$tools/watch_training.py" "$round"/run_{dea,wavelet} --csv "$round/curves.csv"
 CUDA_VISIBLE_DEVICES=0 python -u "$tools/paired_eval.py" \
-    "$round/wavelet.yml" "experiments/probe_011k_matched_wavelet_hust_v2_8000iter_b$batch/models/net_g_latest.pth" \
-    "$round/dea.yml" "experiments/probe_011k_matched_dea_hust_v2_8000iter_b$batch/models/net_g_latest.pth" \
+    "$round/wavelet.yml" "experiments/probes/probe_011k_matched_wavelet_hust_v2_8000iter_b$batch/models/net_g_latest.pth" \
+    "$round/dea.yml" "experiments/probes/probe_011k_matched_dea_hust_v2_8000iter_b$batch/models/net_g_latest.pth" \
     "$round/paired_8000" --correction-check --mid-profile

@@ -52,6 +52,6 @@ wait_success "$protocol/run_011b_width_control"
 python "$tools/watch_training.py" "$protocol/run_011b_width_control" "$protocol/run_011f_width" \
     --csv "$protocol/width_curves.csv"
 CUDA_VISIBLE_DEVICES=0 python -u "$tools/paired_eval.py" \
-    "$protocol/011b_width_control.yml" experiments/probe_011b_width_control_hust_v2_8000iter/models/net_g_latest.pth \
-    "$protocol/011f_width.yml" experiments/probe_011f_width_hust_v2_8000iter/models/net_g_latest.pth \
+    "$protocol/011b_width_control.yml" experiments/probes/probe_011b_width_control_hust_v2_8000iter/models/net_g_latest.pth \
+    "$protocol/011f_width.yml" experiments/probes/probe_011f_width_hust_v2_8000iter/models/net_g_latest.pth \
     "$protocol/paired_width_8000" --phase-check

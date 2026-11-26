@@ -17,6 +17,11 @@ from basicsr.utils import (AvgTimer, MessageLogger, check_resume, get_env_info, 
 from basicsr.utils.options import copy_opt_file, dict2str, parse_options
 
 
+def get_tb_logdir(opt):
+    root = opt['logger'].get('tb_logdir') or osp.join(opt['root_path'], 'tb_logger')
+    return osp.join(root, opt['name'])
+
+
 def init_tb_loggers(opt):
     # initialize swanlab logger before tensorboard logger to allow proper sync
     if opt['logger'].get('use_swanlab') and ('debug' not in opt['name']):
@@ -24,7 +29,7 @@ def init_tb_loggers(opt):
         init_swanlab_logger(opt)
     tb_logger = None
     if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name']:
-        tb_logger = init_tb_logger(log_dir=osp.join(opt['root_path'], 'tb_logger', opt['name']))
+        tb_logger = init_tb_logger(log_dir=get_tb_logdir(opt))
     return tb_logger
 
 
@@ -140,7 +145,7 @@ def train_pipeline(root_path):
     if resume_state is None:
         make_exp_dirs(opt)
         if opt['logger'].get('use_tb_logger') and 'debug' not in opt['name'] and opt['rank'] == 0:
-            mkdir_and_rename(osp.join(opt['root_path'], 'tb_logger', opt['name']))
+            mkdir_and_rename(get_tb_logdir(opt))
 
     # copy the yml file to the experiment root
     copy_opt_file(args.opt, opt['path']['experiments_root'])
