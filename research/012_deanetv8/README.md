@@ -133,7 +133,7 @@ DEA-Net+LFM 在 60k 同预算下三个子集领先 +1.21/+1.71/+1.41 dB，011k �
 | 时间 | 事件 |
 |---|---|
 | 2026-11-20 ~15:00 | 011p 完成（exit 0），定案 DEA+LFM 为 012 系列主干基线；012a 双臂（control=DEANetV3-LFM / branch=DEANetV7，各 8k，seed 0，batch 16）分别在 GPU0/GPU1 启动 |
-| 2026-11-20 14:49 | 两臂经 swanlab_bridge 接入 SwanLab（训练配置 use_swanlab:false，外部同步不改训练）：[对照组](https://swanlab.cn/@xieyh/dehaze/runs/jijacr88)、[分支组](https://swanlab.cn/@xieyh/dehaze/runs/nk3zqqbk)，历史标量已回填，每 30 秒增量同步 |
+| 2026-11-20 14:49 | 两臂经 swanlab_bridge 接入 SwanLab（训练配置 use_swanlab:false，外部同步不改训练）：[对照组](https://swanlab.cn/@xieyh/dehaze-probes/runs/n0ny294z)、[分支组](https://swanlab.cn/@xieyh/dehaze-probes/runs/wq47wgis)，历史标量已回填，每 30 秒增量同步 |
 | 2026-11-20 16:26 | 012a 8k 探针完成并做逐图配对评估（283 张 v2 内部图，两份 8k EMA，`paired_8000/summary.json`） |
 
 ### 012a 8k 终点结果与决策（2026-11-20）
@@ -193,7 +193,7 @@ DEA-Net+LFM 在 60k 同预算下三个子集领先 +1.21/+1.71/+1.41 dB，011k �
 ### 稳定性教训（计入设计约束）
 
 exp 参数化的门控必须带取值钳制：无钳制的 `x·exp(−s)` 在 s<0 时是正反馈放大器。后续凡使用指数门一律 `clamp(s, 0, 4)`。fc 坍缩贴边（fc2→0.02）未直接导致发散，但若重启后再次贴边且验证受损，下一轮把 fc_min 提到 0.04 或对边界预测器用 0.1× 学习率。
-| 2026-11-20 22:34 | 修复后重启（GPU0），新 SwanLab run：[probe_012b_candidate](https://swanlab.cn/@xieyh/dehaze/runs/j9ouoiud)；注意 GPU1 上有无关的 013a_owhregion 实验在跑（非本序列任务，未触碰），本探针只用 GPU0 |
+| 2026-11-20 22:34 | 修复后重启（GPU0），新 SwanLab run：[probe_012b_candidate](https://swanlab.cn/@xieyh/dehaze-probes/runs/u0m4rhek)；注意 GPU1 上有无关的 013a_owhregion 实验在跑（非本序列任务，未触碰），本探针只用 GPU0 |
 | 2026-11-21 00:33 | 012b 8k 探针完成，逐图配对评估（对照=012a seed-0 控制组，`paired_012b_8000/summary.json`） |
 
 ### 012b 8k 终点结果与决策（2026-11-21）
@@ -216,3 +216,5 @@ exp 参数化的门控必须带取值钳制：无钳制的 `x·exp(−s)` 在 s<
 - 家族累计判词：低频平行通路三种形态（012a 固定边界、012a seed1、012b 自适应+跳连门）全部"机理打中频段、净收益触顶 ~0.1~0.2 dB"，低于 60k 阈值；**低频通路家族正式封档**。
 - 012 系列最终结论（写入论文负结果部分）："低频全局校正需要独立通路"成立（004a LFM +0.13），但加深该通路的三种尝试均未超过调制器形式本身；残差误差虽然集中在 DC~0.02，但该频段的可兑现收益已被 LFM 基本榨干，剩余误差以"校正不足与过校正并存"的形态存在，不是任何低频机制单独能解的。
 - 下一步（按 §8）：①容量主线（DEA base_dim 扩展 + 011f 式加宽，011p 基线已就位）；②SOTA bench（sota_benchmark §5 第一梯队）；DEANetV8 代码与三次运行记录归档保留（含 exp 门 clamp 的稳定性教训）。
+
+2026-11-26 记录整理：012 的 7 条 probe SwanLab 记录已全量迁移到独立项目 [`dehaze-probes`](https://swanlab.cn/@xieyh/dehaze-probes)，逐指标核对一致后从正式 `dehaze` 项目删除；本地训练与 TensorBoard 目录分别归入 `experiments/probes/` 和 `tb_logger/probes/`。迁移映射保存在 `experiments/probes/swanlab/migration_manifest.json`。

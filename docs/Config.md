@@ -207,6 +207,8 @@ logger:
   save_checkpoint_freq: !!float 5e3
   # Whether to tensorboard logger
   use_tb_logger: true
+  # Optional TensorBoard root directory; null defaults to <repo>/tb_logger. Probe configs use tb_logger/probes
+  tb_logdir: ~
   # Whether to use swanlab logger. SwanLab syncs tensorboard scalars and images, so tensorboard should also be turned on
   use_swanlab: true
   swanlab:

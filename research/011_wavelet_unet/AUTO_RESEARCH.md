@@ -296,7 +296,7 @@ Dense 继续优先验证 011i 的平滑残差。Mist 即便在上述假设下仍
 
 ### SwanLab：训练默认可见
 
-`launch_probe.sh` 和 `run_confirmatory.sh` 都接入 `start_swanlab_bridge.sh`。如配置已启用原生在线 SwanLab，就保留原生记录，避免重复创建；否则启动独立 CPU 进程，将 TensorBoard 标量持续同步到 `dehaze`。缺少 TensorBoard 时启动检查会报错。同步进程独立记录 URL、进度与退出码；网络异常可查各实验的 `swanlab/console.log`（长训为 `run/<组名>_swanlab/console.log`）。这种同步不改变训练配置、损失或预算。
+`launch_probe.sh` 和 `run_confirmatory.sh` 都接入 `start_swanlab_bridge.sh`。如配置已启用原生在线 SwanLab，就保留原生记录，避免重复创建；否则启动独立 CPU 进程同步 TensorBoard 标量。正式确认实验同步到 `dehaze`，probe 同步到独立的 `dehaze-probes`，并分别写入 `experiments/probes` 与 `tb_logger/probes`；启动脚本会拒绝项目或目录不符合隔离约定的 probe 配置。缺少 TensorBoard 时启动检查会报错。同步进程独立记录 URL、进度与退出码；网络异常可查各实验的 `swanlab/console.log`（长训为 `run/<组名>_swanlab/console.log`）。这种同步不改变训练配置、损失或预算。2026-11-26 使用 `probe_tb_layout_smoke` 完成 6 iter 真实训练验证：checkpoint 写入 `experiments/probes`，TensorBoard 写入 `tb_logger/probes`，验证与最终模型保存正常，临时产物已清理。
 
 已在不中断训练的情况下补同步 [011j 中频残差](https://swanlab.cn/@xieyh/dehaze/runs/zepet2tv) 和 [011k DEA-Net](https://swanlab.cn/@xieyh/dehaze/runs/1zssuve9)，两边均收到标量，之后启动的 011k 小波组将自动接入。该约定覆盖研究启动脚本发起的实验；独立的冒烟和测速保持本地。
 
