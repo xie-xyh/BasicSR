@@ -37,5 +37,5 @@ while :; do
 done
 printf '%s 011n candidate: %s\n' "$(date -Is)" "$candidate"
 run="$protocol/confirm_011n_$candidate"
-bash "$tools/run_confirmatory.sh" "$run" "$protocol/confirm_code_011n" --staggered
+bash "$tools/run_confirmatory.sh" "$run" "$PWD" --staggered
 "$HOME/miniconda3/envs/basicsr/bin/python" "$tools/audit_final.py" "$run"

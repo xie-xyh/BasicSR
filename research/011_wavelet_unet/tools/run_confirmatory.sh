@@ -8,7 +8,11 @@ root=$PWD
 export PATH="$HOME/miniconda3/envs/basicsr/bin:$PATH"
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 
-(cd "$snapshot"; sha256sum -c --quiet source.sha256)
+if [[ -f "$snapshot/source.sha256" ]]; then
+    (cd "$snapshot"; sha256sum -c --quiet source.sha256)
+else
+    [[ -f "$snapshot/basicsr/train.py" ]]
+fi
 python - "$config_dir" "$root" <<'PY'
 import hashlib
 import json

@@ -56,8 +56,8 @@ for arm in smooth band; do
     control_name=$(sed -n 's/^name: //p' "$out/control.yml")
     candidate_name=$(sed -n 's/^name: //p' "$out/$arm.yml")
     CUDA_VISIBLE_DEVICES="$evaluation_gpu" python -u "$tools/paired_eval.py" \
-        "$out/control.yml" "experiments/$control_name/models/net_g_latest.pth" \
-        "$out/$arm.yml" "experiments/$candidate_name/models/net_g_latest.pth" \
+        "$out/control.yml" "experiments/probes/$control_name/models/net_g_latest.pth" \
+        "$out/$arm.yml" "experiments/probes/$candidate_name/models/net_g_latest.pth" \
         "$out/paired_$arm" --correction-check --mid-profile
 done
 python "$tools/compare_paired_tables.py" "$out/paired_band/pairs.csv" "$out/paired_smooth/pairs.csv" \

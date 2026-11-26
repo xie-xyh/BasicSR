@@ -5,7 +5,7 @@ protocol=$(realpath "$1")
 tools=$(realpath "$(dirname "$0")")
 export PATH="$HOME/miniconda3/envs/basicsr/bin:$PATH"
 run="$protocol/confirm_011p_backbone_draft"
-snapshot="$protocol/confirm_code_011n"
+snapshot="$PWD"
 deadline=$((SECONDS + 21600))
 until [[ -s "$protocol/confirm_011n_queue.exit" ]]; do
     (( SECONDS < deadline )) || exit 1
