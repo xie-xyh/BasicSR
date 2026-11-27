@@ -1,6 +1,7 @@
 # 013 — OWHRegionUNet：自研架构主线
 
 > 设计文档与实验记录。013a 架构已合入主仓库 `basicsr/archs/owh_lfm_unet_arch.py`（参数化 widths/depths，默认值与 013a 原快照同构）。正式实验目录 `experiments/013a_owhregion_20261120/` 仅保留最终模型、训练配置、合并训练日志与完整 SwanLab 记录。
+> **2026-11-27 诊断与路线切换**：013a/b/c 相对 011p 的代码级全量归因已整理至 `DIAGNOSIS_013_VS_011P.md`；暂缓 013d/013e 末端补丁与止损消融，直接转入下一代 3 尺度空频物理对齐主干 **014（`research/014_maritime_sfnet/README.md`）**。
 
 ## 1. 定位
 
