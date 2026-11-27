@@ -30,7 +30,7 @@ if [[ -n "$resume_flag" && "$resume_flag" != "--auto_resume" ]]; then
     exit 1
 fi
 
-master_port=$("$python" - "$config" "$resume_flag" "$ngpu" <<'PY'
+read -r master_port exp_name tb_dir < <("$python" - "$config" "$resume_flag" "$ngpu" <<'PY'
 import sys
 from pathlib import Path
 import yaml
@@ -55,7 +55,7 @@ if resume_mode:
     assert states, f'No .state checkpoints found for --auto_resume under {experiment / "training_states"}'
 else:
     assert not experiment.exists(), f'Experiment already exists (pass --auto_resume to continue): {experiment}'
-print(config.get('dist_params', {}).get('port', 29500))
+print(config.get('dist_params', {}).get('port', 29500), config['name'], config['logger']['tb_logdir'])
 PY
 )
 
@@ -70,6 +70,11 @@ for g in "${gpu_list[@]}"; do
         exit 1
     fi
 done
+
+# 首次启动前若遗留同名旧 TensorBoard 目录（如上次失败运行残留），先归档，防止 SwanLab 桥接误抓旧文件
+if [[ -z "$resume_flag" && -d "$tb_dir/$exp_name" ]]; then
+    mv "$tb_dir/$exp_name" "$tb_dir/${exp_name}_archived_$(date +%Y%m%d_%H%M%S)"
+fi
 
 mkdir "$output"
 sha256sum "$config" basicsr/archs/maritime_sfnet_arch.py basicsr/models/maritime_sf_model.py > "$output/source.sha256"
@@ -111,6 +116,17 @@ setsid -f bash -c '
     status=$?
     printf "%s\n" "$status" > "$output/exit_code"
     printf "结束 %s，退出码 %s\n" "$(date -Is)" "$status"
+    # 训练正常结束后，待 SwanLab 桥接退出后自动清理临时控制文件（pid / exit_code）
+    if (( status == 0 )); then
+        if [[ -f "$output/swanlab/pid" ]]; then
+            swan_pid=$(cat "$output/swanlab/pid")
+            for _ in $(seq 1 90); do
+                kill -0 "$swan_pid" 2>/dev/null || break
+                sleep 2
+            done
+        fi
+        rm -f "$output/pid" "$output/exit_code" "$output/swanlab/pid" "$output/swanlab/exit_code"
+    fi
     exit "$status"
 ' probe "$config" "$output" "$resume_flag" "$ngpu" "$master_port" "$cpu_affinity" </dev/null >/dev/null 2>&1
 printf '已启动 %s，GPU %s (ngpu=%s, cpu_affinity=%s)，日志 %s/console.log\n' "$config" "$gpu" "$ngpu" "${cpu_affinity:-all}" "$output"
