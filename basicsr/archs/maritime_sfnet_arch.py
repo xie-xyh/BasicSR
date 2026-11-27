@@ -555,8 +555,11 @@ class MaritimeSFNet(nn.Module):
         use_deep_supervision (bool): Enable 1/4 and 1/2 training-only auxiliary
             BASR heads (014c, skipped at eval for zero inference overhead).
             Default: False.
-        activation_checkpointing (bool): Gradient checkpointing for heavy VRAM
-            configs. Default: False (enable on 24G GPUs with bs=16).
+        activation_checkpointing (bool | str): Gradient checkpointing mode.
+            False: disabled; True / 'all': checkpoint all stages;
+            'high_res': checkpoint 1x (512x512) stages only (enc1, fcsf1, dec1);
+            'l1_l2': checkpoint 1x and 1/2 stages (enc1/2, fcsf1/2, dec1/2).
+            Default: False.
     """
 
     def __init__(
@@ -693,8 +696,20 @@ class MaritimeSFNet(nn.Module):
         self.aux_outputs = {}
         self.diagnostics = {}
 
-    def _run(self, module, *inputs):
-        if self.activation_checkpointing and self.training and torch.is_grad_enabled():
+    def _should_checkpoint(self, level):
+        mode = self.activation_checkpointing
+        if not mode:
+            return False
+        if mode is True or mode == 'all':
+            return True
+        if mode == 'high_res':
+            return level == 'l1'
+        if mode == 'l1_l2':
+            return level in ('l1', 'l2')
+        raise ValueError(f'Unknown activation_checkpointing mode: {mode!r}')
+
+    def _run(self, module, *inputs, level='l3'):
+        if self._should_checkpoint(level) and self.training and torch.is_grad_enabled():
             return checkpoint(module, *inputs, use_reentrant=False)
         return module(*inputs)
 
@@ -738,32 +753,32 @@ class MaritimeSFNet(nn.Module):
             if need_img_1_4 else None)
 
         # Encoder
-        s1 = self._run(self.enc1, self.stem(padded))
+        s1 = self._run(self.enc1, self.stem(padded), level='l1')
         x2 = self.down1(s1)
         if self.mimo_in2 is not None:
             x2 = x2 + self.mimo_in2(img_1_2)
-        s2 = self._run(self.enc2, x2)
+        s2 = self._run(self.enc2, x2, level='l2')
 
         x3 = self.down2(s2)
         if self.mimo_in3 is not None:
             x3 = x3 + self.mimo_in3(img_1_4)
 
         # 1/4 Bottleneck
-        b = self._run(self.bot_seg1, x3)
-        b = self._run(self.asfb1, b)
-        b = self._run(self.bot_seg2, b)
-        b = self._run(self.asfb2, b)
-        b = self._run(self.bot_seg3, b)
-        b = self._run(self.fcsf3, b, x3)
+        b = self._run(self.bot_seg1, x3, level='l3')
+        b = self._run(self.asfb1, b, level='l3')
+        b = self._run(self.bot_seg2, b, level='l3')
+        b = self._run(self.asfb2, b, level='l3')
+        b = self._run(self.bot_seg3, b, level='l3')
+        b = self._run(self.fcsf3, b, x3, level='l3')
 
         # Decoder
-        d2 = self._run(self.fcsf2, self.up2(b, target_size=s2.shape[-2:]), s2)
-        d2 = self._run(self.dec2, d2)
+        d2 = self._run(self.fcsf2, self.up2(b, target_size=s2.shape[-2:]), s2, level='l2')
+        d2 = self._run(self.dec2, d2, level='l2')
         if self.dec2_aniso_lk is not None:
-            d2 = self._run(self.dec2_aniso_lk, d2)
+            d2 = self._run(self.dec2_aniso_lk, d2, level='l2')
 
-        d1 = self._run(self.fcsf1, self.up1(d2, target_size=s1.shape[-2:]), s1)
-        d1 = self._run(self.dec1, d1)
+        d1 = self._run(self.fcsf1, self.up1(d2, target_size=s1.shape[-2:]), s1, level='l1')
+        d1 = self._run(self.dec1, d1, level='l1')
 
         out = self.basr_head(d1, padded)
 
