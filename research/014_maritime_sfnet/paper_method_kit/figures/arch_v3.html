@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>MaritimeSFNet Architecture v3 (Final Print Master)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #FFFFFF;
+    width: 1480px;
+    height: 916px;
+    overflow: hidden;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  svg { display: block; width: 1480px; height: 916px; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 916" width="1480" height="916">
+  <defs>
+    <marker id="arr-ink" viewBox="0 0 10 8" refX="8.6" refY="4" markerWidth="6.2" markerHeight="5.0" orient="auto">
+      <path d="M 0 0.7 L 9.1 4 L 0 7.3 z" fill="#24292F"/>
+    </marker>
+    <marker id="arr-ochre" viewBox="0 0 10 8" refX="8.6" refY="4" markerWidth="6.2" markerHeight="5.0" orient="auto">
+      <path d="M 0 0.7 L 9.1 4 L 0 7.3 z" fill="#9B7432"/>
+    </marker>
+    <marker id="arr-terra" viewBox="0 0 10 8" refX="8.6" refY="4" markerWidth="6.2" markerHeight="5.0" orient="auto">
+      <path d="M 0 0.7 L 9.1 4 L 0 7.3 z" fill="#A95035"/>
+    </marker>
+    <marker id="arr-teal" viewBox="0 0 10 8" refX="8.6" refY="4" markerWidth="6.2" markerHeight="5.0" orient="auto">
+      <path d="M 0 0.7 L 9.1 4 L 0 7.3 z" fill="#2F6B60"/>
+    </marker>
+    <marker id="arr-slate" viewBox="0 0 10 8" refX="8.6" refY="4" markerWidth="6.2" markerHeight="5.0" orient="auto">
+      <path d="M 0 0.7 L 9.1 4 L 0 7.3 z" fill="#3B5978"/>
+    </marker>
+    <linearGradient id="hazy-sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#DCE4EA"/>
+      <stop offset="53%" stop-color="#E8EDF0"/>
+      <stop offset="56%" stop-color="#C6D2DB"/>
+      <stop offset="100%" stop-color="#A6B7C6"/>
+    </linearGradient>
+    <linearGradient id="clear-sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8FB4D4"/>
+      <stop offset="53%" stop-color="#D2E3F0"/>
+      <stop offset="56%" stop-color="#456E90"/>
+      <stop offset="100%" stop-color="#274B6B"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    .panel-bg { fill: #FFFFFF; stroke: #CBD5E1; stroke-width: 1.2; }
+    .subpanel-bg { fill: #FBFCFD; stroke: #CBD5E1; stroke-width: 1.2; }
+    .inner-card { fill: #FFFFFF; stroke: #DCE4EC; stroke-width: 1.0; }
+    .stage-band { fill: #F8FAFC; stroke: none; }
+    .bot-zone { fill: #F2F7F6; stroke: #8EB2AA; stroke-width: 1.15; stroke-dasharray: 5 3.5; }
+
+    /* Semantic 4-hue Morandi-IEEE blocks */
+    .blk-slate { fill: #EDF2F7; stroke: #3B5978; stroke-width: 1.35; }
+    .blk-slate-deep { fill: #DCE6F1; stroke: #3B5978; stroke-width: 1.3; }
+    .blk-teal { fill: #E6F2EF; stroke: #2F6B60; stroke-width: 1.4; }
+    .blk-teal-soft { fill: #F0F7F5; stroke: #4C877C; stroke-width: 1.25; }
+    .blk-ochre { fill: #FAF2E3; stroke: #9B7432; stroke-width: 1.35; }
+    .blk-terra { fill: #F9EAE5; stroke: #A95035; stroke-width: 1.4; }
+    .blk-neutral { fill: #F8F9FA; stroke: #64748B; stroke-width: 1.15; }
+
+    /* Connectors */
+    .flow { fill: none; stroke: #24292F; stroke-width: 1.35; marker-end: url(#arr-ink); }
+    .flow-line { fill: none; stroke: #24292F; stroke-width: 1.35; }
+    .skip-ochre { fill: none; stroke: #9B7432; stroke-width: 1.25; stroke-dasharray: 4.5 3; marker-end: url(#arr-ochre); }
+    .skip-terra { fill: none; stroke: #A95035; stroke-width: 1.3; stroke-dasharray: 5 3; marker-end: url(#arr-terra); }
+    .skip-slate { fill: none; stroke: #3B5978; stroke-width: 1.25; marker-end: url(#arr-slate); }
+
+    /* Typography */
+    .panel-title { font-size: 13px; font-weight: 700; fill: #1F2933; letter-spacing: -0.1px; }
+    .card-title { font-size: 11px; font-weight: 700; fill: #1F2933; text-anchor: middle; }
+    .blk-title { font-size: 10.6px; font-weight: 600; fill: #1F2933; text-anchor: middle; }
+    .blk-sub { font-size: 9px; font-weight: 400; fill: #3E4C59; text-anchor: middle; }
+    .blk-small { font-size: 9.2px; font-weight: 600; fill: #24292F; text-anchor: middle; }
+    .scale-tag { font-size: 9.5px; font-weight: 700; fill: #475569; }
+    .ref-pill { fill: #FFFFFF; stroke: #94A3B8; stroke-width: 0.9; }
+    .ref-txt { font-size: 8.2px; font-weight: 700; fill: #475569; text-anchor: middle; dominant-baseline: central; }
+    .math { font-family: 'Times New Roman', Georgia, serif; font-style: italic; fill: #1F2933; }
+    .math-rm { font-family: 'Times New Roman', Georgia, serif; font-style: normal; fill: #1F2933; }
+    .dim-txt { font-family: 'Times New Roman', Georgia, serif; font-style: italic; font-size: 10px; fill: #475569; }
+    .op-circ { fill: #FFFFFF; stroke: #24292F; stroke-width: 1.25; }
+    .op-sym { font-size: 11.5px; font-weight: 700; fill: #24292F; text-anchor: middle; dominant-baseline: central; }
+    .lora-dot { fill: #A95035; stroke: #FFFFFF; stroke-width: 0.9; }
+    .lora-txt { font-size: 7.5px; font-weight: 700; fill: #FFFFFF; text-anchor: middle; dominant-baseline: central; }
+    .legend-txt { font-size: 9.3px; fill: #334155; }
+  </style>
+
+  <!-- Canvas -->
+  <rect x="0" y="0" width="1480" height="916" fill="#FFFFFF"/>
+
+  <!-- ===================================================================== -->
+  <!-- PANEL (a): OVERALL 3-SCALE MARITIMESFNET BACKBONE                     -->
+  <!-- ===================================================================== -->
+  <rect x="14" y="12" width="1452" height="450" rx="6" class="panel-bg"/>
+  <text x="28" y="34" class="panel-title">
+    (a) Overall Three-Scale MaritimeSFNet Backbone (Max Downsampling Stride <tspan class="math" font-size="13">s</tspan> = 4, Scale-Bandwidth Aligned)
+  </text>
+
+  <!-- Horizontal Scale Tier Bands -->
+  <rect x="24" y="66" width="1432" height="98" rx="4" class="stage-band"/>
+  <rect x="24" y="182" width="1432" height="98" rx="4" class="stage-band"/>
+  <rect x="24" y="298" width="1432" height="122" rx="4" class="stage-band"/>
+
+  <!-- Far-left Scale Annotations -->
+  <text x="32" y="84" class="scale-tag">Scale 1 (1×)</text>
+  <text x="32" y="98" class="dim-txt">H × W, C<tspan font-style="normal" font-size="7.5" dy="2">1</tspan><tspan dy="-2"> = 36</tspan></text>
+  <text x="32" y="200" class="scale-tag">Scale 2 (1/2)</text>
+  <text x="32" y="214" class="dim-txt">H/2 × W/2, C<tspan font-style="normal" font-size="7.5" dy="2">2</tspan><tspan dy="-2"> = 72</tspan></text>
+  <text x="32" y="316" class="scale-tag">Scale 3 (1/4)</text>
+  <text x="32" y="330" class="dim-txt">H/4 × W/4, C<tspan font-style="normal" font-size="7.5" dy="2">3</tspan><tspan dy="-2"> = 144</tspan></text>
+
+  <!-- Input Hazy Maritime Image Thumbnail -->
+  <g transform="translate(106, 86)">
+    <rect x="0" y="0" width="56" height="48" rx="3" fill="url(#hazy-sea)" stroke="#3B5978" stroke-width="1.3"/>
+    <line x1="2" y1="26" x2="54" y2="26" stroke="#9AA9B6" stroke-width="0.9"/>
+    <path d="M 15 26 L 19 21 L 37 21 L 41 26 Z" fill="#8B9AA8"/>
+    <rect x="25" y="17" width="6" height="4" fill="#9AA9B6"/>
+    <text x="28" y="61" class="blk-sub">Hazy <tspan class="math" font-size="10.5">I</tspan> (3×<tspan class="math" font-size="9.5">H</tspan>×<tspan class="math" font-size="9.5">W</tspan>)</text>
+  </g>
+
+  <!-- Top Raw Radiance Skip I -> C2-BASR (exact center x=1327!) -->
+  <path d="M 134 86 L 134 52 Q 134 46 140 46 L 1321 46 Q 1327 46 1327 52 L 1327 86" class="skip-terra"/>
+  <rect x="612" y="37" width="236" height="17" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="0.8"/>
+  <text x="730" y="49" class="blk-sub" fill="#8B3F28">
+    Raw Hazy Radiance Skip <tspan class="math" fill="#8B3F28" font-size="10.5">I</tspan> (Physics Affine Base)
+  </text>
+
+  <!-- MIMO Multi-Scale Encoder Injections -->
+  <path d="M 134 150 L 134 225 Q 134 231 140 231 L 170 231" class="skip-ochre"/>
+  <path d="M 134 229 L 134 352 Q 134 358 140 358 L 186 358" class="skip-ochre"/>
+
+  <rect x="172" y="215" width="70" height="32" rx="4" class="blk-ochre"/>
+  <text x="207" y="229" class="blk-small" fill="#4F3A14">MIMO (↓2×)</text>
+  <text x="207" y="241" class="blk-sub" fill="#6E5220">Conv 3×3<tspan font-size="7" dy="2">0</tspan></text>
+
+  <rect x="188" y="342" width="70" height="32" rx="4" class="blk-ochre"/>
+  <text x="223" y="356" class="blk-small" fill="#4F3A14">MIMO (↓4×)</text>
+  <text x="223" y="368" class="blk-sub" fill="#6E5220">Conv 3×3<tspan font-size="7" dy="2">0</tspan></text>
+
+  <!-- ENCODER L1: Stem -> Enc1 -> Down1 -->
+  <path d="M 162 110 L 180 110" class="flow"/>
+  <rect x="182" y="90" width="54" height="40" rx="4" class="blk-slate"/>
+  <text x="209" y="107" class="blk-title">Stem</text>
+  <text x="209" y="120" class="blk-sub">3×3</text>
+
+  <path d="M 236 110 L 252 110" class="flow"/>
+  <rect x="258" y="86" width="96" height="44" rx="4" class="blk-slate" opacity="0.5"/>
+  <rect x="254" y="90" width="96" height="44" rx="4" class="blk-slate"/>
+  <text x="302" y="108" class="blk-title">Enc1 (×3)</text>
+  <text x="302" y="122" class="blk-sub">Rep5-CD Block</text>
+  <!-- Cross-reference tag (b) -->
+  <rect x="256" y="75" width="20" height="13" rx="3" class="ref-pill"/>
+  <text x="266" y="81.5" class="ref-txt">(b)</text>
+
+  <!-- Down1: Enc1 -> L2 sum -->
+  <path d="M 302 134 L 302 162 Q 302 168 296 168 L 270 168 Q 264 168 264 174 L 264 220" class="flow"/>
+  <rect x="234" y="158" width="84" height="20" rx="3" class="blk-slate-deep"/>
+  <text x="276" y="171" class="blk-sub" font-weight="600">Down1 (3×3, s=2)</text>
+
+  <!-- ENCODER L2: MIMO + Down1 -> Enc2 -> Down2 -->
+  <path d="M 242 231 L 253 231" class="skip-ochre"/>
+  <circle cx="264" cy="231" r="8.5" class="op-circ"/>
+  <text x="264" y="231" class="op-sym">+</text>
+  <path d="M 272.5 231 L 288 231" class="flow"/>
+
+  <rect x="294" y="205" width="96" height="44" rx="4" class="blk-slate" opacity="0.5"/>
+  <rect x="290" y="209" width="96" height="44" rx="4" class="blk-slate"/>
+  <text x="338" y="227" class="blk-title">Enc2 (×3)</text>
+  <text x="338" y="241" class="blk-sub">Rep5-CD Block</text>
+
+  <!-- Down2: Enc2 -> L3 sum -->
+  <path d="M 338 253 L 338 280 Q 338 286 332 286 L 286 286 Q 280 286 280 292 L 280 347" class="flow"/>
+  <rect x="256" y="276" width="84" height="20" rx="3" class="blk-slate-deep"/>
+  <text x="298" y="289" class="blk-sub" font-weight="600">Down2 (3×3, s=2)</text>
+
+  <!-- 1/4 BOTTLENECK ZONE -->
+  <rect x="266" y="306" width="594" height="106" rx="6" class="bot-zone"/>
+  <text x="278" y="321" class="scale-tag" fill="#2F6B60">
+    1/4 Bottleneck (<tspan class="math" fill="#2F6B60" font-size="10">C</tspan><tspan font-size="7" dy="2" fill="#2F6B60">3</tspan><tspan dy="-2"> = 144, Norm-Free DC Preserving)</tspan>
+  </text>
+
+  <path d="M 258 358 L 269 358" class="skip-ochre"/>
+  <circle cx="280" cy="358" r="8.5" class="op-circ"/>
+  <text x="280" y="358" class="op-sym">+</text>
+  <path d="M 288.5 358 L 302 358" class="flow"/>
+
+  <!-- Bottleneck Residual Skip x3 -> FCSF3 -->
+  <path d="M 280 366.5 L 280 396 Q 280 402 286 402 L 803 402 Q 809 402 809 396 L 809 382" class="skip-ochre"/>
+  <text x="544" y="397" class="blk-sub" fill="#7D5B22">
+    1/4 Bottleneck Residual Skip (<tspan class="math" fill="#7D5B22" font-size="10">x</tspan><tspan font-size="7" dy="2" fill="#7D5B22">3</tspan><tspan dy="-2">)</tspan>
+  </text>
+
+  <!-- Bot1 -> ASFB1 -> Bot2 -> ASFB2 -> Bot3 -> FCSF3 -->
+  <rect x="304" y="336" width="76" height="44" rx="4" class="blk-teal-soft"/>
+  <text x="342" y="354" class="blk-title">Bot1 (×2)</text>
+  <text x="342" y="368" class="blk-sub">Rep5+DCA</text>
+  <rect x="306" y="325" width="20" height="13" rx="3" class="ref-pill"/>
+  <text x="316" y="331.5" class="ref-txt">(b)</text>
+
+  <path d="M 380 358 L 392 358" class="flow"/>
+  <rect x="394" y="334" width="84" height="48" rx="4" class="blk-teal"/>
+  <text x="436" y="353" class="blk-title" fill="#174038">ASFB-1</text>
+  <text x="436" y="367" class="blk-sub" fill="#23574E">LFM + LK</text>
+  <circle cx="472" cy="340" r="6" class="lora-dot"/>
+  <text x="472" y="340" class="lora-txt">L</text>
+  <rect x="396" y="323" width="20" height="13" rx="3" class="ref-pill"/>
+  <text x="406" y="329.5" class="ref-txt">(c)</text>
+
+  <path d="M 478 358 L 490 358" class="flow"/>
+  <rect x="492" y="336" width="76" height="44" rx="4" class="blk-teal-soft"/>
+  <text x="530" y="354" class="blk-title">Bot2 (×3)</text>
+  <text x="530" y="368" class="blk-sub">Rep5+DCA</text>
+
+  <path d="M 568 358 L 580 358" class="flow"/>
+  <rect x="582" y="334" width="84" height="48" rx="4" class="blk-teal"/>
+  <text x="624" y="353" class="blk-title" fill="#174038">ASFB-2</text>
+  <text x="624" y="367" class="blk-sub" fill="#23574E">LFM + LK</text>
+  <circle cx="660" cy="340" r="6" class="lora-dot"/>
+  <text x="660" y="340" class="lora-txt">L</text>
+
+  <path d="M 666 358 L 678 358" class="flow"/>
+  <rect x="680" y="336" width="76" height="44" rx="4" class="blk-teal-soft"/>
+  <text x="718" y="354" class="blk-title">Bot3 (×3)</text>
+  <text x="718" y="368" class="blk-sub">Rep5+DCA</text>
+
+  <path d="M 756 358 L 768 358" class="flow"/>
+  <rect x="770" y="336" width="78" height="44" rx="4" class="blk-ochre"/>
+  <text x="809" y="354" class="blk-title" fill="#4F3A14">FCSF3</text>
+  <text x="809" y="368" class="blk-sub" fill="#6E5220">Scene Skip</text>
+  <circle cx="842" cy="342" r="6" class="lora-dot"/>
+  <text x="842" y="342" class="lora-txt">L</text>
+
+  <!-- Up2: FCSF3 -> FCSF2 (strict left-to-right!) -->
+  <path d="M 848 358 L 918 358 Q 924 358 924 352 L 924 255" class="flow"/>
+  <rect x="874" y="276" width="100" height="20" rx="3" class="blk-slate-deep"/>
+  <text x="924" y="289" class="blk-sub" font-weight="600">Up2 (Bilin×2 + 3×3)</text>
+
+  <!-- Skip2: Enc2 -> FCSF2 -->
+  <path d="M 386 231 L 882 231" class="skip-ochre"/>
+  <text x="634" y="224" class="blk-sub" fill="#7D5B22" font-weight="600">
+    1/2 Skip (<tspan class="math" fill="#7D5B22" font-size="10">s</tspan><tspan font-size="7" dy="2" fill="#7D5B22">2</tspan><tspan dy="-2">): Scene-Aware Convex Low-Band + Detail Gating</tspan>
+  </text>
+
+  <!-- DECODER L2: FCSF2 -> Dec2 -> L2-AnisoLK -->
+  <rect x="884" y="209" width="80" height="44" rx="4" class="blk-ochre"/>
+  <text x="924" y="227" class="blk-title" fill="#4F3A14">FCSF2</text>
+  <text x="924" y="241" class="blk-sub" fill="#6E5220">Scene Skip</text>
+  <circle cx="958" cy="215" r="6" class="lora-dot"/>
+  <text x="958" y="215" class="lora-txt">L</text>
+  <rect x="886" y="198" width="20" height="13" rx="3" class="ref-pill"/>
+  <text x="896" y="204.5" class="ref-txt">(d)</text>
+
+  <path d="M 964 231 L 978 231" class="flow"/>
+  <rect x="984" y="205" width="84" height="44" rx="4" class="blk-slate" opacity="0.5"/>
+  <rect x="980" y="209" width="84" height="44" rx="4" class="blk-slate"/>
+  <text x="1022" y="227" class="blk-title">Dec2 (×3)</text>
+  <text x="1022" y="241" class="blk-sub">Rep5-CD</text>
+
+  <path d="M 1064 231 L 1078 231" class="flow"/>
+  <rect x="1080" y="209" width="88" height="44" rx="4" class="blk-teal"/>
+  <text x="1124" y="227" class="blk-title" fill="#174038">L2-AnisoLK</text>
+  <text x="1124" y="241" class="blk-sub" fill="#23574E">1×15 / 15×1 / 7</text>
+  <circle cx="1162" cy="215" r="6" class="lora-dot"/>
+  <text x="1162" y="215" class="lora-txt">L</text>
+
+  <!-- Up1: straight vertical rise into FCSF1 -->
+  <path d="M 1124 209 L 1124 136" class="flow"/>
+  <rect x="1074" y="158" width="100" height="20" rx="3" class="blk-slate-deep"/>
+  <text x="1124" y="171" class="blk-sub" font-weight="600">Up1 (Bilin×2 + 3×3)</text>
+
+  <!-- Skip1: Enc1 -> FCSF1 (High-pass only!) -->
+  <path d="M 350 112 L 1082 112" class="skip-ochre"/>
+  <text x="716" y="105" class="blk-sub" fill="#7D5B22" font-weight="600">
+    1× Skip (<tspan class="math" fill="#7D5B22" font-size="10">s</tspan><tspan font-size="7" dy="2" fill="#7D5B22">1</tspan><tspan dy="-2">): Strict High-Pass Only (α ≡ 0, Blocks Shallow Haze Passthrough)</tspan>
+  </text>
+
+  <!-- DECODER L1: FCSF1 -> Dec1 -> C2-BASR -> Output -->
+  <rect x="1084" y="90" width="80" height="44" rx="4" class="blk-ochre"/>
+  <text x="1124" y="108" class="blk-title" fill="#4F3A14">FCSF1</text>
+  <text x="1124" y="122" class="blk-sub" fill="#6E5220">α ≡ 0, HP β</text>
+  <circle cx="1158" cy="96" r="6" class="lora-dot"/>
+  <text x="1158" y="96" class="lora-txt">L</text>
+
+  <path d="M 1164 112 L 1178 112" class="flow"/>
+  <rect x="1184" y="86" width="80" height="44" rx="4" class="blk-slate" opacity="0.5"/>
+  <rect x="1180" y="90" width="80" height="44" rx="4" class="blk-slate"/>
+  <text x="1220" y="108" class="blk-title">Dec1 (×3)</text>
+  <text x="1220" y="122" class="blk-sub">Rep5-CD</text>
+
+  <path d="M 1260 112 L 1276 112" class="flow"/>
+  <rect x="1278" y="88" width="98" height="48" rx="4" class="blk-terra"/>
+  <text x="1327" y="107" class="blk-title" fill="#542416">C²-BASR Head</text>
+  <text x="1327" y="123" class="math" font-size="10.2" fill="#783520" text-anchor="middle">
+    G<tspan class="math-rm" font-size="7.2" dy="2" fill="#783520">sym</tspan><tspan dy="-2">(K̃)⊙I + B</tspan>
+  </text>
+  <circle cx="1370" cy="94" r="6" class="lora-dot"/>
+  <text x="1370" y="94" class="lora-txt">L</text>
+  <rect x="1280" y="75" width="20" height="13" rx="3" class="ref-pill"/>
+  <text x="1290" y="81.5" class="ref-txt">(d)</text>
+
+  <path d="M 1376 112 L 1390 112" class="flow"/>
+  <g transform="translate(1392, 86)">
+    <rect x="0" y="0" width="56" height="48" rx="3" fill="url(#clear-sea)" stroke="#2F6B60" stroke-width="1.3"/>
+    <line x1="2" y1="26" x2="54" y2="26" stroke="#E2EEF5" stroke-width="1.0"/>
+    <path d="M 15 26 L 19 20.5 L 37 20.5 L 41 26 Z" fill="#1E293B"/>
+    <rect x="25" y="16.5" width="6" height="4" fill="#F8FAFC" stroke="#1E293B" stroke-width="0.6"/>
+    <text x="28" y="61" class="blk-sub">Restored <tspan class="math" font-size="10.5">Ĵ</tspan></text>
+  </g>
+
+  <!-- Legend Strip inside Panel (a) -->
+  <g transform="translate(28, 434)">
+    <rect x="0" y="0" width="13" height="9.5" rx="2" class="blk-slate"/>
+    <text x="19" y="8.2" class="legend-txt">Local Texture &amp; Rep5-CD (Folded &amp; Frozen in LoRA)</text>
+    <rect x="286" y="0" width="13" height="9.5" rx="2" class="blk-teal"/>
+    <text x="305" y="8.2" class="legend-txt">Dual-Domain Bottleneck &amp; Mid-Band Context (ASFB / AnisoLK / DCA-PA)</text>
+    <rect x="688" y="0" width="13" height="9.5" rx="2" class="blk-ochre"/>
+    <text x="707" y="8.2" class="legend-txt">Scene-FCSF &amp; MIMO</text>
+    <rect x="828" y="0" width="13" height="9.5" rx="2" class="blk-terra"/>
+    <text x="847" y="8.2" class="legend-txt">C²-BASR Physics Head</text>
+    <circle cx="984" cy="4.8" r="5.5" class="lora-dot"/>
+    <text x="984" y="4.8" class="lora-txt">L</text>
+    <text x="995" y="8.2" class="legend-txt">Sim2Real LoRA Interface (4 Groups)</text>
+    <text x="1186" y="8.2" class="legend-txt" fill="#64748B">Subscript 0 = Zero-Init Identity | Folded: 4.56M</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- PANEL (b): SPECTRAL REP5-CD & RESIDUAL DCA-PA                         -->
+  <!-- ===================================================================== -->
+  <rect x="14" y="474" width="468" height="428" rx="6" class="subpanel-bg"/>
+  <text x="26" y="496" class="panel-title">(b) Spectral Rep5-CD &amp; Bottleneck DCA-PA</text>
+
+  <!-- Left card: AnisoRepConv3x3 -->
+  <rect x="24" y="508" width="218" height="382" rx="5" class="inner-card"/>
+  <text x="133" y="526" class="card-title" fill="#3B5978">AnisoRepConv 3×3 (Rep5-CD)</text>
+
+  <text x="133" y="546" class="math" font-size="11.5" text-anchor="middle">x</text>
+  <path d="M 133 551 L 133 566" class="flow-line"/>
+  <line x1="47" y1="566" x2="219" y2="566" stroke="#24292F" stroke-width="1.2"/>
+  <path d="M 47 566 L 47 581" class="flow"/>
+  <path d="M 90 566 L 90 581" class="flow"/>
+  <path d="M 133 566 L 133 581" class="flow"/>
+  <path d="M 176 566 L 176 581" class="flow"/>
+  <path d="M 219 566 L 219 581" class="flow"/>
+
+  <!-- 5 Parallel Branches -->
+  <rect x="29" y="583" width="36" height="52" rx="3.5" class="blk-slate"/>
+  <text x="47" y="604" class="blk-small">Plain</text>
+  <text x="47" y="618" class="blk-sub">3×3</text>
+
+  <rect x="72" y="583" width="36" height="52" rx="3.5" class="blk-slate"/>
+  <text x="90" y="604" class="blk-small">PW</text>
+  <text x="90" y="618" class="blk-sub">1×1</text>
+
+  <rect x="115" y="583" width="36" height="52" rx="3.5" class="blk-slate-deep"/>
+  <text x="133" y="604" class="blk-small">HD</text>
+  <text x="133" y="618" class="blk-sub">1×3</text>
+
+  <rect x="158" y="583" width="36" height="52" rx="3.5" class="blk-slate-deep"/>
+  <text x="176" y="604" class="blk-small">VD</text>
+  <text x="176" y="618" class="blk-sub">3×1</text>
+
+  <rect x="201" y="583" width="36" height="52" rx="3.5" class="blk-teal"/>
+  <text x="219" y="600" class="blk-small" fill="#174038">CD</text>
+  <text x="219" y="613" class="blk-sub" fill="#23574E">3×3</text>
+  <text x="219" y="626" class="blk-sub" fill="#23574E">Σ=0</text>
+
+  <path d="M 47 635 L 47 651" class="flow-line"/>
+  <path d="M 90 635 L 90 651" class="flow-line"/>
+  <path d="M 133 635 L 133 651" class="flow-line"/>
+  <path d="M 176 635 L 176 651" class="flow-line"/>
+  <path d="M 219 635 L 219 651" class="flow-line"/>
+  <line x1="47" y1="651" x2="219" y2="651" stroke="#24292F" stroke-width="1.2"/>
+  <path d="M 133 651 L 133 668" class="flow"/>
+
+  <rect x="34" y="670" width="198" height="38" rx="4" class="blk-neutral"/>
+  <text x="133" y="686" class="blk-small">
+    Linear Kernel Merge (<tspan class="math" font-size="10">W</tspan><tspan font-size="7" dy="2">eq</tspan><tspan dy="-2">, </tspan><tspan class="math" font-size="10">b</tspan><tspan font-size="7" dy="2">eq</tspan><tspan dy="-2">)</tspan>
+  </text>
+  <text x="133" y="700" class="blk-sub">
+    CD: <tspan class="math" font-size="9.5">W</tspan><tspan font-size="6.8" dy="1.8">cd</tspan><tspan dy="-1.8"> − (Σ</tspan><tspan class="math" font-size="9.5">W</tspan><tspan font-size="6.8" dy="1.8">cd</tspan><tspan dy="-1.8">)δ</tspan><tspan font-size="6.8" dy="1.8">0</tspan><tspan dy="-1.8"> (Zero DC Gain)</tspan>
+  </text>
+
+  <path d="M 133 708 L 133 738" class="skip-slate"/>
+  <text x="180" y="726" class="blk-sub" fill="#3B5978" font-weight="600">fold_reparam()</text>
+
+  <rect x="34" y="740" width="198" height="46" rx="4" class="blk-slate-deep"/>
+  <text x="133" y="759" class="blk-title">Single Dense Conv 3×3</text>
+  <text x="133" y="775" class="blk-sub">−41.9% Params | 0 Extra Inference FLOPs</text>
+
+  <rect x="34" y="800" width="198" height="76" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="0.9"/>
+  <text x="133" y="818" class="blk-small" fill="#2F6B60">Learned Spectral Energy Share</text>
+  <text x="133" y="834" class="blk-sub">CD (60.9%): Isotropic 0.02–0.15 Bandpass</text>
+  <text x="133" y="849" class="blk-sub">HD / VD (26.1%): Horizon &amp; Mast Gradients</text>
+  <text x="133" y="864" class="blk-sub" fill="#64748B">Exact Fold Error: 0.00e+00 (26.5 FPS)</text>
+
+  <!-- Right card: Residual DCA-PA (Snapped to exact vertical spine x=366!) -->
+  <rect x="252" y="508" width="220" height="382" rx="5" class="inner-card"/>
+  <text x="362" y="526" class="card-title" fill="#2F6B60">Residual DCA-PA (Norm-Free)</text>
+
+  <text x="366" y="546" class="math" font-size="11.5" text-anchor="middle">x</text>
+  <path d="M 366 551 L 366 564" class="flow-line"/>
+  <line x1="296" y1="564" x2="448" y2="564" stroke="#24292F" stroke-width="1.2"/>
+
+  <!-- CA branch -->
+  <path d="M 296 564 L 296 580" class="flow"/>
+  <rect x="262" y="582" width="68" height="48" rx="4" class="blk-teal-soft"/>
+  <text x="296" y="599" class="blk-small">CA (GAP)</text>
+  <text x="296" y="612" class="blk-sub">1×1→GELU</text>
+  <text x="296" y="624" class="blk-sub">→1×1<tspan font-size="6.8" dy="1.8">0</tspan></text>
+
+  <!-- SA branch -->
+  <path d="M 374 564 L 374 580" class="flow"/>
+  <rect x="340" y="582" width="68" height="48" rx="4" class="blk-teal-soft"/>
+  <text x="374" y="599" class="blk-small">SA (7×7)</text>
+  <text x="374" y="612" class="blk-sub">[Avg, Max]</text>
+  <text x="374" y="624" class="blk-sub">→Conv 7×7<tspan font-size="6.8" dy="1.8">0</tspan></text>
+
+  <!-- Right bypass of x down to Interleave (y=684) AND × (y=830) -->
+  <path d="M 448 564 L 448 830 L 376 830" class="flow"/>
+  <path d="M 448 684 L 412 684" class="flow"/>
+
+  <!-- CA + SA -> p1 (centered at x=335) -->
+  <path d="M 296 630 L 296 648 L 325 648" class="flow"/>
+  <path d="M 374 630 L 374 648 L 345 648" class="flow"/>
+  <circle cx="335" cy="648" r="8.5" class="op-circ"/>
+  <text x="335" y="648" class="op-sym">+</text>
+
+  <!-- p1 branches cleanly: down to spine x=366 AND left residual bypass to + at y=766 -->
+  <path d="M 335 656.5 L 335 666 L 366 666 L 366 670" class="flow"/>
+  <path d="M 335 666 L 274 666 L 274 766 L 356 766" class="flow"/>
+  <text x="303" y="661" class="math" font-size="10.2">p<tspan class="math-rm" font-size="7.2" dy="1.8">1</tspan></text>
+
+  <!-- Aligned vertical spine at x=366: Interleave -> PA -> + -> 2σ -> × -->
+  <rect x="322" y="672" width="88" height="24" rx="3.5" class="blk-neutral"/>
+  <text x="366" y="687" class="blk-sub">Interleave (<tspan class="math" font-size="9.5">x</tspan>, <tspan class="math" font-size="9.5">p</tspan><tspan font-size="6.8" dy="1.5">1</tspan><tspan dy="-1.5">)</tspan></text>
+
+  <path d="M 366 696 L 366 712" class="flow"/>
+  <rect x="308" y="714" width="116" height="28" rx="4" class="blk-teal"/>
+  <text x="366" y="731" class="blk-small" fill="#174038">DW-Grp 7×7 PA<tspan font-size="6.8" dy="1.8">0</tspan></text>
+
+  <path d="M 366 742 L 366 756" class="flow"/>
+  <circle cx="366" cy="766" r="8.5" class="op-circ"/>
+  <text x="366" y="766" class="op-sym">+</text>
+
+  <path d="M 366 774.5 L 366 788" class="flow"/>
+  <rect x="308" y="790" width="116" height="22" rx="3.5" class="blk-neutral"/>
+  <text x="366" y="804" class="blk-small">2·σ(·) ∈ (0, 2) [Init=1]</text>
+
+  <path d="M 366 812 L 366 820" class="flow"/>
+  <circle cx="366" cy="830" r="8.5" class="op-circ"/>
+  <text x="366" y="830" class="op-sym">×</text>
+
+  <path d="M 366 838.5 L 366 862" class="flow"/>
+  <text x="366" y="877" class="blk-sub">Channel-Specific Gated Output</text>
+
+  <!-- ===================================================================== -->
+  <!-- PANEL (c): ANISOTROPIC SPATIAL-FREQUENCY BOTTLENECK (ASFB)            -->
+  <!-- ===================================================================== -->
+  <rect x="494" y="474" width="480" height="428" rx="6" class="subpanel-bg"/>
+  <text x="506" y="496" class="panel-title">(c) Anisotropic Spatial-Frequency Bottleneck (ASFB)</text>
+
+  <!-- Left card: PhysicsAligned MS-LFM -->
+  <rect x="504" y="508" width="228" height="382" rx="5" class="inner-card"/>
+  <text x="618" y="526" class="card-title" fill="#2F6B60">
+    MS-LFM (<tspan class="math" fill="#2F6B60" font-size="11">c</tspan><tspan font-size="7.5" dy="2" fill="#2F6B60">f</tspan><tspan dy="-2"> = 4·</tspan><tspan class="math" fill="#2F6B60" font-size="11">c</tspan><tspan font-size="7.5" dy="2" fill="#2F6B60">img</tspan><tspan dy="-2"> = 0.10)</tspan>
+  </text>
+
+  <text x="618" y="546" class="math" font-size="11.5" text-anchor="middle">X</text>
+  <path d="M 618 551 L 618 564" class="flow-line"/>
+  <line x1="554" y1="564" x2="716" y2="564" stroke="#24292F" stroke-width="1.2"/>
+
+  <!-- Left FFT lowpass branch -->
+  <path d="M 554 564 L 554 580" class="flow"/>
+  <rect x="512" y="582" width="84" height="26" rx="4" class="blk-teal-soft"/>
+  <text x="554" y="598" class="blk-small">rFFT2 (ortho)</text>
+
+  <path d="M 554 608 L 554 624" class="flow"/>
+  <rect x="512" y="626" width="84" height="38" rx="4" class="blk-teal"/>
+  <text x="554" y="642" class="blk-small" fill="#174038">Soft LP Mask</text>
+  <text x="554" y="656" class="blk-sub" fill="#23574E">
+    <tspan class="math" fill="#23574E" font-size="10">c</tspan><tspan font-size="7" dy="2" fill="#23574E">img</tspan><tspan dy="-2"> = 0.025</tspan>
+  </text>
+
+  <path d="M 554 664 L 554 680" class="flow"/>
+  <rect x="512" y="682" width="84" height="26" rx="4" class="blk-teal-soft"/>
+  <text x="554" y="698" class="blk-small">
+    irFFT2 → <tspan class="math" font-size="10.2">X</tspan><tspan font-size="7" dy="2">low</tspan>
+  </text>
+
+  <!-- Right dual-grid pooling branch -->
+  <path d="M 634 564 L 634 580" class="flow"/>
+  <path d="M 685 564 L 685 580" class="flow"/>
+  <rect x="610" y="582" width="46" height="32" rx="3.5" class="blk-ochre"/>
+  <text x="633" y="596" class="blk-small" fill="#4F3A14">Pool</text>
+  <text x="633" y="608" class="blk-sub" fill="#6E5220">8×8</text>
+
+  <rect x="662" y="582" width="46" height="32" rx="3.5" class="blk-ochre"/>
+  <text x="685" y="596" class="blk-small" fill="#4F3A14">Pool</text>
+  <text x="685" y="608" class="blk-sub" fill="#6E5220">16×16</text>
+
+  <path d="M 633 614 L 633 624 L 659 624 L 659 634" class="flow"/>
+  <path d="M 685 614 L 685 624 L 659 624" class="flow-line"/>
+
+  <rect x="612" y="636" width="94" height="38" rx="4" class="blk-teal"/>
+  <text x="659" y="652" class="blk-small" fill="#174038">Concat → 3×3</text>
+  <text x="659" y="666" class="blk-sub" fill="#23574E">GELU → 1×1<tspan font-size="7" dy="1.8">0</tspan></text>
+  <circle cx="701" cy="641" r="5.5" class="lora-dot"/>
+  <text x="701" y="641" class="lora-txt">L</text>
+
+  <path d="M 659 674 L 659 688" class="flow"/>
+  <rect x="612" y="690" width="94" height="24" rx="3.5" class="blk-neutral"/>
+  <text x="659" y="705" class="blk-sub">Up → Split (<tspan class="math" font-size="10">γ</tspan>, <tspan class="math" font-size="10">β</tspan>)</text>
+
+  <!-- Clean non-overlapping FiLM combine -->
+  <path d="M 554 708 L 554 746 L 591 746" class="flow"/>
+  <path d="M 638 714 L 638 746 L 610 746" class="flow"/>
+  <text x="625" y="739" class="math" font-size="11">γ</text>
+  <circle cx="601" cy="746" r="8.5" class="op-circ"/>
+  <text x="601" y="746" class="op-sym">×</text>
+
+  <path d="M 601 754.5 L 601 772" class="flow"/>
+  <path d="M 680 714 L 680 782 L 611 782" class="flow"/>
+  <text x="687" y="758" class="math" font-size="11">β</text>
+  <circle cx="601" cy="782" r="8.5" class="op-circ"/>
+  <text x="601" y="782" class="op-sym">+</text>
+
+  <path d="M 716 564 L 716 816 L 611 816" class="flow"/>
+  <path d="M 601 790.5 L 601 806" class="flow"/>
+  <circle cx="601" cy="816" r="8.5" class="op-circ"/>
+  <text x="601" y="816" class="op-sym">+</text>
+
+  <path d="M 601 824.5 L 601 844" class="flow"/>
+  <rect x="516" y="846" width="204" height="32" rx="4" fill="#F2F7F6" stroke="#8EB2AA" stroke-width="0.9"/>
+  <text x="618" y="866" class="math" font-size="11.2" text-anchor="middle">
+    X<tspan class="math-rm" font-size="8" dy="2.5">out</tspan><tspan dy="-2.5"> = X + γ ⊙ X</tspan><tspan class="math-rm" font-size="8" dy="2.5">low</tspan><tspan dy="-2.5"> + β</tspan>
+  </text>
+
+  <!-- Right card: Maritime AnisoLK -->
+  <rect x="742" y="508" width="222" height="382" rx="5" class="inner-card"/>
+  <text x="853" y="526" class="card-title" fill="#2F6B60">Maritime AnisoLK (4-Group)</text>
+
+  <text x="853" y="546" class="math" font-size="11.5" text-anchor="middle">
+    X<tspan class="math-rm" font-size="8" dy="2.5">in</tspan>
+  </text>
+  <path d="M 853 551 L 853 568" class="flow"/>
+  <path d="M 853 558 L 950 558 L 950 818 L 863 818" class="flow"/>
+
+  <rect x="780" y="570" width="146" height="26" rx="4" class="blk-teal-soft"/>
+  <text x="853" y="586" class="blk-small">Conv 1×1 → Split (<tspan class="math" font-size="9.5">C</tspan>/4 × 4)</text>
+  <circle cx="921" cy="575" r="5.5" class="lora-dot"/>
+  <text x="921" y="575" class="lora-txt">L</text>
+
+  <path d="M 853 596 L 853 610" class="flow-line"/>
+  <line x1="771" y1="610" x2="924" y2="610" stroke="#24292F" stroke-width="1.2"/>
+  <path d="M 771 610 L 771 624" class="flow"/>
+  <path d="M 822 610 L 822 624" class="flow"/>
+  <path d="M 873 610 L 873 624" class="flow"/>
+  <path d="M 924 610 L 924 624" class="flow"/>
+
+  <rect x="749" y="626" width="44" height="68" rx="4" class="blk-teal"/>
+  <text x="771" y="645" class="blk-small" fill="#174038">DW</text>
+  <text x="771" y="659" class="blk-title" fill="#174038">1×31</text>
+  <text x="771" y="674" class="blk-sub" fill="#23574E">Horizon</text>
+  <text x="771" y="686" class="blk-sub" fill="#23574E">124 px</text>
+
+  <rect x="800" y="626" width="44" height="68" rx="4" class="blk-teal"/>
+  <text x="822" y="645" class="blk-small" fill="#174038">DW</text>
+  <text x="822" y="659" class="blk-title" fill="#174038">31×1</text>
+  <text x="822" y="674" class="blk-sub" fill="#23574E">Depth</text>
+  <text x="822" y="686" class="math" font-size="9.5" fill="#23574E" text-anchor="middle">∂d/∂y</text>
+
+  <rect x="851" y="626" width="44" height="68" rx="4" class="blk-teal-soft"/>
+  <text x="873" y="645" class="blk-small">DW</text>
+  <text x="873" y="659" class="blk-title">15×15</text>
+  <text x="873" y="674" class="blk-sub">Patchy</text>
+  <text x="873" y="686" class="blk-sub">Fog</text>
+
+  <rect x="902" y="626" width="44" height="68" rx="4" class="blk-slate"/>
+  <text x="924" y="645" class="blk-small">DW</text>
+  <text x="924" y="659" class="blk-title">3×3</text>
+  <text x="924" y="674" class="blk-sub">Vessel</text>
+  <text x="924" y="686" class="blk-sub">Edge</text>
+
+  <path d="M 771 694 L 771 710" class="flow-line"/>
+  <path d="M 822 694 L 822 710" class="flow-line"/>
+  <path d="M 873 694 L 873 710" class="flow-line"/>
+  <path d="M 924 694 L 924 710" class="flow-line"/>
+  <line x1="771" y1="710" x2="924" y2="710" stroke="#24292F" stroke-width="1.2"/>
+  <path d="M 853 710 L 853 726" class="flow"/>
+
+  <rect x="783" y="728" width="140" height="25" rx="4" class="blk-neutral"/>
+  <text x="853" y="744" class="blk-small">Concat → GELU</text>
+
+  <path d="M 853 753 L 853 769" class="flow"/>
+  <rect x="783" y="771" width="140" height="26" rx="4" class="blk-teal"/>
+  <text x="853" y="787" class="blk-small" fill="#174038">Conv 1×1<tspan font-size="7" dy="1.8">0</tspan><tspan dy="-1.8"> (Zero-Init)</tspan></text>
+  <circle cx="918" cy="776" r="5.5" class="lora-dot"/>
+  <text x="918" y="776" class="lora-txt">L</text>
+
+  <path d="M 853 797 L 853 808" class="flow"/>
+  <circle cx="853" cy="818" r="8.5" class="op-circ"/>
+  <text x="853" y="818" class="op-sym">+</text>
+
+  <path d="M 853 826.5 L 853 844" class="flow"/>
+  <rect x="754" y="846" width="198" height="32" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="0.9"/>
+  <text x="853" y="860" class="blk-small" fill="#2F6B60">Translation-Equivariant Context</text>
+  <text x="853" y="872" class="blk-sub">L2-AnisoLK (1/2): 1×15, 15×1, 7×7, 3×3</text>
+
+  <!-- ===================================================================== -->
+  <!-- PANEL (d): SCENE-AWARE FCSF & C2 ZERO-CURVATURE BASR (ZERO OVERLAPS!) -->
+  <!-- ===================================================================== -->
+  <rect x="986" y="474" width="480" height="428" rx="6" class="subpanel-bg"/>
+  <text x="998" y="496" class="panel-title">(d) Scene-Aware FCSF &amp; C² Zero-Curvature BASR</text>
+
+  <!-- Top Card: Scene-Aware FCSF (height 186px, generous title breathing room!) -->
+  <rect x="996" y="508" width="460" height="186" rx="5" class="inner-card"/>
+  <text x="1226" y="524" class="card-title" fill="#7D5B22">Scene-Aware Frequency Convex Skip Fusion (FCSF)</text>
+
+  <!-- Inputs F_enc and F_dec -->
+  <rect x="1004" y="560" width="44" height="26" rx="3.5" class="blk-slate"/>
+  <text x="1026" y="577" class="math" font-size="11" text-anchor="middle">
+    F<tspan class="math-rm" font-size="7.5" dy="2.5">enc</tspan>
+  </text>
+
+  <rect x="1004" y="638" width="44" height="26" rx="3.5" class="blk-teal-soft"/>
+  <text x="1026" y="655" class="math" font-size="11" text-anchor="middle">
+    F<tspan class="math-rm" font-size="7.5" dy="2.5">dec</tspan>
+  </text>
+
+  <!-- LP Split of F_enc -->
+  <path d="M 1048 573 L 1068 573" class="flow"/>
+  <rect x="1070" y="554" width="84" height="36" rx="4" class="blk-ochre"/>
+  <text x="1112" y="569" class="blk-small" fill="#4F3A14">LP Split</text>
+  <text x="1112" y="582" class="math" font-size="9.5" fill="#6E5220" text-anchor="middle">
+    F<tspan class="math-rm" font-size="6.8" dy="2">enc</tspan><tspan class="math-rm" font-size="6.8" dy="-4.5">L</tspan><tspan dy="2.5">, F</tspan><tspan class="math-rm" font-size="6.8" dy="2">enc</tspan><tspan class="math-rm" font-size="6.8" dy="-4.5">H</tspan>
+  </text>
+
+  <!-- Clean F_enc^H path cleanly BELOW title (y=539) & routed OUTSIDE σ(·) at x=1446 into fusion box! -->
+  <path d="M 1112 554 L 1112 544 Q 1112 539 1117 539 L 1441 539 Q 1446 539 1446 544 L 1446 651 L 1438 651" class="skip-ochre"/>
+  <rect x="1224" y="531" width="110" height="15" rx="3" fill="#FFFFFF" stroke="#E8DEC8" stroke-width="0.7"/>
+  <text x="1279" y="542" class="blk-sub" fill="#7D5B22">
+    Detail Skip <tspan class="math" fill="#7D5B22" font-size="9.5">F</tspan><tspan font-size="6.5" dy="1.8" fill="#7D5B22">enc</tspan><tspan font-size="6.5" dy="-3.6" fill="#7D5B22">H</tspan>
+  </text>
+
+  <!-- ΔL = F_enc^L - F_dec^L -->
+  <path d="M 1112 590 L 1112 601" class="flow"/>
+  <path d="M 1048 651 L 1280 651" class="flow"/>
+  <path d="M 1112 651 L 1112 633" class="flow"/>
+  <rect x="1070" y="603" width="84" height="28" rx="4" class="blk-neutral"/>
+  <text x="1112" y="620" class="math" font-size="9.6" text-anchor="middle">
+    ΔL = F<tspan class="math-rm" font-size="6.8" dy="2">enc</tspan><tspan class="math-rm" font-size="6.8" dy="-4">L</tspan><tspan dy="2">−F</tspan><tspan class="math-rm" font-size="6.8" dy="2">dec</tspan><tspan class="math-rm" font-size="6.8" dy="-4">L</tspan>
+  </text>
+
+  <!-- Local DW Gate + Global SceneGate -->
+  <path d="M 1154 572 L 1174 572" class="flow"/>
+  <path d="M 1154 617 L 1174 617" class="flow"/>
+
+  <rect x="1176" y="556" width="98" height="32" rx="4" class="blk-ochre"/>
+  <text x="1225" y="570" class="blk-small" fill="#4F3A14">Local DW Gate</text>
+  <text x="1225" y="582" class="blk-sub" fill="#6E5220">1×1→DW3→1×1</text>
+  <circle cx="1269" cy="561" r="5" class="lora-dot"/>
+  <text x="1269" y="561" class="lora-txt">L</text>
+
+  <rect x="1176" y="598" width="98" height="32" rx="4" class="blk-ochre"/>
+  <text x="1225" y="612" class="blk-small" fill="#4F3A14">SceneGate<tspan font-size="6.8" dy="1.8">0</tspan></text>
+  <text x="1225" y="624" class="blk-sub" fill="#6E5220">GAP → MLP</text>
+  <circle cx="1269" cy="603" r="5" class="lora-dot"/>
+  <text x="1269" y="603" class="lora-txt">L</text>
+
+  <!-- Sum logits -> sigmoid -> (alpha, beta) -->
+  <path d="M 1274 572 L 1294 572 L 1294 584" class="flow"/>
+  <path d="M 1274 614 L 1294 614 L 1294 602" class="flow"/>
+  <circle cx="1294" cy="593" r="7.5" class="op-circ"/>
+  <text x="1294" y="593" class="op-sym">+</text>
+
+  <path d="M 1301.5 593 L 1314 593" class="flow"/>
+  <rect x="1316" y="574" width="110" height="38" rx="4" class="blk-ochre"/>
+  <text x="1371" y="590" class="blk-small" fill="#4F3A14">σ(·) → (<tspan class="math" font-size="10" fill="#4F3A14">α</tspan>, <tspan class="math" font-size="10" fill="#4F3A14">β</tspan>)</text>
+  <text x="1371" y="604" class="blk-sub" fill="#6E5220">
+    <tspan class="math" font-size="9.2" fill="#6E5220">α</tspan><tspan font-size="6.5" dy="1.5" fill="#6E5220">0</tspan><tspan dy="-1.5">≈0.23 | 1×: </tspan><tspan class="math" font-size="9.2" fill="#6E5220">α</tspan>≡0
+  </text>
+
+  <!-- Final Fusion Block -->
+  <path d="M 1360 612 L 1360 630" class="flow"/>
+  <rect x="1282" y="632" width="154" height="38" rx="4" class="blk-neutral"/>
+  <text x="1359" y="648" class="math" font-size="9.8" text-anchor="middle">
+    F<tspan class="math-rm" font-size="6.8" dy="2">dec</tspan><tspan dy="-2"> + αΔL + βF</tspan><tspan class="math-rm" font-size="6.8" dy="2">enc</tspan><tspan class="math-rm" font-size="6.8" dy="-4">H</tspan>
+  </text>
+  <text x="1359" y="663" class="blk-sub">→ Conv 1×1 Projection</text>
+  <circle cx="1431" cy="637" r="5" class="lora-dot"/>
+  <text x="1431" y="637" class="lora-txt">L</text>
+
+  <text x="1144" y="685" class="blk-sub" fill="#6E5220">
+    Convex low-band (1−<tspan class="math" fill="#6E5220">α</tspan>)<tspan class="math" fill="#6E5220">F</tspan><tspan font-size="6.8" dy="1.5" fill="#6E5220">dec</tspan><tspan font-size="6.8" dy="-3.5" fill="#6E5220">L</tspan><tspan dy="2"> + </tspan><tspan class="math" fill="#6E5220">αF</tspan><tspan font-size="6.8" dy="1.5" fill="#6E5220">enc</tspan><tspan font-size="6.8" dy="-3.5" fill="#6E5220">L</tspan><tspan dy="2"> prevents fog leakage</tspan>
+  </text>
+
+  <!-- Bottom Card: C2 Zero-Curvature BASR (height 188px, zero title collision!) -->
+  <rect x="996" y="702" width="460" height="188" rx="5" class="inner-card"/>
+  <text x="1226" y="718" class="card-title" fill="#8B3F28">C² Zero-Curvature BASR Head + Scene Contrast Gate</text>
+
+  <!-- Inputs d1 and I -->
+  <rect x="1004" y="746" width="40" height="26" rx="3.5" class="blk-slate"/>
+  <text x="1024" y="763" class="math" font-size="11" text-anchor="middle">
+    d<tspan class="math-rm" font-size="7.5" dy="2.5">1</tspan>
+  </text>
+
+  <rect x="1004" y="832" width="40" height="26" rx="3.5" class="blk-terra"/>
+  <text x="1024" y="849" class="math" font-size="11" text-anchor="middle">I</text>
+
+  <!-- Conv3x3_0 -> (K~, B) -->
+  <path d="M 1044 759 L 1066 759" class="flow"/>
+  <rect x="1068" y="743" width="84" height="32" rx="4" class="blk-terra"/>
+  <text x="1110" y="757" class="blk-small" fill="#542416">Conv 3×3<tspan font-size="6.8" dy="1.8">0</tspan></text>
+  <text x="1110" y="770" class="math" font-size="9.8" fill="#783520" text-anchor="middle">→ (K̃, B)</text>
+  <circle cx="1147" cy="748" r="5" class="lora-dot"/>
+  <text x="1147" y="748" class="lora-txt">L</text>
+
+  <!-- Scene Contrast MLP -->
+  <path d="M 1055 759 L 1055 798 L 1066 798" class="flow"/>
+  <path d="M 1044 845 L 1055 845 L 1055 806 L 1066 806" class="flow"/>
+  <rect x="1068" y="784" width="136" height="38" rx="4" class="blk-ochre"/>
+  <text x="1136" y="799" class="blk-small" fill="#4F3A14">Scene Contrast MLP<tspan font-size="6.8" dy="1.8">0</tspan></text>
+  <text x="1136" y="813" class="blk-sub" fill="#6E5220">
+    [GAP(<tspan class="math" fill="#6E5220">d</tspan><tspan font-size="6.5" dy="1.5" fill="#6E5220">1</tspan><tspan dy="-1.5">), GAP(</tspan><tspan class="math" fill="#6E5220">I</tspan>), <tspan class="math" fill="#6E5220">σ</tspan><tspan font-size="6.5" dy="1.5" fill="#6E5220">RMS</tspan><tspan dy="-1.5">(</tspan><tspan class="math" fill="#6E5220">I</tspan>)]
+  </text>
+  <circle cx="1199" cy="789" r="5" class="lora-dot"/>
+  <text x="1199" y="789" class="lora-txt">L</text>
+
+  <!-- Modulation product -->
+  <path d="M 1152 759 L 1210 759" class="flow"/>
+  <path d="M 1204 803 L 1220 803 L 1220 769" class="flow"/>
+  <rect x="1225" y="794" width="60" height="15" rx="2.5" fill="#FFFFFF" stroke="#E8DEC8" stroke-width="0.6"/>
+  <text x="1255" y="805" class="math" font-size="9.2" fill="#4F3A14" text-anchor="middle">
+    2σ→(s<tspan class="math-rm" font-size="6.5" dy="1.5">k</tspan><tspan dy="-1.5">, s</tspan><tspan class="math-rm" font-size="6.5" dy="1.5">b</tspan><tspan dy="-1.5">)</tspan>
+  </text>
+
+  <circle cx="1220" cy="759" r="8" class="op-circ"/>
+  <text x="1220" y="759" class="op-sym">×</text>
+
+  <!-- Cleanly separated Modulated Bias B·s_b path at y=734 (16px below title!) -->
+  <path d="M 1220 751 L 1220 739 Q 1220 734 1225 734 L 1413 734 Q 1418 734 1418 739 L 1418 835" class="flow"/>
+  <rect x="1250" y="726" width="142" height="15" rx="3" fill="#FFFFFF" stroke="#EEDBD5" stroke-width="0.7"/>
+  <text x="1321" y="737" class="blk-sub" fill="#542416">
+    Modulated Bias <tspan class="math" fill="#542416" font-size="9.6">B̃</tspan> = <tspan class="math" fill="#542416" font-size="9.6">B</tspan>·<tspan class="math" fill="#542416" font-size="9.6">s</tspan><tspan font-size="6.5" dy="1.5" fill="#542416">b</tspan>
+  </text>
+
+  <!-- G_sym piecewise tanh block -->
+  <path d="M 1228 759 L 1250 759" class="flow"/>
+  <rect x="1252" y="746" width="118" height="46" rx="4" class="blk-terra"/>
+  <text x="1311" y="761" class="blk-small" fill="#542416">
+    <tspan class="math" font-size="10" fill="#542416">G</tspan><tspan font-size="6.8" dy="1.8" fill="#542416">sym</tspan><tspan dy="-1.8">(</tspan><tspan class="math" fill="#542416">k</tspan>) ∈ (0.5, 4.0)
+  </text>
+  <text x="1311" y="774" class="math" font-size="9.5" fill="#783520" text-anchor="middle">
+    1 + a<tspan class="math-rm" font-size="7" dy="1.8">±</tspan><tspan dy="-1.8"> tanh(k / a</tspan><tspan class="math-rm" font-size="7" dy="1.8">±</tspan><tspan dy="-1.8">)</tspan>
+  </text>
+  <text x="1311" y="787" class="blk-sub" fill="#2F6B60" font-weight="600">G(0)=1, G'(0)=1, G''(0)=0</text>
+
+  <!-- Final affine J_hat = G * I + B -->
+  <path d="M 1044 845 L 1372 845" class="skip-terra"/>
+  <path d="M 1370 769 L 1382 769 L 1382 835" class="flow"/>
+  <circle cx="1382" cy="845" r="8" class="op-circ"/>
+  <text x="1382" y="845" class="op-sym">×</text>
+
+  <path d="M 1390 845 L 1408 845" class="flow"/>
+  <circle cx="1418" cy="845" r="8" class="op-circ"/>
+  <text x="1418" y="845" class="op-sym">+</text>
+
+  <path d="M 1426 845 L 1448 845" class="flow"/>
+  <text x="1414" y="870" class="math" font-size="10.8" text-anchor="middle">Ĵ = G⊙I + B̃</text>
+
+  <text x="1186" y="879" class="blk-sub" fill="#783520">
+    Zero curvature (<tspan class="math" fill="#783520">G</tspan>''(0) = 0) eliminates Jensen overshoot &amp; 1/<tspan class="math" fill="#783520">t</tspan> blow-up
+  </text>
+</svg>
+</body>
+</html>

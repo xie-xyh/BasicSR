@@ -1,0 +1,78 @@
+{
+  "bottleneck": {
+    "014a": {
+      "area_gt_15pct": 0.9814,
+      "h_span_gt_15pct_px": 254,
+      "v_span_gt_15pct_px": 254,
+      "area_gt_25pct": 0.6878,
+      "h_span_gt_25pct_px": 231,
+      "v_span_gt_25pct_px": 181,
+      "area_gt_40pct": 0.1307,
+      "h_span_gt_40pct_px": 103,
+      "v_span_gt_40pct_px": 96,
+      "area_gt_60pct": 0.0496,
+      "h_span_gt_60pct_px": 71,
+      "v_span_gt_60pct_px": 59,
+      "far_horiz_mean": 0.4143,
+      "far_vert_mean": 0.3883,
+      "far_diag_mean": 0.2987,
+      "cross_to_diag_ratio": 1.343
+    },
+    "014d": {
+      "area_gt_15pct": 0.9785,
+      "h_span_gt_15pct_px": 254,
+      "v_span_gt_15pct_px": 253,
+      "area_gt_25pct": 0.674,
+      "h_span_gt_25pct_px": 246,
+      "v_span_gt_25pct_px": 232,
+      "area_gt_40pct": 0.1884,
+      "h_span_gt_40pct_px": 160,
+      "v_span_gt_40pct_px": 148,
+      "area_gt_60pct": 0.0343,
+      "h_span_gt_60pct_px": 65,
+      "v_span_gt_60pct_px": 70,
+      "far_horiz_mean": 0.4849,
+      "far_vert_mean": 0.4678,
+      "far_diag_mean": 0.3059,
+      "cross_to_diag_ratio": 1.557
+    }
+  },
+  "pre_basr_dec1": {
+    "014a": {
+      "area_gt_15pct": 0.4578,
+      "h_span_gt_15pct_px": 166,
+      "v_span_gt_15pct_px": 151,
+      "area_gt_25pct": 0.1624,
+      "h_span_gt_25pct_px": 127,
+      "v_span_gt_25pct_px": 100,
+      "area_gt_40pct": 0.0503,
+      "h_span_gt_40pct_px": 71,
+      "v_span_gt_40pct_px": 62,
+      "area_gt_60pct": 0.0029,
+      "h_span_gt_60pct_px": 15,
+      "v_span_gt_60pct_px": 16,
+      "far_horiz_mean": 0.2691,
+      "far_vert_mean": 0.2413,
+      "far_diag_mean": 0.1729,
+      "cross_to_diag_ratio": 1.476
+    },
+    "014d": {
+      "area_gt_15pct": 0.7965,
+      "h_span_gt_15pct_px": 252,
+      "v_span_gt_15pct_px": 219,
+      "area_gt_25pct": 0.4374,
+      "h_span_gt_25pct_px": 213,
+      "v_span_gt_25pct_px": 165,
+      "area_gt_40pct": 0.0739,
+      "h_span_gt_40pct_px": 85,
+      "v_span_gt_40pct_px": 80,
+      "area_gt_60pct": 0.0026,
+      "h_span_gt_60pct_px": 14,
+      "v_span_gt_60pct_px": 16,
+      "far_horiz_mean": 0.3567,
+      "far_vert_mean": 0.3092,
+      "far_diag_mean": 0.2456,
+      "cross_to_diag_ratio": 1.356
+    }
+  }
+}

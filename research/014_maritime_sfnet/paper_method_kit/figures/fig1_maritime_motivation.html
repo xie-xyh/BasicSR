@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Maritime Sea-Fog Motivation & Three Structural Mismatches</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #FFFFFF;
+    width: 1440px;
+    height: 416px;
+    overflow: hidden;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  svg { display: block; width: 1440px; height: 416px; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 416" width="1440" height="416">
+  <defs>
+    <marker id="arr-k" viewBox="0 0 10 8" refX="8.6" refY="4" markerWidth="6" markerHeight="4.8" orient="auto">
+      <path d="M 0 0.7 L 9.1 4 L 0 7.3 z" fill="#24292F"/>
+    </marker>
+    <marker id="arr-t" viewBox="0 0 10 8" refX="8.6" refY="4" markerWidth="6" markerHeight="4.8" orient="auto">
+      <path d="M 0 0.7 L 9.1 4 L 0 7.3 z" fill="#2F6B60"/>
+    </marker>
+    <marker id="arr-r" viewBox="0 0 10 8" refX="8.6" refY="4" markerWidth="6" markerHeight="4.8" orient="auto">
+      <path d="M 0 0.7 L 9.1 4 L 0 7.3 z" fill="#A95035"/>
+    </marker>
+    <linearGradient id="sea-depth-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#E7EEF3"/>
+      <stop offset="46%" stop-color="#D7E2EB"/>
+      <stop offset="50%" stop-color="#B0C4D4"/>
+      <stop offset="76%" stop-color="#6A8EA9"/>
+      <stop offset="100%" stop-color="#2E5170"/>
+    </linearGradient>
+    <linearGradient id="fog-veil-band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.78"/>
+      <stop offset="48%" stop-color="#FFFFFF" stop-opacity="0.68"/>
+      <stop offset="58%" stop-color="#FFFFFF" stop-opacity="0.40"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.06"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    .card { fill: #FBFCFD; stroke: #CBD5E1; stroke-width: 1.2; }
+    .inner { fill: #FFFFFF; stroke: #DCE4EC; stroke-width: 1.0; }
+    .title { font-size: 12.6px; font-weight: 700; fill: #1F2933; }
+    .sub { font-size: 9.8px; fill: #3E4C59; }
+    .bold { font-size: 10px; font-weight: 700; fill: #1F2933; }
+    .small { font-size: 8.8px; fill: #475569; }
+    .math { font-family: 'Times New Roman', Georgia, serif; font-style: italic; }
+    .msub { font-family: 'Times New Roman', Georgia, serif; font-style: normal; font-size: 7.4px; }
+    .tag-bad { fill: #F9EAE5; stroke: #A95035; stroke-width: 1.1; }
+    .tag-good { fill: #E6F2EF; stroke: #2F6B60; stroke-width: 1.2; }
+    .tag-mid { fill: #FAF2E3; stroke: #9B7432; stroke-width: 1.1; }
+  </style>
+
+  <rect x="0" y="0" width="1440" height="416" fill="#FFFFFF"/>
+
+  <!-- ================= PANEL (a): Maritime Sea-Fog Geometry & Anisotropic Depth Field ================= -->
+  <rect x="12" y="10" width="460" height="396" rx="6" class="card"/>
+  <text x="26" y="34" class="title">(a) Maritime Horizon Geometry &amp; Anisotropic Sea Fog</text>
+  <text x="26" y="51" class="sub">ASV/USV horizontal camera view: |∂<tspan class="math">V</tspan>/∂<tspan class="math">y</tspan>| = 1.36–1.46× |∂<tspan class="math">V</tspan>/∂<tspan class="math">x</tspan>| (88% OWH scenes)</text>
+
+  <g transform="translate(26, 66)">
+    <rect x="0" y="0" width="432" height="216" rx="5" fill="url(#sea-depth-grad)" stroke="#3B5978" stroke-width="1.2"/>
+    <rect x="0" y="0" width="432" height="216" rx="5" fill="url(#fog-veil-band)"/>
+
+    <!-- Horizon line -->
+    <line x1="2" y1="104" x2="430" y2="104" stroke="#2F6B60" stroke-width="1.5" stroke-dasharray="6 3"/>
+    <rect x="12" y="83" width="152" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.93" stroke="#2F6B60" stroke-width="0.9"/>
+    <text x="88" y="95" class="small" style="fill:#174038; font-weight:700;" text-anchor="middle">Sea–Sky Horizon (Iso-Depth Band)</text>
+
+    <!-- Distant target vessel near horizon (mid-frequency 0.02-0.15) -->
+    <path d="M 208 104 L 216 91 L 284 91 L 296 104 Z" fill="#4E6478" stroke="#243442" stroke-width="1.0"/>
+    <rect x="234" y="80" width="24" height="11" fill="#7D91A3" stroke="#243442" stroke-width="0.9"/>
+    <line x1="246" y1="80" x2="246" y2="68" stroke="#243442" stroke-width="1.2"/>
+    <rect x="200" y="64" width="104" height="45" rx="3" fill="none" stroke="#9B7432" stroke-width="1.3" stroke-dasharray="3.5 2.5"/>
+    <text x="252" y="58" class="small" style="fill:#6E5220; font-weight:700;" text-anchor="middle">Target Vessel (0.02–0.15 Mid-Band)</text>
+
+    <!-- Horizontal 1x31 kernel span indicator -->
+    <line x1="158" y1="126" x2="342" y2="126" stroke="#2F6B60" stroke-width="2.1" marker-end="url(#arr-t)"/>
+    <line x1="342" y1="126" x2="158" y2="126" stroke="#2F6B60" stroke-width="2.1" marker-end="url(#arr-t)"/>
+    <rect x="178" y="133" width="144" height="19" rx="3" fill="#E6F2EF" stroke="#2F6B60" stroke-width="0.95"/>
+    <text x="250" y="146" class="small" style="fill:#174038; font-weight:600;" text-anchor="middle">DW 1×31: Horizontal Iso-Depth</text>
+
+    <!-- Vertical 31x1 depth gradient arrow (placed cleanly to the right of its label box) -->
+    <line x1="414" y1="18" x2="414" y2="198" stroke="#A95035" stroke-width="2.2" marker-end="url(#arr-r)"/>
+    <rect x="296" y="160" width="108" height="34" rx="3" fill="#F9EAE5" stroke="#A95035" stroke-width="0.95"/>
+    <text x="350" y="174" class="small" style="fill:#542416; font-weight:600;" text-anchor="middle">DW 31×1: Vertical Depth</text>
+    <text x="350" y="187" class="small" style="fill:#542416;" text-anchor="middle"><tspan class="math">t</tspan>(<tspan class="math">y</tspan>) = exp(−<tspan class="math">β</tspan> <tspan class="math">d</tspan>(<tspan class="math">y</tspan>))</text>
+
+    <!-- Sky & Near-sea labels (crisp high contrast!) -->
+    <rect x="10" y="10" width="218" height="18" rx="3" fill="#FFFFFF" fill-opacity="0.82"/>
+    <text x="17" y="22" class="small" style="fill:#243442; font-weight:600;">Upper Sky: Airlight <tspan class="math">A</tspan> (86–87% DC–0.02)</text>
+
+    <rect x="10" y="191" width="212" height="18" rx="3" fill="#1B364D" fill-opacity="0.72"/>
+    <text x="17" y="203" class="small" style="fill:#F8FAFC; font-weight:600;">Near-Field Sea: High Transmission <tspan class="math">t</tspan>(<tspan class="math">x</tspan>) → 1</text>
+  </g>
+
+  <rect x="26" y="296" width="432" height="96" rx="4" class="inner"/>
+  <text x="38" y="316" class="bold" style="fill:#2F6B60;">Structural Mismatch 1 (Geometry &amp; Mid-Band Blur):</text>
+  <text x="38" y="334" class="sub">• Self-attention mixes white vessel superstructures with distant fog banks → sky halos.</text>
+  <text x="38" y="352" class="sub">• Standard 3×3 CNNs miss 124 px horizon bands &amp; 0.02–0.15 hull silhouettes.</text>
+  <text x="38" y="373" class="bold" style="fill:#1F2933;">→ Solution: <tspan font-weight="400">ASFB (MS-LFM + AnisoLK 1×31/31×1) + Rep5-CD (Zero-DC) + L2-AnisoLK.</tspan></text>
+
+  <!-- ================= PANEL (b): Scale-Bandwidth Collapse Theorem ================= -->
+  <rect x="490" y="10" width="460" height="396" rx="6" class="card"/>
+  <text x="504" y="34" class="title">(b) Scale–Bandwidth Alignment Theorem (Prop. 1)</text>
+  <text x="504" y="51" class="sub">Feature cutoff <tspan class="math">c</tspan><tspan class="msub" dy="2">f</tspan><tspan dy="-2"> maps to image band </tspan><tspan class="math">c</tspan><tspan class="msub" dy="2">img</tspan><tspan dy="-2"> = </tspan><tspan class="math">c</tspan><tspan class="msub" dy="2">f</tspan><tspan dy="-2">/</tspan><tspan class="math">s</tspan>, 2D area Ω ∝ 1/<tspan class="math">s</tspan><tspan class="msub" dy="-3">2</tspan></text>
+
+  <rect x="504" y="66" width="432" height="216" rx="5" class="inner"/>
+
+  <!-- Concentric 2D frequency domain diagram (cleanly spaced labels, zero overlap!) -->
+  <g transform="translate(612, 174)">
+    <rect x="-92" y="-94" width="184" height="188" rx="4" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/>
+    <line x1="-92" y1="0" x2="92" y2="0" stroke="#CBD5E1" stroke-width="0.9" stroke-dasharray="3 2"/>
+    <line x1="0" y1="-94" x2="0" y2="94" stroke="#CBD5E1" stroke-width="0.9" stroke-dasharray="3 2"/>
+    <!-- Axes labels tucked cleanly in corners -->
+    <text x="72" y="-6" class="math" font-size="9.5" style="fill:#475569;">ω<tspan class="msub" dy="2">x</tspan></text>
+    <text x="6" y="-81" class="math" font-size="9.5" style="fill:#475569;">ω<tspan class="msub" dy="2">y</tspan></text>
+
+    <!-- Target maritime haze band DC-0.025 (r=64) -->
+    <circle cx="0" cy="0" r="64" fill="#E6F2EF" stroke="#2F6B60" stroke-width="2.0"/>
+    <!-- s=8 collapsed disk (r=32, 25% area) -->
+    <circle cx="0" cy="0" r="32" fill="#FAF2E3" stroke="#9B7432" stroke-width="1.6" stroke-dasharray="4 2.5"/>
+    <!-- s=16 collapsed disk (r=16, 6.25% area) -->
+    <circle cx="0" cy="0" r="16" fill="#F9EAE5" stroke="#A95035" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="2.5" fill="#1F2933"/>
+
+    <!-- Clean non-overlapping labels -->
+    <text x="0" y="-69" class="small" style="fill:#174038; font-weight:700;" text-anchor="middle">s = 4 (Ours): 100% Area</text>
+    <text x="0" y="-36" class="small" style="fill:#6E5220; font-weight:600;" text-anchor="middle">s = 8: 25%</text>
+    <!-- Leader line for s=16 -->
+    <line x1="0" y1="16" x2="0" y2="73" stroke="#A95035" stroke-width="0.9" stroke-dasharray="2 2"/>
+    <rect x="-42" y="71" width="84" height="16" rx="2.5" fill="#F9EAE5" stroke="#A95035" stroke-width="0.8"/>
+    <text x="0" y="82" class="small" style="fill:#783520; font-weight:600;" text-anchor="middle">s = 16: 6.25%</text>
+  </g>
+
+  <!-- Right side quantitative comparison bars -->
+  <g transform="translate(720, 82)">
+    <text x="0" y="14" class="bold">2D Spectral Coverage (<tspan class="math">c</tspan><tspan class="msub" dy="2">f</tspan><tspan dy="-2"> = 0.08–0.10)</tspan></text>
+
+    <rect x="0" y="28" width="204" height="45" rx="4" class="tag-good"/>
+    <text x="10" y="46" class="bold" style="fill:#174038;">3-Scale (<tspan class="math">s</tspan> = 4, Ours)</text>
+    <text x="10" y="63" class="small" style="fill:#23574E;"><tspan class="math">c</tspan><tspan class="msub" dy="2">img</tspan><tspan dy="-2"> = 0.020–0.025 | Covers 87% veil</tspan></text>
+
+    <rect x="0" y="83" width="204" height="45" rx="4" class="tag-mid"/>
+    <text x="10" y="101" class="bold" style="fill:#6E5220;">4-Scale U-Net (<tspan class="math">s</tspan> = 8)</text>
+    <text x="10" y="118" class="small" style="fill:#6E5220;"><tspan class="math">c</tspan><tspan class="msub" dy="2">img</tspan><tspan dy="-2"> = 0.010 | 75% band collapsed</tspan></text>
+
+    <rect x="0" y="138" width="204" height="45" rx="4" class="tag-bad"/>
+    <text x="10" y="156" class="bold" style="fill:#542416;">5-Scale U-Net (<tspan class="math">s</tspan> = 16)</text>
+    <text x="10" y="173" class="small" style="fill:#783520;"><tspan class="math">c</tspan><tspan class="msub" dy="2">img</tspan><tspan dy="-2"> = 0.005 | Degenerates to DC only</tspan></text>
+  </g>
+
+  <rect x="504" y="296" width="432" height="96" rx="4" class="inner"/>
+  <text x="516" y="316" class="bold" style="fill:#3B5978;">Structural Mismatch 2 (Downsampling Collapse &amp; Fog Leakage):</text>
+  <text x="516" y="334" class="sub">• Over-deep 1/8–1/16 U-Nets shrink bottleneck spectral bandwidth quadratically (1/<tspan class="math">s</tspan>²).</text>
+  <text x="516" y="352" class="sub">• Unconstrained shallow skip connections re-inject raw hazy low frequencies into decoder.</text>
+  <text x="516" y="373" class="bold" style="fill:#1F2933;">→ Solution: <tspan font-weight="400">3-Scale (</tspan><tspan class="math" font-weight="400">s</tspan><tspan font-weight="400">=4) + Physics </tspan><tspan class="math" font-weight="400">c</tspan><tspan class="msub" dy="2">f</tspan><tspan dy="-2" font-weight="400">=4</tspan><tspan class="math" font-weight="400">c</tspan><tspan class="msub" dy="2">img</tspan><tspan dy="-2" font-weight="400"> + Scene-FCSF (1×: </tspan><tspan class="math" font-weight="400">α</tspan><tspan font-weight="400">≡0).</tspan></text>
+
+  <!-- ================= PANEL (c): C2 Zero-Curvature BASR vs Convex Sigmoid ================= -->
+  <rect x="968" y="10" width="460" height="396" rx="6" class="card"/>
+  <text x="982" y="34" class="title">(c) Zero-Curvature Affine Inversion (Prop. 4)</text>
+  <text x="982" y="51" class="sub">Eliminating light-mist Jensen overshoot (<tspan class="math">G</tspan>″(0) = 0) &amp; dense-fog 1/<tspan class="math">t</tspan> blow-up</text>
+
+  <rect x="982" y="66" width="432" height="216" rx="5" class="inner"/>
+  <g transform="translate(1030, 82)">
+    <!-- Axes: k in [-3, 5] -> x in [0, 360]; G in [0, 5] -> y in [168, 8] -->
+    <line x1="0" y1="168" x2="360" y2="168" stroke="#CBD5E1" stroke-width="1"/>
+    <line x1="0" y1="136" x2="360" y2="136" stroke="#94A3B8" stroke-width="1" stroke-dasharray="3 3"/>
+    <line x1="0" y1="104" x2="360" y2="104" stroke="#E2E8F0" stroke-width="0.8"/>
+    <line x1="0" y1="72" x2="360" y2="72" stroke="#E2E8F0" stroke-width="0.8"/>
+    <line x1="0" y1="40" x2="360" y2="40" stroke="#E2E8F0" stroke-width="0.8"/>
+    <line x1="135" y1="6" x2="135" y2="168" stroke="#64748B" stroke-width="1.1"/>
+    <line x1="0" y1="168" x2="360" y2="168" stroke="#24292F" stroke-width="1.2" marker-end="url(#arr-k)"/>
+    <line x1="0" y1="168" x2="0" y2="6" stroke="#24292F" stroke-width="1.2" marker-end="url(#arr-k)"/>
+
+    <text x="-8" y="139" class="small" text-anchor="end">1.0</text>
+    <text x="-8" y="155" class="small" text-anchor="end">0.5</text>
+    <text x="-8" y="75" class="small" text-anchor="end">3.0</text>
+    <text x="-8" y="43" class="small" text-anchor="end">4.0</text>
+    <text x="-8" y="12" class="small" text-anchor="end">5.0</text>
+    <text x="135" y="182" class="small" style="font-weight:700; fill:#1F2933;" text-anchor="middle"><tspan class="math">k</tspan> = 0</text>
+    <text x="45" y="182" class="small" text-anchor="middle">−2</text>
+    <text x="225" y="182" class="small" text-anchor="middle">+2</text>
+    <text x="315" y="182" class="small" text-anchor="middle">+4</text>
+    <text x="354" y="161" class="math" font-size="10.5" style="fill:#1F2933;">k</text>
+    <text x="8" y="14" class="math" font-size="10.5" style="fill:#1F2933;">G(k)</text>
+
+    <!-- Curve 1: Unbounded linear 1+k -->
+    <path d="M 90 168 L 135 136 L 225 72 L 315 8" fill="none" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="4 3"/>
+
+    <!-- Curve 2: Convex Sigmoid G_sig(k) = 0.5 + 4.5*sigmoid(k - ln8) -->
+    <!-- Exact points: (-3,0.51)->151.7, (-2,0.52)->151.3, (-1,0.57)->149.8, (0,1.00)->136.0, (1,1.64)->115.5, (2,2.65)->83.2, (3,3.70)->49.6, (4,4.42)->26.6, (5,4.76)->15.7 -->
+    <polyline points="0,151.7 45,151.3 90,149.8 112.5,145.6 135,136.0 157.5,127.0 180,115.5 202.5,100.3 225,83.2 247.5,65.7 270,49.6 315,26.6 360,15.7"
+              fill="none" stroke="#A95035" stroke-width="2.0" stroke-dasharray="5 3"/>
+
+    <!-- Curve 3: Ours C2 Zero-Curvature Piecewise tanh -->
+    <!-- Exact points: (-3,0.50)->152.0, (-1,0.518)->151.4, (-0.5,0.619)->148.2, (0,1.00)->136.0, (0.5,1.495)->120.2, (1,1.964)->105.2, (2,2.749)->80.0, (3,3.285)->62.9, (4,3.611)->52.4, (5,3.792)->46.7 -->
+    <polyline points="0,152.0 45,151.9 90,151.4 112.5,148.2 123.75,143.4 135,136.0 146.25,128.0 157.5,120.2 180,105.2 202.5,91.8 225,80.0 270,62.9 315,52.4 360,46.7"
+              fill="none" stroke="#2F6B60" stroke-width="2.4"/>
+
+    <!-- Identity Point (0, 1) marker -->
+    <circle cx="135" cy="136" r="4.5" fill="#FFFFFF" stroke="#1F2933" stroke-width="1.8"/>
+
+    <!-- Legend -->
+    <rect x="12" y="18" width="120" height="54" rx="3.5" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="0.9"/>
+    <line x1="18" y1="30" x2="36" y2="30" stroke="#2F6B60" stroke-width="2.4"/>
+    <text x="41" y="33" class="small" style="fill:#174038; font-weight:700;">C²-BASR (<tspan class="math">G</tspan>″ = 0)</text>
+    <line x1="18" y1="46" x2="36" y2="46" stroke="#A95035" stroke-width="2.0" stroke-dasharray="4 2"/>
+    <text x="41" y="49" class="small" style="fill:#8B3F28;">Sigmoid (<tspan class="math">G</tspan>″ = +0.35)</text>
+    <line x1="18" y1="62" x2="36" y2="62" stroke="#94A3B8" stroke-width="1.4" stroke-dasharray="3 2"/>
+    <text x="41" y="65" class="small" style="fill:#64748B;">Unbounded 1 + <tspan class="math">k</tspan></text>
+
+    <!-- Callout at k=0 -->
+    <text x="145" y="149" class="small" style="fill:#174038; font-weight:600;">Identity (0, 1): <tspan class="math">G</tspan>″(0) = 0</text>
+  </g>
+
+  <rect x="982" y="296" width="432" height="96" rx="4" class="inner"/>
+  <text x="994" y="316" class="bold" style="fill:#8B3F28;">Structural Mismatch 3 (Wide Mist-to-Dense Dynamic Range):</text>
+  <text x="994" y="334" class="sub">• Pure additive <tspan class="math">I</tspan>+Δ struggles on 3–10× dense contrast loss; 1/<tspan class="math">t</tspan> explodes.</text>
+  <text x="994" y="352" class="sub">• Convex sigmoid (<tspan class="math">G</tspan>″(0)=+0.346) creates Jensen bias E[<tspan class="math">G</tspan>]&gt;1 → mist overshoot.</text>
+  <text x="994" y="373" class="bold" style="fill:#1F2933;">→ Solution: <tspan font-weight="400">C² Piecewise tanh (</tspan><tspan class="math" font-weight="400">G</tspan><tspan font-weight="400">″(0)=0) + RMS-Contrast Scene Gate.</tspan></text>
+</svg>
+</body>
+</html>

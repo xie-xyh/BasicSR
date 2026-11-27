@@ -1,0 +1,71 @@
+{
+  "label_map": {
+    "0": "Dense",
+    "1": "Moderate",
+    "2": "Mist"
+  },
+  "bottleneck_144d": {
+    "014a": {
+      "silhouette_true": 0.0443,
+      "silhouette_kmeans": 0.143,
+      "silhouette_tsne2d": 0.0497,
+      "calinski_harabasz": 22.95,
+      "kmeans_ari": 0.2229,
+      "kmeans_nmi": 0.2594,
+      "kmeans_purity": 0.5689,
+      "linear_5fold_acc": 0.7102
+    },
+    "014b": {
+      "silhouette_true": 0.0452,
+      "silhouette_kmeans": 0.1296,
+      "silhouette_tsne2d": 0.0793,
+      "calinski_harabasz": 21.17,
+      "kmeans_ari": 0.2268,
+      "kmeans_nmi": 0.2312,
+      "kmeans_purity": 0.5583,
+      "linear_5fold_acc": 0.7314
+    },
+    "014d": {
+      "silhouette_true": 0.0439,
+      "silhouette_kmeans": 0.1266,
+      "silhouette_tsne2d": 0.1166,
+      "calinski_harabasz": 25.26,
+      "kmeans_ari": 0.2728,
+      "kmeans_nmi": 0.3192,
+      "kmeans_purity": 0.6184,
+      "linear_5fold_acc": 0.7173
+    }
+  },
+  "decoder_36d": {
+    "014a": {
+      "silhouette_true": 0.0195,
+      "silhouette_kmeans": 0.2066,
+      "silhouette_tsne2d": 0.0499,
+      "calinski_harabasz": 9.96,
+      "kmeans_ari": 0.041,
+      "kmeans_nmi": 0.0544,
+      "kmeans_purity": 0.4417,
+      "linear_5fold_acc": 0.6431
+    },
+    "014b": {
+      "silhouette_true": 0.0122,
+      "silhouette_kmeans": 0.1982,
+      "silhouette_tsne2d": 0.0358,
+      "calinski_harabasz": 9.21,
+      "kmeans_ari": 0.0589,
+      "kmeans_nmi": 0.0802,
+      "kmeans_purity": 0.4594,
+      "linear_5fold_acc": 0.6608
+    },
+    "014d": {
+      "silhouette_true": 0.018,
+      "silhouette_kmeans": 0.1441,
+      "silhouette_tsne2d": 0.0113,
+      "calinski_harabasz": 11.24,
+      "kmeans_ari": 0.0654,
+      "kmeans_nmi": 0.0758,
+      "kmeans_purity": 0.4664,
+      "linear_5fold_acc": 0.6608
+    }
+  }
+}
