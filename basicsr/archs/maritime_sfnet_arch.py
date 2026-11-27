@@ -1,28 +1,32 @@
 """MaritimeSFNet (014): Three-scale anisotropic spatial-frequency dehazing backbone.
 
 Design specification and mathematical derivations:
-    research/014_maritime_sfnet/README.md (Propositions P1-P6).
+    research/014_maritime_sfnet/README.md (Propositions P1-P6 and P1-v2).
 
 Key modules:
-    - AnisoRepConv3x3: 4-branch anisotropic structural reparameterization
-      (plain 3x3 + 1x1 + horizontal diff 1x3 + vertical diff 3x1), merged on
-      the fly into a single dense 3x3 conv and losslessly foldable via
+    - AnisoRepConv3x3: 4-branch (014a/b/c) or 5-branch with isotropic Center
+      Difference (`use_cd=True`, 014d) structural reparameterization
+      (plain 3x3 + 1x1 + horizontal diff 1x3 + vertical diff 3x1 [+ center diff 3x3]),
+      merged on the fly into a single dense 3x3 conv and losslessly foldable via
       `fold_reparam()` for deployment and frozen-backbone LoRA adaptation.
     - DualChannelSpatialAttention (DCA): DC-preserving multiplicative gating
-      in (0, 2) with zero-init identity (1.0 at start) for bottleneck blocks.
+      in (0, 2) with zero-init identity (1.0 at start) for bottleneck blocks;
+      optionally refined by channel-wise grouped 7x7 pixel attention (`channel_spatial=True`).
     - PhysicsAlignedLFM: Low-frequency FiLM modulation parameterized in
       image-space normalized Nyquist units (`cutoff_img`), automatically
       scaled by bottleneck stride `s=4` to prevent scale-bandwidth collapse;
-      supports single-grid (014a) or multi-scale 8x8+16x16 grids (014b/c).
-    - AnisotropicLargeKernelBlock: Parallel 1x31, 31x1, 15x15, and 3x3
+      supports single-grid (014a) or multi-scale 8x8+16x16 grids (014b/c/d).
+    - AnisotropicLargeKernelBlock: Parallel 1xK, Kx1, K_sq x K_sq, and 3x3
       depthwise branches targeting maritime horizon/vertical haze anisotropy,
-      strictly zero-initialized.
+      strictly zero-initialized; deployable at 1/4 bottleneck and 1/2 decoder (`use_l2_aniso_lk`).
     - FrequencyConvexSkipFusion (FCSF): Deep-dominant convex low-band fusion
-      plus gated detail injection and 1x1 channel projection; full-resolution
-      (1x) skip blocks all low-frequency haze passthrough (`high_pass_only`).
+      plus gated detail injection, optional global scene context (`scene_context=True`),
+      and 1x1 channel projection; full-resolution (1x) skip blocks all low-frequency
+      haze passthrough (`high_pass_only`).
     - BoundedAffineSoftReconHead (BASR): Strictly positive bounded affine
-      reconstruction J_hat = G(K_tilde) * I + B with G in (0.5, 5.0) and
-      exact zero-init identity (G=1, B=0).
+      reconstruction J_hat = G(K_tilde) * I + B with exact zero-init identity
+      (G=1, B=0). Supports original sigmoid gain (014a/b/c) and C^2 zero-curvature
+      symmetric-tanh gain + scene contrast gate (`symmetric_gain=True, scene_gate=True`, 014d).
 """
 import math
 
@@ -35,34 +39,47 @@ from basicsr.utils.registry import ARCH_REGISTRY
 
 
 class AnisoRepConv3x3(nn.Module):
-    """Four-branch anisotropic reparameterized 3x3 convolution.
+    """Four- or five-branch isotropic+anisotropic reparameterized 3x3 convolution.
 
     Branches during training:
         1. Plain 3x3 convolution
         2. 1x1 pointwise convolution (embedded at kernel center)
         3. Horizontal 1x3 difference convolution ([+w, 0, -w])
         4. Vertical 3x1 difference convolution ([+w; 0; -w])
+        5. Optional Center Difference 3x3 convolution (w - sum(w) * delta_center,
+           zero DC gain, isotropic radial bandpass targeting 0.02-0.15 mid-band;
+           enabled when `use_cd=True`).
 
-    All four branches are merged linearly into one dense 3x3 kernel before
-    calling F.conv2d, preserving Tensor Core arithmetic intensity and allowing
-    exact lossless folding via `fold_reparam()`.
+    All branches are merged linearly into one dense 3x3 kernel before calling
+    F.conv2d, preserving Tensor Core arithmetic intensity and allowing exact
+    lossless folding via `fold_reparam()` with zero extra inference cost.
     """
 
-    def __init__(self, dim):
+    def __init__(self, dim, use_cd=False):
         super().__init__()
         self.dim = dim
+        self.use_cd = bool(use_cd)
         self.plain = nn.Conv2d(dim, dim, 3, padding=1, bias=True)
         self.pw = nn.Conv2d(dim, dim, 1, bias=True)
         self.hd = nn.Conv1d(dim, dim, 3, bias=True)
         self.vd = nn.Conv1d(dim, dim, 3, bias=True)
+        self.cd = nn.Conv2d(dim, dim, 3, padding=1, bias=True) if self.use_cd else None
         self.folded_conv = None
 
-        # Variance-balanced initialization so the 4-branch sum has unit gain
+        # Variance-balanced initialization so the multi-branch sum has unit gain
         with torch.no_grad():
-            self.plain.weight.mul_(0.5)
-            self.pw.weight.mul_(0.5)
-            self.hd.weight.mul_(0.35)
-            self.vd.weight.mul_(0.35)
+            if self.use_cd:
+                self.plain.weight.mul_(0.45)
+                self.pw.weight.mul_(0.45)
+                self.hd.weight.mul_(0.30)
+                self.vd.weight.mul_(0.30)
+                self.cd.weight.mul_(0.25)
+                nn.init.zeros_(self.cd.bias)
+            else:
+                self.plain.weight.mul_(0.5)
+                self.pw.weight.mul_(0.5)
+                self.hd.weight.mul_(0.35)
+                self.vd.weight.mul_(0.35)
             nn.init.zeros_(self.pw.bias)
             nn.init.zeros_(self.hd.bias)
             nn.init.zeros_(self.vd.bias)
@@ -79,11 +96,16 @@ class AnisoRepConv3x3(nn.Module):
         w_vd = torch.stack((self.vd.weight, zero_vd, -self.vd.weight), dim=2)
         w = w_plain + w_pw + w_hd + w_vd
         b = self.plain.bias + self.pw.bias + self.hd.bias + self.vd.bias
+        if self.cd is not None:
+            w_cd_sum = self.cd.weight.sum(dim=(2, 3), keepdim=True)
+            w_cd = self.cd.weight - F.pad(w_cd_sum, (1, 1, 1, 1))
+            w = w + w_cd
+            b = b + self.cd.bias
         return w, b
 
     @torch.no_grad()
     def fold_reparam(self):
-        """Losslessly fold the four training branches into one plain 3x3 conv."""
+        """Losslessly fold all training branches into one plain 3x3 conv."""
         if self.folded_conv is not None:
             return
         w, b = self.get_merged_weight()
@@ -96,6 +118,7 @@ class AnisoRepConv3x3(nn.Module):
         self.pw = None
         self.hd = None
         self.vd = None
+        self.cd = None
 
     def forward(self, x):
         if self.folded_conv is not None:
@@ -109,9 +132,12 @@ class DualChannelSpatialAttention(nn.Module):
 
     Output gate lies strictly in (0, 2) and starts at exact identity 1.0 via
     zero initialization, avoiding early activation attenuation.
+    When `channel_spatial=True`, adds a zero-initialized channel-wise grouped
+    7x7 residual refinement (`pa`) over interleaved `(x_c, p1_c)` pairs so each
+    channel obtains its own spatial modulation without gradient deadlock.
     """
 
-    def __init__(self, dim, reduction=4):
+    def __init__(self, dim, reduction=4, channel_spatial=False):
         super().__init__()
         hidden = max(dim // reduction, 16)
         self.ca = nn.Sequential(
@@ -124,25 +150,45 @@ class DualChannelSpatialAttention(nn.Module):
         nn.init.zeros_(self.ca[-1].bias)
         nn.init.zeros_(self.sa.weight)
         nn.init.zeros_(self.sa.bias)
+        if channel_spatial:
+            self.pa = nn.Conv2d(
+                2 * dim, dim, 7, padding=3, padding_mode='replicate', groups=dim)
+            nn.init.zeros_(self.pa.weight)
+            nn.init.zeros_(self.pa.bias)
+        else:
+            self.pa = None
 
     def forward(self, x):
         c_attn = self.ca(x)
         s_in = torch.cat((x.mean(dim=1, keepdim=True), x.amax(dim=1, keepdim=True)), dim=1)
         s_attn = self.sa(s_in)
-        return x * (2.0 * torch.sigmoid(c_attn + s_attn))
+        p1 = c_attn + s_attn
+        if self.pa is not None:
+            b, c, h, w = x.shape
+            pa_in = torch.stack((x, p1), dim=2).reshape(b, 2 * c, h, w)
+            logits = p1 + self.pa(pa_in)
+        else:
+            logits = p1
+        return x * (2.0 * torch.sigmoid(logits))
 
 
 class MaritimeBlock(nn.Module):
     """Dense 3x3 residual block with optional reparameterization and DCA."""
 
-    def __init__(self, dim, use_attn=False, attn_reduction=4, use_reparam=True):
+    def __init__(self, dim, use_attn=False, attn_reduction=4, use_reparam=True,
+                 use_cd=False, channel_spatial_attn=False):
         super().__init__()
-        self.conv1 = AnisoRepConv3x3(dim) if use_reparam else nn.Conv2d(dim, dim, 3, padding=1)
+        self.conv1 = (
+            AnisoRepConv3x3(dim, use_cd=use_cd)
+            if use_reparam else nn.Conv2d(dim, dim, 3, padding=1))
         self.act = nn.GELU()
         self.conv2 = nn.Conv2d(dim, dim, 3, padding=1)
         with torch.no_grad():
             self.conv2.weight.mul_(0.5)
-        self.attn = DualChannelSpatialAttention(dim, reduction=attn_reduction) if use_attn else None
+        self.attn = (
+            DualChannelSpatialAttention(
+                dim, reduction=attn_reduction, channel_spatial=channel_spatial_attn)
+            if use_attn else None)
 
     def forward(self, x):
         res = self.act(self.conv1(x)) + x
@@ -276,14 +322,20 @@ class FrequencyConvexSkipFusion(nn.Module):
 
     When `high_pass_only=False` (1/4 & 1/2 scales):
         fused = out_proj(deep + alpha * (skip_low - deep_low) + beta * skip_detail)
-        with alpha in (0, 1) initialized near 0.12 (bias=-2.0) so dehazed deep
-        features dominate the low-frequency base.
+        with alpha in (0, 1) initialized via `alpha_init_bias` (default -2.0,
+        alpha_0 ~ 0.12; -1.2 gives ~0.23) so dehazed deep features dominate the
+        low-frequency base.
     When `high_pass_only=True` (1x full resolution):
         alpha === 0; blocks shallow hazy low frequencies completely and injects
         only gated high-pass structural detail.
+    When `scene_context=True` (014d):
+        adds a zero-initialized global GAP scene branch to the gate logits so
+        light-haze scenes can smoothly relax low-band suppression while heavy
+        haze keeps alpha near zero.
     """
 
-    def __init__(self, dim, reduction=4, high_pass_only=False, lp_stride=4):
+    def __init__(self, dim, reduction=4, high_pass_only=False, lp_stride=4,
+                 scene_context=False, alpha_init_bias=-2.0):
         super().__init__()
         self.dim = dim
         self.high_pass_only = high_pass_only
@@ -302,8 +354,18 @@ class FrequencyConvexSkipFusion(nn.Module):
             if high_pass_only:
                 self.gate[-1].bias.fill_(-1.0)  # beta_0 ~ 0.27
             else:
-                self.gate[-1].bias[:dim].fill_(-2.0)  # alpha_0 ~ 0.12 (deep-dominant)
-                self.gate[-1].bias[dim:].fill_(0.0)   # beta_0 = 0.50
+                self.gate[-1].bias[:dim].fill_(float(alpha_init_bias))
+                self.gate[-1].bias[dim:].fill_(0.0)  # beta_0 = 0.50
+        if scene_context:
+            self.scene_gate = nn.Sequential(
+                nn.AdaptiveAvgPool2d(1),
+                nn.Conv2d(in_ch, hidden, 1),
+                nn.GELU(),
+                nn.Conv2d(hidden, out_ch, 1))
+            nn.init.zeros_(self.scene_gate[-1].weight)
+            nn.init.zeros_(self.scene_gate[-1].bias)
+        else:
+            self.scene_gate = None
         self.out_proj = nn.Conv2d(dim, dim, 1)
         self.last_alpha_mean = None
         self.last_beta_mean = None
@@ -329,6 +391,8 @@ class FrequencyConvexSkipFusion(nn.Module):
             evidence = torch.cat((self._pool2(deep), self._pool2(skip_detail.abs())), dim=1)
             logits = F.interpolate(
                 self.gate(evidence), size=deep.shape[-2:], mode='bilinear', align_corners=False)
+            if self.scene_gate is not None:
+                logits = logits + self.scene_gate(evidence)
             beta = torch.sigmoid(logits)
             self.last_alpha_mean = None
             self.last_beta_mean = beta.detach().mean()
@@ -342,6 +406,8 @@ class FrequencyConvexSkipFusion(nn.Module):
         ), dim=1)
         logits = F.interpolate(
             self.gate(evidence), size=deep.shape[-2:], mode='bilinear', align_corners=False)
+        if self.scene_gate is not None:
+            logits = logits + self.scene_gate(evidence)
         alpha, beta = torch.sigmoid(logits).chunk(2, dim=1)
         self.last_alpha_mean = alpha.detach().mean()
         self.last_beta_mean = beta.detach().mean()
@@ -350,32 +416,77 @@ class FrequencyConvexSkipFusion(nn.Module):
 
 
 class BoundedAffineSoftReconHead(nn.Module):
-    """Strictly positive bounded affine soft reconstruction head (Proposition P1).
+    """Strictly positive bounded affine soft reconstruction head (Propositions P1 & P1-v2).
 
         J_hat = G(K_tilde) * I + B
-        G(K_tilde) = g_min + (g_max - g_min) * sigmoid(K_tilde + b0)
 
-    With g_min=0.5, g_max=5.0, b0=-ln(8), zero-initialized conv gives exact
-    identity (G=1.0, B=0.0) and prevents both 1/t division blow-up and polarity
-    inversion.
+    Two bounded positive parameterizations with exact zero-init identity (G=1, B=0):
+        1. `symmetric_gain=False` (014a/b/c):
+               G(k) = g_min + (g_max - g_min) * sigmoid(k + b0),  G''(0) > 0.
+        2. `symmetric_gain=True` (014d, Proposition P1-v2):
+               G(k) = 1 + a_+ * tanh(k / a_+)  for k >= 0
+                      1 + a_- * tanh(k / a_-)  for k < 0
+           with a_+ = g_max - 1, a_- = 1 - g_min. Satisfies G(0)=1, G'(0)=1,
+           G''(0)=0 (C^2 zero-curvature at identity), eliminating Jensen's
+           convexity overshoot bias on light-haze scenes while keeping G in (g_min, g_max).
+
+    When `scene_gate=True` (014d), a lightweight global scene contrast MLP over
+    [GAP(feat), GAP(image), RMS_contrast(image)] scales (raw_k, bias) in (0, 2)
+    with exact 1.0 initialization so light-haze scenes can damp over-correction.
     """
 
-    def __init__(self, dim, out_ch=3, g_min=0.5, g_max=5.0):
+    def __init__(self, dim, out_ch=3, g_min=0.5, g_max=5.0,
+                 symmetric_gain=False, scene_gate=False):
         super().__init__()
         if not (0.0 < g_min < 1.0 < g_max):
             raise ValueError(f'Require 0 < g_min < 1 < g_max, got ({g_min}, {g_max})')
         self.g_min = float(g_min)
         self.g_max = float(g_max)
-        self.b0 = -math.log((self.g_max - 1.0) / (1.0 - self.g_min))
+        self.a_pos = self.g_max - 1.0
+        self.a_neg = 1.0 - self.g_min
+        self.b0 = -math.log(self.a_pos / self.a_neg)
+        self.symmetric_gain = bool(symmetric_gain)
         self.head = nn.Conv2d(dim, out_ch * 2, 3, padding=1)
         nn.init.zeros_(self.head.weight)
         nn.init.zeros_(self.head.bias)
+        if scene_gate:
+            scene_in = dim + 2 * out_ch
+            scene_hidden = max(dim // 2, 16)
+            self.scene_mlp = nn.Sequential(
+                nn.Conv2d(scene_in, scene_hidden, 1),
+                nn.GELU(),
+                nn.Conv2d(scene_hidden, out_ch * 2, 1))
+            nn.init.zeros_(self.scene_mlp[-1].weight)
+            nn.init.zeros_(self.scene_mlp[-1].bias)
+        else:
+            self.scene_mlp = None
         self.last_gain_mean = None
         self.last_bias_abs = None
+        self.last_scene_scale = None
 
     def forward(self, feat, image):
         raw_k, bias = self.head(feat).chunk(2, dim=1)
-        gain = self.g_min + (self.g_max - self.g_min) * torch.sigmoid(raw_k + self.b0)
+        if self.scene_mlp is not None:
+            g_feat = F.adaptive_avg_pool2d(feat, 1)
+            g_img_mean = F.adaptive_avg_pool2d(image, 1)
+            g_img_std = torch.sqrt(
+                image.var(dim=(-2, -1), keepdim=True, unbiased=False) + 1e-6)
+            scene_scale = 2.0 * torch.sigmoid(
+                self.scene_mlp(torch.cat((g_feat, g_img_mean, g_img_std), dim=1)))
+            s_k, s_b = scene_scale.chunk(2, dim=1)
+            raw_k = raw_k * s_k
+            bias = bias * s_b
+            self.last_scene_scale = scene_scale.detach().mean()
+        else:
+            self.last_scene_scale = None
+
+        if self.symmetric_gain:
+            gain = torch.where(
+                raw_k >= 0,
+                1.0 + self.a_pos * torch.tanh(raw_k / self.a_pos),
+                1.0 + self.a_neg * torch.tanh(raw_k / self.a_neg))
+        else:
+            gain = self.g_min + (self.g_max - self.g_min) * torch.sigmoid(raw_k + self.b0)
         self.last_gain_mean = gain.detach().mean()
         self.last_bias_abs = bias.detach().abs().mean()
         return gain * image + bias
@@ -408,24 +519,44 @@ class MaritimeSFNet(nn.Module):
         depths (tuple[int, int, int]): Block counts at L1 (enc & dec each),
             L2 (enc & dec each), and L3 bottleneck. Default: (3, 3, 8).
         use_reparam (bool): Use AnisoRepConv3x3 in MaritimeBlock. Default: True.
+        use_cd (bool): Enable 5th isotropic Center-Difference branch inside
+            AnisoRepConv3x3 (zero DC gain, targets 0.02-0.15 mid-band, folds
+            losslessly at zero inference cost; 014d). Default: False.
+        channel_spatial_attn (bool): Add channel-wise grouped 7x7 pixel
+            attention refinement to bottleneck DCA (014d). Default: False.
         use_aniso_lk (bool): Enable AnisotropicLargeKernelBlock in bottleneck
-            ASFB (014b/c). Default: False.
+            ASFB (014b/c/d). Default: False.
         lfm_cutoff_img (float): Low-pass cutoff in *image-space* normalized
             Nyquist units (automatically scaled x4 at 1/4 bottleneck).
-            Default: 0.020 (014a); use 0.025 for 014b/c.
+            Default: 0.020 (014a); use 0.025 for 014b/c/d.
         lfm_edge_img (float): Soft transition width in image-space Nyquist units.
             Default: 0.010.
         lfm_mod_grids (tuple[int, ...]): Modulation pooling grid sizes.
-            Default: (16,) for 014a; use (8, 16) for 014b/c.
+            Default: (16,) for 014a; use (8, 16) for 014b/c/d.
         lk_strip (int): Strip kernel length for 1xK / Kx1 branches. Default: 31.
         lk_square (int): Square large kernel size. Default: 15.
+        fcsf_scene_context (bool): Add global scene GAP branch to FCSF gates
+            (014d). Default: False.
+        fcsf_alpha_bias (float): Initial logit bias for FCSF low-band gate alpha.
+            Default: -2.0 (014a/b/c); use -1.2 for 014d.
+        basr_symmetric (bool): Use C^2 zero-curvature asymmetric-tanh gain in
+            BASR head (Proposition P1-v2, 014d). Default: False.
+        basr_scene_gate (bool): Add global scene contrast modulator in BASR head
+            (014d). Default: False.
+        basr_g_max (float): Upper bound of BASR multiplicative gain. Default: 5.0
+            (014a/b/c); use 4.0 for 014d.
+        use_l2_aniso_lk (bool): Add lightweight mid-scale AnisotropicLargeKernelBlock
+            after dec2 (1/2 scale, 256x256) targeting 0.02-0.15 mid-band (014d).
+            Default: False.
+        l2_lk_strip (int): Strip kernel size for 1/2-scale AnisoLK. Default: 15.
+        l2_lk_square (int): Square kernel size for 1/2-scale AnisoLK. Default: 7.
         use_mimo_input (bool): Inject downsampled hazy RGB at 1/2 and 1/4
-            encoder stages (014c). Default: False.
+            encoder stages (014c/d). Default: False.
         use_deep_supervision (bool): Enable 1/4 and 1/2 training-only auxiliary
             BASR heads (014c, skipped at eval for zero inference overhead).
             Default: False.
         activation_checkpointing (bool): Gradient checkpointing for heavy VRAM
-            configs. Default: False (not needed at default widths on 48G GPUs).
+            configs. Default: False (enable on 24G GPUs with bs=16).
     """
 
     def __init__(
@@ -435,12 +566,22 @@ class MaritimeSFNet(nn.Module):
         widths=(36, 72, 144),
         depths=(3, 3, 8),
         use_reparam=True,
+        use_cd=False,
+        channel_spatial_attn=False,
         use_aniso_lk=False,
         lfm_cutoff_img=0.020,
         lfm_edge_img=0.010,
         lfm_mod_grids=(16,),
         lk_strip=31,
         lk_square=15,
+        fcsf_scene_context=False,
+        fcsf_alpha_bias=-2.0,
+        basr_symmetric=False,
+        basr_scene_gate=False,
+        basr_g_max=5.0,
+        use_l2_aniso_lk=False,
+        l2_lk_strip=15,
+        l2_lk_square=7,
         use_mimo_input=False,
         use_deep_supervision=False,
         activation_checkpointing=False,
@@ -460,11 +601,13 @@ class MaritimeSFNet(nn.Module):
         # Encoder
         self.stem = nn.Conv2d(in_ch, w1, 3, padding=1)
         self.enc1 = nn.Sequential(*(
-            MaritimeBlock(w1, use_attn=False, use_reparam=use_reparam) for _ in range(d1)))
+            MaritimeBlock(w1, use_attn=False, use_reparam=use_reparam, use_cd=use_cd)
+            for _ in range(d1)))
         self.down1 = nn.Sequential(nn.Conv2d(w1, w2, 3, stride=2, padding=1), nn.GELU())
 
         self.enc2 = nn.Sequential(*(
-            MaritimeBlock(w2, use_attn=False, use_reparam=use_reparam) for _ in range(d2)))
+            MaritimeBlock(w2, use_attn=False, use_reparam=use_reparam, use_cd=use_cd)
+            for _ in range(d2)))
         self.down2 = nn.Sequential(nn.Conv2d(w2, w3, 3, stride=2, padding=1), nn.GELU())
 
         # Optional MIMO multi-scale hazy input injections (zero-init for smooth start)
@@ -485,39 +628,64 @@ class MaritimeSFNet(nn.Module):
         b_seg2 = (d3 - b_seg1) // 2
         b_seg3 = d3 - b_seg1 - b_seg2
         self.bot_seg1 = nn.Sequential(*(
-            MaritimeBlock(w3, use_attn=True, use_reparam=use_reparam) for _ in range(b_seg1)))
+            MaritimeBlock(
+                w3, use_attn=True, use_reparam=use_reparam,
+                use_cd=use_cd, channel_spatial_attn=channel_spatial_attn)
+            for _ in range(b_seg1)))
         self.asfb1 = AnisoSpatialFreqBlock(
             w3, cutoff_img=lfm_cutoff_img, edge_img=lfm_edge_img, scale_factor=4,
             mod_grids=lfm_mod_grids, use_aniso_lk=use_aniso_lk,
             lk_strip=lk_strip, lk_square=lk_square)
         self.bot_seg2 = nn.Sequential(*(
-            MaritimeBlock(w3, use_attn=True, use_reparam=use_reparam) for _ in range(b_seg2)))
+            MaritimeBlock(
+                w3, use_attn=True, use_reparam=use_reparam,
+                use_cd=use_cd, channel_spatial_attn=channel_spatial_attn)
+            for _ in range(b_seg2)))
         self.asfb2 = AnisoSpatialFreqBlock(
             w3, cutoff_img=lfm_cutoff_img, edge_img=lfm_edge_img, scale_factor=4,
             mod_grids=lfm_mod_grids, use_aniso_lk=use_aniso_lk,
             lk_strip=lk_strip, lk_square=lk_square)
         self.bot_seg3 = nn.Sequential(*(
-            MaritimeBlock(w3, use_attn=True, use_reparam=use_reparam) for _ in range(b_seg3)))
+            MaritimeBlock(
+                w3, use_attn=True, use_reparam=use_reparam,
+                use_cd=use_cd, channel_spatial_attn=channel_spatial_attn)
+            for _ in range(b_seg3)))
 
         # Decoder + frequency-decoupled convex skip fusion
-        self.fcsf3 = FrequencyConvexSkipFusion(w3, high_pass_only=False)
+        self.fcsf3 = FrequencyConvexSkipFusion(
+            w3, high_pass_only=False,
+            scene_context=fcsf_scene_context, alpha_init_bias=fcsf_alpha_bias)
         self.up2 = BilinearConvUp(w3, w2)
-        self.fcsf2 = FrequencyConvexSkipFusion(w2, high_pass_only=False)
+        self.fcsf2 = FrequencyConvexSkipFusion(
+            w2, high_pass_only=False,
+            scene_context=fcsf_scene_context, alpha_init_bias=fcsf_alpha_bias)
         self.dec2 = nn.Sequential(*(
-            MaritimeBlock(w2, use_attn=False, use_reparam=use_reparam) for _ in range(d2)))
+            MaritimeBlock(w2, use_attn=False, use_reparam=use_reparam, use_cd=use_cd)
+            for _ in range(d2)))
+        self.dec2_aniso_lk = (
+            AnisotropicLargeKernelBlock(w2, k_strip=l2_lk_strip, k_square=l2_lk_square)
+            if use_l2_aniso_lk else None)
 
         self.up1 = BilinearConvUp(w2, w1)
-        self.fcsf1 = FrequencyConvexSkipFusion(w1, high_pass_only=True)
+        self.fcsf1 = FrequencyConvexSkipFusion(
+            w1, high_pass_only=True, scene_context=fcsf_scene_context)
         self.dec1 = nn.Sequential(*(
-            MaritimeBlock(w1, use_attn=False, use_reparam=use_reparam) for _ in range(d1)))
+            MaritimeBlock(w1, use_attn=False, use_reparam=use_reparam, use_cd=use_cd)
+            for _ in range(d1)))
 
         # Output head: strictly positive bounded affine soft reconstruction
-        self.basr_head = BoundedAffineSoftReconHead(w1, out_ch=out_ch)
+        self.basr_head = BoundedAffineSoftReconHead(
+            w1, out_ch=out_ch, g_max=basr_g_max,
+            symmetric_gain=basr_symmetric, scene_gate=basr_scene_gate)
 
         # Training-only auxiliary heads for multi-scale deep supervision (014c)
         if use_deep_supervision:
-            self.aux_head_l3 = BoundedAffineSoftReconHead(w3, out_ch=out_ch)
-            self.aux_head_l2 = BoundedAffineSoftReconHead(w2, out_ch=out_ch)
+            self.aux_head_l3 = BoundedAffineSoftReconHead(
+                w3, out_ch=out_ch, g_max=basr_g_max,
+                symmetric_gain=basr_symmetric, scene_gate=basr_scene_gate)
+            self.aux_head_l2 = BoundedAffineSoftReconHead(
+                w2, out_ch=out_ch, g_max=basr_g_max,
+                symmetric_gain=basr_symmetric, scene_gate=basr_scene_gate)
         else:
             self.aux_head_l3 = None
             self.aux_head_l2 = None
@@ -546,7 +714,8 @@ class MaritimeSFNet(nn.Module):
         targets = {
             'ms_lfm': [self.asfb1.ms_lfm.mod, self.asfb2.ms_lfm.mod],
             'aniso_lk': [
-                m for m in (self.asfb1.aniso_lk, self.asfb2.aniso_lk) if m is not None
+                m for m in (self.asfb1.aniso_lk, self.asfb2.aniso_lk, self.dec2_aniso_lk)
+                if m is not None
             ],
             'fcsf': [self.fcsf3, self.fcsf2, self.fcsf1],
             'basr': [self.basr_head],
@@ -590,6 +759,8 @@ class MaritimeSFNet(nn.Module):
         # Decoder
         d2 = self._run(self.fcsf2, self.up2(b, target_size=s2.shape[-2:]), s2)
         d2 = self._run(self.dec2, d2)
+        if self.dec2_aniso_lk is not None:
+            d2 = self._run(self.dec2_aniso_lk, d2)
 
         d1 = self._run(self.fcsf1, self.up1(d2, target_size=s1.shape[-2:]), s1)
         d1 = self._run(self.dec1, d1)
@@ -608,6 +779,7 @@ class MaritimeSFNet(nn.Module):
         self.diagnostics = {
             'diag_basr_gain': self.basr_head.last_gain_mean,
             'diag_basr_bias': self.basr_head.last_bias_abs,
+            'diag_basr_scene': self.basr_head.last_scene_scale,
             'diag_fcsf3_alpha': self.fcsf3.last_alpha_mean,
             'diag_fcsf2_alpha': self.fcsf2.last_alpha_mean,
             'diag_fcsf1_beta': self.fcsf1.last_beta_mean,
