@@ -292,23 +292,28 @@ $$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{full}}(\hat{J}, J) + \lambda_{
    - 综合验证脚本：`research/014_maritime_sfnet/tools/verify_014.py`（包含语法与 YAML 一致性审计、奇偶尺寸前向/反向、`AnisoRepConv3×3` 无损折叠误差 `<1e-5`、BASR/ASFB 零初始化恒等、2 步全链路梯度传播、LoRA 模块分组检查、BasicSR 合成冒烟训练、以及真实批次 `bs16@512` 显存/耗时预检）；
    - 防重复启动脚本：`research/014_maritime_sfnet/tools/launch_probe.sh`（支持首次启动与 `--auto_resume` 断点续训，强制校验 `save_checkpoint_freq > 0` 与探针目录隔离，自动接入 `dehaze-probes` SwanLab 同步）。
 
-### 6.3 服务器上机验证与启动命令清单（`basicsr` conda 环境）
+### 6.3 `d533`（2×RTX 3090 24 GB）预检实测与启动清单
 
-> 注：本机 macOS 无可用 PyTorch 动态库，已在本地完成 Python 语法、`bash -n` 与 `014a/b/c` 配置逐字段一致性检查；拉取到 Linux GPU 服务器后按顺序执行以下命令即可开跑：
+2026-11-27 在 `d533`（`torch 2.1.1+cu118`, `basicsr 1.4.2`, 两张 RTX 3090 24 GB）完成单元测试与显存/速度矩阵实测：
+
+- **单元测试**：`014a`（5.627M / 折叠 4.189M）、`014b`（5.826M / 折叠 4.387M）、`014c`（5.844M / 折叠 4.405M）全部通过，`init_id = 0.00e+00`、`fold_err = 0.00e+00`。
+- **24 GB 3090 实测（512×512，含 L1+FFT+Grad 及 014c 深监督）**：
+  - 单卡 `bs=16, ckpt=False`：OOM（>24 GiB）；
+  - **单卡 `bs=16, ckpt=True`（当前探针采用，双卡并行跑两组）**：014a 13.28/17.63 GiB (1.92 s/it)、014b 13.29/17.49 GiB (2.00 s/it)、014c 13.75/17.79 GiB (2.03 s/it)，单组 8k 约 4.3–4.5 小时，每卡留有 ~6 GiB 安全余量；
+  - 双卡 DDP `bs=8/卡`（总 batch=16，适合 60k 正式长训）：`ckpt=False` 每卡 20.00–20.77 GiB (~0.85–0.90 s/it)；`ckpt=True` 每卡 8.94–9.01 GiB (~1.05–1.10 s/it)。
 
 ```bash
 conda activate basicsr
 
-# 1) 快速导入 + 全部单元测试 + CPU 合成冒烟 + GPU0 真实批次(bs16@512)显存与速度预检
-python -c "import basicsr; print(basicsr.__version__)"
-python research/014_maritime_sfnet/tools/verify_014.py --smoke --preflight-gpu 0
+# 1) 单元测试 + 合成冒烟训练
+python research/014_maritime_sfnet/tools/verify_014.py --smoke
 
-# 2) 按顺序或双卡并行启动 014a / 014b / 014c 8k 探针（默认每 2000 iter 存模型与 .state 断点）
-bash research/014_maritime_sfnet/tools/launch_probe.sh 0 research/014_maritime_sfnet/probe_014a_base.yml research/014_maritime_sfnet/run_014a 38000
-bash research/014_maritime_sfnet/tools/launch_probe.sh 1 research/014_maritime_sfnet/probe_014b_asfb.yml research/014_maritime_sfnet/run_014b 38000
+# 2) 双卡 3090 并行启动 014a (GPU0) + 014b (GPU1) 8k 探针（每 2000 iter 存模型与 .state 断点）
+bash research/014_maritime_sfnet/tools/launch_probe.sh 0 research/014_maritime_sfnet/probe_014a_base.yml research/014_maritime_sfnet/run_014a 19000
+bash research/014_maritime_sfnet/tools/launch_probe.sh 1 research/014_maritime_sfnet/probe_014b_asfb.yml research/014_maritime_sfnet/run_014b 19000
 # 014a 或 014b 结束后在空闲卡启动 014c：
-bash research/014_maritime_sfnet/tools/launch_probe.sh 0 research/014_maritime_sfnet/probe_014c_mimo.yml research/014_maritime_sfnet/run_014c 38000
+bash research/014_maritime_sfnet/tools/launch_probe.sh 0 research/014_maritime_sfnet/probe_014c_mimo.yml research/014_maritime_sfnet/run_014c 19000
 
 # 3) 若中途因 GPU/驱动故障中断，传入 --auto_resume 与新的日志目录即可从最近 2000.state 续训：
-# bash research/014_maritime_sfnet/tools/launch_probe.sh 1 research/014_maritime_sfnet/probe_014a_base.yml research/014_maritime_sfnet/run_014a_resume1 38000 --auto_resume
+# bash research/014_maritime_sfnet/tools/launch_probe.sh 1 research/014_maritime_sfnet/probe_014a_base.yml research/014_maritime_sfnet/run_014a_resume1 19000 --auto_resume
 ```

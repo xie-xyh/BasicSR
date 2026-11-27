@@ -12,7 +12,7 @@ set -euo pipefail
 gpu=$1
 config=$2
 output=$3
-minimum_free=${4:-38000}
+minimum_free=${4:-19000}
 resume_flag=${5:-}
 python="$HOME/miniconda3/envs/basicsr/bin/python"
 

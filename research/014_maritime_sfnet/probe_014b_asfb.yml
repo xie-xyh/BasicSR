@@ -66,7 +66,7 @@ network_g:
   lk_square: 15
   use_mimo_input: false
   use_deep_supervision: false
-  activation_checkpointing: false
+  activation_checkpointing: true
 path:
   experiments_root: experiments/probes
   pretrain_network_g: null
