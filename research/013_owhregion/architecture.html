@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>013 · OWHRegionUNet 架构与实验分析</title>
+<style>
+:root{color-scheme:light;--ink:#142c36;--muted:#49626d;--line:#d7e2e5;--paper:#f1f6f6;--teal:#126456;--teal-bg:#e5f4ee;--blue:#215888;--blue-bg:#eaf3fb;--amber:#79501e;--amber-bg:#fbf1de;--purple:#5e467e;--purple-bg:#f2edf9;--orange:#a14824}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+a{color:var(--blue);text-underline-offset:4px}button{font:inherit}
+button:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:3px solid #2d719d;outline-offset:3px}
+h1,h2,h3,h4,p,figure{margin:0}p+p{margin-top:.65em}
+h2{font-size:clamp(25px,4vw,34px);letter-spacing:-.035em;line-height:1.2}h3{font-size:19px;line-height:1.35}h4{font-size:15px}
+.wrap{width:min(1180px,calc(100% - 48px));margin:auto}.mono,code,.stat strong,td:not(:first-child){font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-variant-numeric:tabular-nums}
+code{overflow-wrap:anywhere;color:var(--teal);font-size:.94em}.muted,.caption{color:var(--muted)}.caption{font-size:13px;margin-top:12px}
+.hero{position:relative;overflow:hidden;color:#effbf7;background:radial-gradient(ellipse at 88% 110%,#1e7868,transparent 63%),linear-gradient(120deg,#0d2732,#153e48);border-bottom:4px solid #73bfab}
+.hero:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(120deg,transparent 0 49px,#a2e5cf14 50px 51px,transparent 52px 83px);mask-image:linear-gradient(90deg,transparent 48%,black);pointer-events:none}
+.hero .wrap{position:relative;padding:26px 0 33px}.topline{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px;color:#b6dfd6;font-size:13px}.topline strong{letter-spacing:.12em;color:#d5f2e9}
+.hero h1{font-size:clamp(32px,6.5vw,72px);line-height:1.12;letter-spacing:-.053em;margin:24px 0 12px;overflow-wrap:anywhere}.hero h1 span{display:block;font-size:.44em;letter-spacing:0;color:#b4dfd5;margin-top:9px}
+.hero p{max-width:780px;color:#e0efee;font-size:16px}.hero nav{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:23px}.hero nav a{color:#e6f7f2;font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px auto 31px}.stat,.panel{background:white;border:1px solid var(--line);border-radius:15px}
+.stat{padding:13px 16px}.stat strong{display:block;font-size:clamp(19px,2.8vw,31px);line-height:1.3}.stat span{color:var(--muted);font-size:13px}.stat.is-gap strong{color:var(--orange)}
+section{margin:35px 0;scroll-margin-top:15px}.section-title{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px}
+.panel{padding:20px;margin:12px 0;box-shadow:0 6px 24px #1c4a5208}
+.toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.choices{display:flex;flex-wrap:wrap;gap:4px;background:#edf3f4;border:1px solid var(--line);padding:4px;border-radius:10px}
+.choices button{border:0;background:transparent;color:var(--ink);padding:5px 12px;border-radius:7px;cursor:pointer}.choices button[aria-pressed=true]{color:white;background:#176355}
+.variant-note{margin:10px 0 14px;color:var(--muted);min-height:1.65em}.scroll{overflow-x:auto;border-radius:12px}
+.diagram{min-width:685px;border:1px solid var(--line);padding:14px;border-radius:13px;background:radial-gradient(circle,#adc5cb65 .8px,transparent 1px) 0 0/15px 15px,#f7fafb;display:grid;grid-template-columns:100px minmax(151px,1fr) minmax(225px,1.1fr) minmax(151px,1fr);grid-template-rows:62px 35px 76px 38px 76px 38px 76px 38px auto;gap:0 8px;align-items:stretch}
+.cell{grid-column:var(--col);grid-row:var(--row)}
+.node,.link-node{border:1px solid #b9cfd5;border-radius:9px;padding:7px 10px;display:flex;flex-direction:column;justify-content:center;background:white;line-height:1.3}
+.node strong,.link-node strong{display:block;font-size:14px}.node small,.link-node small{display:block;margin-top:4px;color:var(--muted);font-size:11.5px}
+.encoder{background:var(--teal-bg);border-color:#99cabc;color:var(--teal)}.decoder{background:var(--blue-bg);border-color:#a8c8e0}
+.link-node{background:var(--amber-bg);border-color:#d9bd90;color:var(--amber);text-align:center;position:relative;margin:5px 16px;align-self:center}
+.link-node:before,.link-node:after{content:"";position:absolute;width:16px;top:50%;border-top:2px solid #a77d49}.link-node:before{right:100%}.link-node:after{left:100%}
+.scale{align-self:center;color:var(--muted);font-size:12px;line-height:1.4}.scale strong{display:block;font-size:15px;color:var(--ink)}
+.arrow{align-self:center;justify-self:center;text-align:center;color:var(--muted);font-size:11px;line-height:1.3;white-space:nowrap}.arrow b{font-size:18px;color:var(--teal);vertical-align:middle;margin-right:5px}.up b{color:var(--blue)}
+.edge{align-self:center;text-align:center;border-bottom:2px dashed #a77d49;color:var(--amber);font-size:11px;margin:0 9px;padding-bottom:4px}
+.bottleneck{grid-column:2/5;grid-row:9;padding:10px;border:1px solid #c3afd7;border-radius:11px;background:var(--purple-bg)}.bottleneck h4{color:var(--purple);margin-bottom:7px}
+.flow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.flow span{display:inline-block;padding:3px 8px;border:1px solid #c0d0d4;border-radius:6px;background:white;font-size:12px}.flow i{font-style:normal;color:var(--muted)}.flow .special{background:var(--purple-bg);border-color:#c3afd7;color:var(--purple)}
+.optional{margin:0 0 8px;padding:6px 9px;background:var(--purple-bg);color:var(--purple);border-radius:8px;font-size:12px;text-align:right}
+.viz-link{text-decoration:none}.viz-link:hover{outline:2px solid currentColor;outline-offset:1px}
+.panel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.panel-grid>.panel{margin:0}
+.module{border-top:3px solid var(--teal);scroll-margin-top:10px}.module.purple{border-top-color:var(--purple)}.module.amber{border-top-color:#b08448}.module.blue{border-top-color:var(--blue)}.module .flow{margin:12px 0}
+.equation{font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;background:#f1f6f7;border-left:3px solid #a6c8c4;padding:7px 9px;margin:10px 0;overflow-wrap:anywhere}
+table{border-collapse:collapse;width:100%;font-size:14px;text-align:left}th,td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}thead th{background:#edf3f4;color:#264e5a}tbody tr:last-child>*{border-bottom:0}tbody tr:hover{background:#f6faf9}td.loss{color:var(--orange);font-weight:bold}
+.chart{margin:16px 0 4px}.bar-row{display:grid;grid-template-columns:86px 1fr 62px;align-items:center;gap:9px;margin:9px 0}.bar-track{height:18px;background:#edf3f4;border-radius:5px;overflow:hidden;display:flex}.bar-track span{height:100%}
+.low{background:#207867}.mid{background:#6387b8}.high{background:#dabe8b}.bar-label{text-align:right;color:var(--teal);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted);font-size:13px}.legend i{display:inline-block;width:.75em;height:.75em;margin-right:.4em;border-radius:2px}
+.compare td:not(:first-child){font:inherit}.compare th:first-child{min-width:112px}.note{background:#f3f7f7;border-left:3px solid #7da79e;padding:10px 13px;margin:13px 0 4px}
+.evidence{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}.evidence summary{cursor:pointer;color:var(--teal);font-weight:650}
+.photo-labels{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;color:var(--muted);font-size:11px;margin-top:10px}.montage{display:block;width:100%;height:auto;border-radius:8px;margin:5px 0}
+.directions{display:grid;gap:12px}.direction{display:grid;grid-template-columns:140px 1fr;gap:18px;margin:0}.priority{color:var(--teal);font-size:13px;font-weight:700}.direction h3{margin-top:3px}.direction p{margin:0 0 8px}
+.source-list{display:flex;gap:7px 18px;flex-wrap:wrap;margin-top:10px;font-size:13px}footer{border-top:1px solid var(--line);padding:0 0 22px}.wide-table{min-width:635px}[hidden]{display:none!important}
+@media(max-width:720px){.wrap{width:calc(100% - 28px)}.stats{grid-template-columns:repeat(2,1fr)}.panel{padding:13px}.panel-grid,.evidence{grid-template-columns:1fr}.direction{grid-template-columns:1fr;gap:8px}.hero .wrap{padding:19px 0 24px}.bar-row{grid-template-columns:72px 1fr 50px}.choices button{padding:5px 8px}.stat{padding:10px}.section-title{margin-bottom:9px}}
+@media print{body{background:white;font-size:12px}.wrap{width:100%}.hero .wrap{padding:12px}.hero h1{font-size:35px}.hero nav{display:none}.panel,.stat{box-shadow:none;break-inside:avoid}.scroll{overflow:visible}.diagram{min-width:0;grid-template-columns:63px 1fr 1.3fr 1fr}.arrow{font-size:9px}.wide-table{min-width:0}th,td{padding:4px}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="topline"><strong>BasicSR · OWH v2</strong><time datetime="2026-11-27">2026-11-27</time></div>
+  <h1>OWHRegionUNet<span>013 系列架构与 011p 对照</span></h1>
+  <p>四尺度 U-Net 在瓶颈融合区域信息和低频特征，再通过分带跳连与条形卷积恢复细节。60k 对照中，013a 和 011p 的差距在 Mist 最明显，主要体现在成片区域的色调和亮度误差。</p>
+  <nav aria-label="页面目录"><a href="#architecture">网络总图</a><a href="#modules">模块剖面</a><a href="#comparison">实验对照</a><a href="#diagnostics">误差诊断</a><a href="#next">改进路线</a></nav>
+</div></header>
+<main class="wrap">
+<div class="stats" aria-label="013a 与 011p 对照摘要">
+  <div class="stat"><strong>7.537M</strong><span>013a 参数量</span></div>
+  <div class="stat is-gap"><strong>−1.65 dB</strong><span>Dense · 60k 内部 PSNR 差</span></div>
+  <div class="stat is-gap"><strong>−2.76 dB</strong><span>Mist · 60k 内部 PSNR 差</span></div>
+  <div class="stat is-gap"><strong>−1.67 dB</strong><span>Moderate · 60k 内部 PSNR 差</span></div>
+</div>
+<section id="architecture">
+<div class="section-title"><h2>四尺度网络总图</h2><span class="muted">以 512 × 512 裁剪为例 · 点击节点查看模块</span></div>
+<div class="panel">
+  <div class="toolbar"><div class="choices" role="group" aria-label="选择 013 网络版本">
+    <button type="button" data-variant="a" aria-pressed="true">013a</button><button type="button" data-variant="b" aria-pressed="false">013b</button><button type="button" data-variant="c" aria-pressed="false">013c</button><button type="button" data-variant="d" aria-pressed="false">013d</button><button type="button" data-variant="e" aria-pressed="false">013e</button>
+  </div><strong id="parameters" class="mono">7.537M 参数</strong></div>
+  <p class="variant-note" id="variant-note" aria-live="polite">60k 基线。三层编码、三层解码、两次 LFM，1/2 解码末端做条形核细节修复。</p>
+  <div class="optional" id="head-active" hidden><a href="#rgb-head">全分辨率解码特征 + 有雾 RGB → 16×16 低频 RGB 头 → 与主支路残差一起加回输入</a></div>
+  <div class="scroll" tabindex="0" role="region" aria-label="可横向滚动的 013 网络图">
+    <figure class="diagram" aria-label="左侧编码自上而下，瓶颈从左到右，右侧解码自下而上。三个尺度分别通过跳连融合。">
+      <div class="cell node" style="--col:2;--row:1"><strong>有雾输入 I</strong><small>RGB · 右/下复制填充至 8 的倍数</small></div>
+      <div class="cell edge" style="--col:3;--row:1">I 的全局残差路径 →</div>
+      <div class="cell node" style="--col:4;--row:1"><strong>去雾输出 Ĵ</strong><small id="output-equation">I + ΔRGB，裁回原尺寸</small></div>
+      <div class="cell arrow" style="--col:2;--row:2"><b>↓</b>Stem 3×3</div>
+      <div class="cell arrow up" style="--col:4;--row:2"><b>↑</b>RGB 3×3</div>
+      <div class="cell scale" style="--col:1;--row:3"><strong>1 / 1</strong>512 × 512<br><span data-channel="0">C = 48</span></div>
+      <a class="cell node encoder viz-link" style="--col:2;--row:3" href="#restoration"><strong>编码 E₁ · RB ×2</strong><small>DW 核 3、5</small></a>
+      <a class="cell link-node viz-link" style="--col:3;--row:3" href="#fusion"><strong>E₁ → 分带跳连 → D₁</strong><small>平滑与细节增益 · fuse[2]</small></a>
+      <a class="cell node decoder viz-link" style="--col:4;--row:3" href="#restoration"><strong>解码 D₁ · RB ×2</strong><small>输出全分辨率特征</small></a>
+      <div class="cell arrow" style="--col:2;--row:4"><b>↓</b>4×4 Conv · s2</div>
+      <div class="cell arrow up" style="--col:4;--row:4"><b>↑</b>1×1 → PixelShuffle 2</div>
+      <div class="cell scale" style="--col:1;--row:5"><strong>1 / 2</strong>256 × 256<br><span data-channel="1">C = 96</span></div>
+      <a class="cell node encoder viz-link" style="--col:2;--row:5" href="#restoration"><strong>编码 E₂ · RB ×3</strong><small>DW 核 3、5、3</small></a>
+      <a class="cell link-node viz-link" style="--col:3;--row:5" href="#fusion"><strong>E₂ → 分带跳连 → D₂</strong><small>平滑与细节增益 · fuse[1]</small></a>
+      <a class="cell node decoder viz-link" style="--col:4;--row:5" href="#detail"><strong>解码 D₂ · RB ×3</strong><small>末端接 DetailRefinement</small></a>
+      <div class="cell arrow" style="--col:2;--row:6"><b>↓</b>4×4 Conv · s2</div>
+      <div class="cell arrow up" style="--col:4;--row:6"><b>↑</b>1×1 → PixelShuffle 2</div>
+      <div class="cell scale" style="--col:1;--row:7"><strong>1 / 4</strong>128 × 128<br><span data-channel="2">C = 176</span></div>
+      <a class="cell node encoder viz-link" style="--col:2;--row:7" href="#restoration"><strong>编码 E₃ · RB ×4</strong><small>DW 核 3、5、3、5</small></a>
+      <a class="cell link-node viz-link" style="--col:3;--row:7" href="#fusion"><strong>E₃ → 分带跳连 → D₃</strong><small>平滑与细节增益 · fuse[0]</small></a>
+      <a class="cell node decoder viz-link" style="--col:4;--row:7" href="#restoration"><strong id="quarter-decoder">解码 D₃ · RB ×4</strong><small>最深一层跳连先融合</small></a>
+      <div class="cell arrow" style="--col:2;--row:8"><b>↓</b>4×4 Conv · s2</div>
+      <div class="cell arrow up" style="--col:4;--row:8"><b>↑</b>1×1 → PixelShuffle 2</div>
+      <div class="cell scale" style="--col:1;--row:9"><strong>1 / 8</strong>64 × 64<br><span data-channel="3">C = 320</span></div>
+      <div class="bottleneck"><h4>瓶颈 · 依次执行</h4><div class="flow"><span>RB ×2</span><i>→</i><span class="special"><a href="#lfm">LFM₁</a></span><i>→</i><span class="special"><a href="#region">RegionContext</a></span><i>→</i><span>RB ×2</span><i>→</i><span class="special"><a href="#lfm">LFM₂</a></span><i>→</i><span id="middle-tail">RB ×2</span></div></div>
+    </figure>
+  </div>
+  <p class="caption">每层解码顺序为上采样 → 同尺度融合 → 恢复块。1×1 卷积先生成 4 倍目标通道，再由 PixelShuffle 重排。RB 是 RestorationBlock，FC 是 FullConvRestorationBlock。窄屏可横滑总图。</p>
+</div>
+</section>
+<section id="modules">
+<div class="section-title"><h2>关键模块剖面</h2><a href="../../basicsr/archs/owh_lfm_unet_arch.py">013 网络源码</a></div>
+<div class="panel-grid">
+<article class="panel module" id="restoration">
+  <h3>RestorationBlock · 基础恢复块</h3>
+  <div class="flow"><span>1×1 · C→3C</span><i>→</i><span>局部 2C / 门控 C</span><i>→</i><span>DWConv 与门控</span><i>→</i><span>1×1 · 2C→C</span></div>
+  <p>局部 2C 先做逐通道空间卷积，再分成 a、b。一半走 GELU，一半乘以独立 C 通道的 sigmoid 门。通过可学习逐通道缩放 α 加回输入，α 初值 0.1。每阶段内 3×3、5×5 交替。</p>
+  <div class="equation">x + α · Conv₁×₁([GELU(a), b ⊙ sigmoid(g)])</div>
+  <p class="caption">013c/013e 在 <code>middle.5.1</code> 与 <code>dec.0.3</code> 改用两层全 3×3 卷积，中间接 GELU，保留残差缩放。</p>
+</article>
+<article class="panel module amber" id="fusion">
+  <h3>HazeConditionedFusion · 分带跳连</h3>
+  <div class="flow"><span>1×1 对齐 skip</span><i>→</i><span>5×5 均值 → 平滑 L</span><i>↘</i><span>差分 → 细节 H</span></div>
+  <p>对深层特征 D、平滑差 L−D、细节强度 |H| 做 2×2 降采样池化。区域支路用 1×1 和逐通道 3×3 建模，叠加全局池化得出的场景条件，再预测双线性上采样的两组增益。</p>
+  <div class="equation">F = D + gL ⊙ L + gH ⊙ H，g = 2·sigmoid(logit)</div>
+  <p class="caption">末层零初始化使两组增益初值为 1，融合初始为 D + 对齐后的跳连。</p>
+</article>
+<article class="panel module purple" id="lfm">
+  <h3>LFM · 低频特征调制</h3>
+  <div class="flow"><span>rFFT2 → 软径向低通 → irFFT2</span><i>∥</i><span>16×16 池化 → γ、β → 上采样</span></div>
+  <p>一支得到低通 LP(x)，另一支用 16×16 池化特征预测随位置变化的缩放和平移。软掩码 cutoff 为 0.08，过渡参数 0.04，半径按特征图短边对应的 Nyquist 尺度归一化。</p>
+  <div class="equation">x + γ ⊙ LP(x) + β</div>
+  <p class="caption">调制预测末层零初始化。013 和 011p 共用实现，两次调制所在尺度与后续通路有区别。<a href="../../basicsr/archs/deanet_v3_arch.py">LFM 源码</a></p>
+</article>
+<article class="panel module purple" id="region">
+  <h3>RegionContext · 区域交叉注意力</h3>
+  <div class="flow"><span>逐像素 Q</span><i>×</i><span>最多 8×8 个池化 K/V</span><i>→</i><span>8 头 → 1×1 投影</span></div>
+  <p>在 64×64 瓶颈上，4096 个位置各自查询 64 个区域描述。投影后的跨区上下文按可学习逐通道系数加回原特征，初值 0.01。</p>
+  <div class="equation">x + α · proj(softmax(QKᵀ / √d) V)</div>
+  <p class="caption">放在 LFM₁ 之后、第二组恢复块之前。区域描述的分辨率和后续解码器都会影响恢复的空间精度。</p>
+</article>
+<article class="panel module blue" id="detail">
+  <h3>DetailRefinement · 条形核细节修复</h3>
+  <div class="flow"><span>x − AvgPool₅×₅(x)</span><i>→</i><span>1×1 分两路</span><i>→</i><span>DW 1×9 / 9×1</span><i>→</i><span>拼接 · 门控 · 1×1</span></div>
+  <p>位于 1/2 解码末端，处理两个方向的局部对比。门控从完整的 x 预测，输出投影零初始化后以残差形式注入。</p>
+  <p class="caption">可用海天线、船体边缘检查效果。方向收益可用等成本的方形核对照验证。</p>
+</article>
+<article class="panel module blue" id="rgb-head">
+  <h3>LowFrequencyRGBHead · 013d 低频头</h3>
+  <div class="flow"><span>末端特征与雾图池化</span><i>→</i><span>16×16 拼接</span><i>→</i><span>两层 3×3 · 64 通道</span><i>→</i><span>1×1 RGB</span></div>
+  <p>把低分辨率 RGB 修正双线性放大到输入尺寸，与常规 RGB 残差并联。末层零初始化，起点沿用 013b 的输出形式。</p>
+  <div class="equation">Ĵ = crop(Ipad + ΔRGB + up(ΔRGB₁₆×₁₆))</div>
+</article>
+</div>
+</section>
+<section id="comparison">
+<div class="section-title"><h2>与 011p 的结构和成绩对照</h2><span class="muted">011p 指 DEANetV3 + LFM 实验臂</span></div>
+<div class="panel">
+  <div class="toolbar"><h3>60k · 同一批 283 张内部验证图</h3><div class="choices" role="group" aria-label="选择验证指标">
+    <button type="button" data-metric="psnr" aria-pressed="true">PSNR</button><button type="button" data-metric="ssim" aria-pressed="false">SSIM</button>
+  </div></div>
+  <div class="scroll" tabindex="0" role="region" aria-label="同集验证终点对照表">
+    <table class="wide-table" aria-label="60k 内部验证，013a 减去 011p">
+      <thead><tr><th scope="col">雾级 / 样本数</th><th scope="col">013a</th><th scope="col">011p</th><th scope="col">013a − 011p</th><th scope="col">配对 95% 区间</th></tr></thead>
+      <tbody id="terminal-rows" aria-live="polite">
+        <tr><th scope="row">Dense / 94</th><td>24.296 dB</td><td>25.942 dB</td><td class="loss">−1.646 dB</td><td>[−2.019, −1.283]</td></tr>
+        <tr><th scope="row">Mist / 94</th><td>28.668 dB</td><td>31.432 dB</td><td class="loss">−2.764 dB</td><td>[−3.338, −2.190]</td></tr>
+        <tr><th scope="row">Moderate / 95</th><td>27.327 dB</td><td>28.992 dB</td><td class="loss">−1.665 dB</td><td>[−2.026, −1.340]</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">相同 v2 清单、512 裁剪、batch 16、60k 更新、L1 + FFT + 梯度损失。配对区间量化图像间差异，两份权重各来自一次训练。<a href="terminal_013a_vs_011p_internal/summary.json">终点评估</a> · <a href="../011_wavelet_unet/protocol_v2_20261118/confirm_011p_backbone_draft/candidate_train.yml">011p 配置</a></p>
+  <p class="note"><strong>官方集单独看。</strong> 011p 官方 Dense 25.244 / 0.90410、Mist 31.606 / 0.97463、Moderate 28.457 / 0.94417（PSNR / SSIM）。本地记录中未找到 013a 对应官方逐图审计，因此两模型的差值取自上面的内部同集评估。<a href="../011_wavelet_unet/protocol_v2_20261118/confirm_011p_backbone_draft/official_audit.json">011p 官方审计</a></p>
+</div>
+<div class="panel">
+  <h3>同量级参数，特征走的路径不同</h3>
+  <div class="scroll" tabindex="0" role="region" aria-label="两种架构的模块对比">
+    <table class="compare wide-table">
+      <thead><tr><th scope="col">设计</th><th scope="col">013a · 7.537M</th><th scope="col">011p · 约 7.880M</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">尺度 / 通道</th><td>1、1/2、1/4、1/8；48 / 96 / 176 / 320。三个步幅 2 卷积，解码用 PixelShuffle。</td><td>1、1/2、1/4；32 / 64 / 128。两个步幅 2 卷积，解码用转置卷积。</td></tr>
+        <tr><th scope="row">空间恢复</th><td>编码与解码各 2 / 3 / 4 个门控 RB；1/8 处 6 个 RB。空间卷积逐通道，跨通道混合放在 1×1。</td><td>浅层与中层编码、解码各 4 个 DEBlock，1/4 瓶颈 8 个 DEABlock。DEConv 叠加差分与普通卷积参数，融合为全通道 3×3 核。</td></tr>
+        <tr><th scope="row">全图调制</th><td>两次 LFM 都在 1/8，首个 LFM 后接 RegionContext，调制之后还要经过三层上采样与融合。</td><td>两次 LFM 都在 1/4，分别跟在第 2、5 个 DEABlock 后；以 512 裁剪为例，LFM 输入的空间位置数是 013a 的四倍。</td></tr>
+        <tr><th scope="row">跳连融合</th><td>1/4、1/2、全分辨率各一次。对编码特征做平滑/细节分解，用两组独立增益加回解码路径。</td><td>1/4 把下采样特征与瓶颈输出融合，1/2 把下采样特征与四个解码 DEBlock 后的特征融合。CGA 用内容引导的通道、空间和像素权重。</td></tr>
+        <tr><th scope="row">RGB 输出</th><td>3×3 卷积预测 RGB 残差，加回雾图。</td><td>3×3 卷积直接预测 RGB。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">这组成绩比较的是完整主干。降低 LFM 分辨率可能影响调制与解码的衔接；差分卷积、融合位置、训练轨迹等也同时变化，需要单独对照才能估计各自贡献。<a href="../../basicsr/archs/deanet_v2_arch.py">011p 前向骨架</a> · <a href="https://arxiv.org/abs/2301.04805">DEA-Net 原论文</a></p>
+</div>
+<div class="panel">
+  <h3>8k 探针 · 加宽优先于两处全卷积替换</h3>
+  <div class="scroll" tabindex="0" role="region" aria-label="8k 探针结果">
+    <table class="wide-table" aria-label="8k 结果，PSNR dB 和 SSIM">
+      <thead><tr><th scope="col">雾级</th><th scope="col">013a PSNR</th><th scope="col">013b PSNR / SSIM</th><th scope="col">013c PSNR / SSIM</th><th scope="col">c − b / 95% 区间</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Dense</th><td>19.486</td><td>19.835 / 0.8677</td><td>19.664 / 0.8649</td><td>−0.172 [−0.323, −0.026]</td></tr>
+        <tr><th scope="row">Mist</th><td>23.674</td><td>24.045 / 0.9404</td><td>24.080 / 0.9405</td><td>+0.035 [−0.239, +0.324]</td></tr>
+        <tr><th scope="row">Moderate</th><td>21.565</td><td>22.114 / 0.9066</td><td>21.943 / 0.9043</td><td>−0.171 [−0.376, +0.029]</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">013a 数值取训练记录，013b/c 数值取同集 CPU 逐图复评。8k 时 013b 三组均高于 013a；与 013c 相比，Dense 的 PSNR 优势最明确，Moderate 的 SSIM 区间也支持 013b。013c 相对 013b 多出的 MSE，在 Dense 约 97%、Moderate 约 89% 落在最低频，说明这两处全卷积替换还没有改善主要误差。013b 的显存开销更高，实测峰值分配约 30 GiB（013a 约 23 GiB，batch 16 × 512，开启激活重计算）。仓库快照里 013d/e 尚无可用 8k 终点评估。<a href="README.md">实验记录</a> · <a href="paired_013c_vs_013b_8000_internal/summary.json">8k 配对复评</a></p>
+</div>
+</section>
+<section id="diagnostics">
+<div class="section-title"><h2>性能差距来自哪里</h2><span class="muted">60k · 频段、空间区域与推理干预</span></div>
+<div class="panel evidence">
+<div>
+  <h3>最低频解释了大部分 MSE 差额</h3>
+  <p class="caption">将两模型相对 GT 的归一化 RGB 残差分带。条形表示各频段在「013a MSE − 011p MSE」之和中的占比。</p>
+  <div class="chart" aria-label="Dense 最低频 75.9%，Mist 84.7%，Moderate 74.1%">
+    <div class="bar-row"><strong>Dense</strong><div class="bar-track"><span class="low" style="width:75.89%" title="最低频 75.89%"></span><span class="mid" style="width:18.64%" title="中频 18.64%"></span><span class="high" style="width:5.47%" title="高频 5.47%"></span></div><span class="bar-label">75.9%</span></div>
+    <div class="bar-row"><strong>Mist</strong><div class="bar-track"><span class="low" style="width:84.69%" title="最低频 84.69%"></span><span class="mid" style="width:12.27%" title="中频 12.27%"></span><span class="high" style="width:3.04%" title="高频 3.04%"></span></div><span class="bar-label">84.7%</span></div>
+    <div class="bar-row"><strong>Moderate</strong><div class="bar-track"><span class="low" style="width:74.09%" title="最低频 74.09%"></span><span class="mid" style="width:19.81%" title="中频 19.81%"></span><span class="high" style="width:6.10%" title="高频 6.10%"></span></div><span class="bar-label">74.1%</span></div>
+  </div>
+  <div class="legend"><span><i class="low"></i>最低频 &lt;0.02</span><span><i class="mid"></i>中频 0.02–0.15</span><span><i class="high"></i>高频 ≥0.15</span></div>
+  <p class="caption">频率半径按每轴 Nyquist 归一化。最低频的差值在 Dense、Mist、Moderate 分别为 +1.039、+0.727、+0.688 ×10⁻³。</p>
+  <p class="note">Dense 和 Moderate 的平滑误差差距在图像中段最大，Mist 则在上段最大。平滑量校正不足与校正过头两项都增加，前者的绝对差值更大。更合适的目标是让不同区域各自获得合适的修正幅度。</p>
+  <p class="caption"><a href="terminal_013a_vs_011p_internal/summary.json">频带和空间统计</a> · <a href="../011_wavelet_unet/tools/paired_eval.py">统计口径</a></p>
+</div>
+<details open>
+  <summary>查看两模型差距较大的六个样本</summary>
+  <div class="photo-labels"><span>雾图</span><span>013a</span><span>011p DEA</span><span>清晰 GT</span></div>
+  <a href="worst_gap_montage.jpg"><img class="montage" src="worst_gap_montage.jpg" alt="六幅海上场景的雾图、013a、011p 与清晰图并排比较" width="1280" height="1440" loading="lazy"></a>
+  <p class="caption">按差距选取的样例适合定位天空、水面与船身的色调问题。平均差距见全量配对表。</p>
+</details>
+</div>
+<div class="panel">
+  <h3>RegionContext 已承担主要校正，LFM 和跳连也参与</h3>
+  <p class="caption">在已训练的 013a 上直接干预，内部每个雾级抽 8 张。下表为相对于原模型的 PSNR 变化，单位 dB。</p>
+  <div class="scroll" tabindex="0" role="region" aria-label="013a 推理干预结果">
+    <table class="wide-table">
+      <thead><tr><th scope="col">推理时干预</th><th scope="col">Dense</th><th scope="col">Mist</th><th scope="col">Moderate</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">旁路 RegionContext</th><td>−10.57</td><td>−9.50</td><td>−14.68</td></tr>
+        <tr><th scope="row">旁路 LFM₁</th><td>−3.03</td><td>−5.26</td><td>−3.12</td></tr>
+        <tr><th scope="row">旁路 LFM₂</th><td>−3.94</td><td>−3.91</td><td>−7.23</td></tr>
+        <tr><th scope="row">1/2 处自适应跳连改固定相加</th><td>−2.37</td><td>−8.35</td><td>−5.57</td></tr>
+        <tr><th scope="row">旁路 DetailRefinement</th><td>−0.22</td><td>−0.50</td><td>−0.47</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">推理干预衡量现有权重对模块的依赖。重新训练后的消融结果仍待验证。细节模块的 PSNR 敏感度较小，但同样的干预使 SSIM 降低约 0.013–0.015。<a href="module_interventions_internal24.json">逐组诊断统计</a></p>
+</div>
+</section>
+<section id="next">
+<div class="section-title"><h2>下一轮优先验证什么</h2><span class="muted">优先追赶低频校正，再拆分骨干差异</span></div>
+<div class="directions">
+  <article class="panel direction">
+    <div><div class="priority">优先验证</div><h3>末端低频 RGB 头</h3></div>
+    <div><p><strong>先做 013b ↔ 013d。</strong> 用相同基座、数据、损失和 8k 预算，检验绕开三层解码、直接修正图像低频是否有效。将 Dense/Mist 的 PSNR、最低频 MSE、上中下平滑 MSE 与过校正一起看。</p>
+    <p>在另一组内部抽样（每雾级 24 张）上，用 GT 替换平滑分量时，Dense/Mist 的 PSNR 分别增加约 7.71/9.01 dB。这是使用真值的诊断空间。013d 两条 RGB 支路共享最终监督，若输出修正偏弱或两支抵消，可再单独给平滑残差加监督，并用 013b 重新标定损失梯度。<a href="color_headroom_internal60.csv">真值替换诊断</a> · <a href="probe_013d_lowfreq.yml">013d 配置</a></p></div>
+  </article>
+  <article class="panel direction">
+    <div><div class="priority">拆分 011p 优势</div><h3>把一次 LFM 放到 1/4</h3></div>
+    <div><p>保留 LFM₁ 和 RegionContext，把 LFM₂ 放在 1/4 解码融合后。先用投影保持 LFM 的工作通道一致，并给对照配置等价的投影预算。记录参数、时延和显存，检查 Mist 上段和 Dense 中段的低频误差是否下降。</p>
+    <p>如果尺度对照有效，再比较融合前和融合后。LFM 的 cutoff 和 16×16 调制图先固定，让结果能归到位置和输入特征的变化。<a href="../011_wavelet_unet/NEXT_RESEARCH.md">已有 LFM 位置诊断</a></p></div>
+  </article>
+  <article class="panel direction">
+    <div><div class="priority">检查跳连</div><h3>区分雾与真实色调</h3></div>
+    <div><p>先导出 <code>fuse[1]</code> 的低频和细节增益图，并按上下区域对照残雾、亮水面、白色船身。现有平滑 skip 可能同时携带雾幕、天空和水面本色，可在 1/2 尺度单独尝试用 <code>L−D</code> 修正深层特征，同时保留细节注入。通过同预算重训和配对指标判断两类误差是否一起改善。</p>
+    <p>RegionContext 的推理旁路影响很大，首轮保留它。当前区域注意力没有显式坐标。若误差持续集中在海天线附近，可比较 8×8 与 4×16 池化，保持 64 个 token，检验横向分辨率是否有用。再单独验证相对高度信息，避免同时改池化和注意力。</p></div>
+  </article>
+  <article class="panel direction">
+    <div><div class="priority">低优先级</div><h3>全卷积与细节增强</h3></div>
+    <div><p>013e 对 013b 可以验证全卷积块在宽主干上是否还有收益。013c 在 Dense 的同 8k 对照落后，Mist 区间跨零，暂时优先做上面的低频实验。若 013e 的收益集中在中高频或 SSIM，再用单处替换明确瓶颈和解码端各自的价值。若要优化条形细节模块，可直接利用已有 <code>detail_mode: square</code> 做对照。<a href="probe_013e_combined.yml">013e 配置</a></p></div>
+  </article>
+</div>
+<p class="note"><strong>先在内部 v2 筛选。</strong> 候选共享 013b 基座并分别从头训练，每轮改一个方向。8k 看 Dense/Mist 是否同步改善，并复核 SSIM 与低频代价。优胜方案再跑同配方 60k，报告相对 011p 的配对差和官方集成绩。最终方向的稳定性可用额外种子复核。</p>
+</section>
+</main>
+<footer><div class="wrap">
+  <p class="caption">基于仓库 2026-11-27 的记录（dd109ca）。参数量按仓库记录取近似值。图示为生成器本身，BasicSR 验证从 DehazeModel 进入时外层还有 mod-4 填充与裁剪。</p>
+  <div class="source-list"><a href="README.md">013 研究日志</a><a href="../../basicsr/models/dehaze_model.py">模型验证入口</a><a href="probe_013b_wide.yml">013b 配置</a><a href="probe_013c_spatial.yml">013c 配置</a><a href="terminal_013a_vs_011p_internal/pairs.csv">60k 逐图结果</a><a href="paired_013c_vs_013b_8000_internal/error_attribution.json">8k 误差归因</a></div>
+</div></footer>
+<noscript><p class="wrap caption">启用 JavaScript 可切换架构版本和 SSIM 指标。默认图显示 013a，表格显示 PSNR。</p></noscript>
+<script>
+const variants = {
+  a: {widths: [48, 96, 176, 320], params: '7.537', note: '60k 基线。三层编码、三层解码、两次 LFM，1/2 解码末端做条形核细节修复。'},
+  b: {widths: [64, 128, 224, 320], params: '9.332', note: '8k 加宽探针。只加宽全分辨率、1/2 和 1/4 三个尺度，瓶颈维持 320 通道。'},
+  c: {widths: [48, 96, 176, 320], params: '9.244', fullConv: true, note: '8k 空间表达探针。将瓶颈末块和 1/4 解码末块换成全通道 3×3 卷积块。'},
+  d: {widths: [64, 128, 224, 320], params: '9.408', rgbHead: true, note: '013b + 16×16 低频 RGB 头。配置已做真实批次预检，当前快照缺少 8k 终点。'},
+  e: {widths: [64, 128, 224, 320], params: '11.286', fullConv: true, note: '013b + 两处全卷积块。当前快照记录已通过冒烟，尚无 8k 终点。'}
+};
+
+const variantButtons = document.querySelectorAll('[data-variant]');
+const channelLabels = document.querySelectorAll('[data-channel]');
+
+function selectVariant(button) {
+  const variant = variants[button.dataset.variant];
+  variantButtons.forEach(option => option.setAttribute('aria-pressed', option === button));
+  channelLabels.forEach(label => {
+    label.textContent = 'C = ' + variant.widths[Number(label.dataset.channel)];
+  });
+  document.getElementById('parameters').textContent = variant.params + 'M 参数';
+  document.getElementById('variant-note').textContent = variant.note;
+  document.getElementById('quarter-decoder').textContent = variant.fullConv ? '解码 D₃ · RB ×3 → FC' : '解码 D₃ · RB ×4';
+  document.getElementById('middle-tail').textContent = variant.fullConv ? 'RB → FC' : 'RB ×2';
+  document.getElementById('head-active').hidden = !variant.rgbHead;
+  document.getElementById('output-equation').textContent = variant.rgbHead ? 'I + ΔRGB + Δ低频，裁回原尺寸' : 'I + ΔRGB，裁回原尺寸';
+}
+
+variantButtons.forEach(button => button.addEventListener('click', () => selectVariant(button)));
+
+// Paired EMA evaluation snapshot from terminal_013a_vs_011p_internal/summary.json.
+// Values are rounded at render time. The interval below uses 013a minus 011p.
+const terminal = [
+  {"name": "Dense", "n": 94, "psnr": [24.29605378, 25.94237506, -1.64632128, -2.01882301, -1.28349246], "ssim": [0.89782763, 0.90820809, -0.01038046, -0.0125514, -0.00843961]},
+  {"name": "Mist", "n": 94, "psnr": [28.66788962, 31.4320393, -2.76414968, -3.33820645, -2.19006788], "ssim": [0.96702286, 0.97366696, -0.0066441, -0.0083018, -0.00507643]},
+  {"name": "Moderate", "n": 95, "psnr": [27.32661544, 28.9919376, -1.66532216, -2.02572697, -1.33976696], "ssim": [0.93660658, 0.94603708, -0.0094305, -0.01174357, -0.00748221]}
+];
+const metricButtons = document.querySelectorAll('[data-metric]');
+
+function selectMetric(button) {
+  const metric = button.dataset.metric;
+  const psnr = metric === 'psnr';
+  const precision = psnr ? 3 : 5;
+  const unit = psnr ? ' dB' : '';
+  metricButtons.forEach(option => option.setAttribute('aria-pressed', option === button));
+
+  const rows = terminal.map(entry => {
+    const [owh, dea, diff, lo, hi] = entry[metric];
+    const values = [entry.name + ' / ' + entry.n, owh.toFixed(precision) + unit,
+      dea.toFixed(precision) + unit, diff.toFixed(precision) + unit,
+      '[' + lo.toFixed(precision) + ', ' + hi.toFixed(precision) + ']'];
+    const row = document.createElement('tr');
+    values.forEach((value, index) => {
+      const cell = document.createElement(index === 0 ? 'th' : 'td');
+      if (index === 0) cell.scope = 'row';
+      if (index === 3) cell.className = 'loss';
+      cell.textContent = value.replaceAll('-', '−');
+      row.append(cell);
+    });
+    return row;
+  });
+  document.getElementById('terminal-rows').replaceChildren(...rows);
+}
+
+metricButtons.forEach(button => button.addEventListener('click', () => selectMetric(button)));
+</script>
+</body>
+</html>
