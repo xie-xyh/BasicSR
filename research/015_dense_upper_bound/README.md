@@ -63,6 +63,17 @@
 | **`015a` (`probe_015a_axial_basr`)** | `d533` GPU 0 | 7.931M / 4.648M | 13.61 / **18.09 GiB** | 2.41 s/it | ~5.4 h |
 | **`015b` (`probe_015b_maritime_recipe`)** | `d533` GPU 1 | 7.838M / 4.555M | 13.61 / **17.73 GiB** | 2.32 s/it | ~5.2 h |
 
-### 3.2 并行启动与 SwanLab 追踪（`dehaze-probes`）
+### 3.2 并行启动与 SwanLab 追踪（`dehaze-probes`，2026-11-28 01:11 启动）
 
-*(启动后自动在控制台日志与 `dehaze-probes` 看板追踪，待 8k 完成回填最终三子集 PSNR / SSIM 与配对归因结果。)*
+| 探针臂 | 机器 / 卡位 | 进程 PID / 核亲和度 | 实测稳定显存 | 断点频率 | SwanLab (`dehaze-probes`) |
+|---|---|---|---|---:|---|
+| **`015a`** (`probe_015a_axial_basr_d533_v2_8000iter`) | `d533` GPU 0 | `1201201` / `0-7,12-31` | 18.7 GiB / 100% util | 1000 iter | [`9ljyf7i5`](https://swanlab.cn/@xieyh/dehaze-probes/runs/9ljyf7i5) |
+| **`015b`** (`probe_015b_maritime_recipe_d533_v2_8000iter`) | `d533` GPU 1 | `1201252` / `0-7,12-31` | 19.1 GiB / 97% util | 1000 iter | [`b5h4gkml`](https://swanlab.cn/@xieyh/dehaze-probes/runs/b5h4gkml) |
+
+> 异常中断续训命令（自动接续最近 `1000.state` 断点）：
+> ```bash
+> CPU_AFFINITY=0-7,12-31 bash research/015_dense_upper_bound/tools/launch_probe.sh 0 research/015_dense_upper_bound/probe_015a_axial_basr.yml research/015_dense_upper_bound/run_015a_resume1 18500 --auto_resume
+> CPU_AFFINITY=0-7,12-31 bash research/015_dense_upper_bound/tools/launch_probe.sh 1 research/015_dense_upper_bound/probe_015b_maritime_recipe.yml research/015_dense_upper_bound/run_015b_resume1 18500 --auto_resume
+> ```
+
+*(待 8k 训练结束并执行 `paired_eval.py` 后，回填最终三子集 PSNR / SSIM 与频段归因对比表。)*
