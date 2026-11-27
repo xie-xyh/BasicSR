@@ -1,0 +1,77 @@
+# MaritimeSFNet (014d) 官方 OWH 2,711 图全量终评测试配置
+# 运行：
+#   CUDA_VISIBLE_DEVICES=1 python basicsr/test.py -opt options/test/MaritimeSFNet/test_MaritimeSFNet_014d_owh_official.yml
+
+name: 014d_MaritimeSFNet_OWHscreened_100k_B16G1_official
+model_type: MaritimeSFModel
+scale: 1
+num_gpu: 1
+manual_seed: 0
+
+datasets:
+  test_1:
+    name: OWH-Dense-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Dense/test/clear
+    dataroot_lq: datasets/OWH/Dense/test/hazy
+    io_backend:
+      type: disk
+  test_2:
+    name: OWH-Mist-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Mist/test/clear
+    dataroot_lq: datasets/OWH/Mist/test/hazy
+    io_backend:
+      type: disk
+  test_3:
+    name: OWH-Moderate-test
+    type: PairedImageDataset
+    dataroot_gt: datasets/OWH/Moderate/test/clear
+    dataroot_lq: datasets/OWH/Moderate/test/hazy
+    io_backend:
+      type: disk
+
+network_g:
+  type: MaritimeSFNet
+  widths: [36, 72, 144]
+  depths: [3, 3, 8]
+  use_reparam: true
+  use_cd: true
+  channel_spatial_attn: true
+  use_aniso_lk: true
+  lfm_cutoff_img: 0.025
+  lfm_edge_img: 0.01
+  lfm_mod_grids: [8, 16]
+  lk_strip: 31
+  lk_square: 15
+  fcsf_scene_context: true
+  fcsf_alpha_bias: -1.2
+  basr_symmetric: true
+  basr_scene_gate: true
+  basr_g_max: 4.0
+  use_l2_aniso_lk: true
+  l2_lk_strip: 15
+  l2_lk_square: 7
+  use_mimo_input: true
+  use_deep_supervision: false
+  activation_checkpointing: false
+
+path:
+  pretrain_network_g: experiments/014d_MaritimeSFNet_OWHscreened_100k_B16G1/models/net_g_latest.pth
+  param_key_g: params_ema
+  strict_load_g: true
+
+val:
+  save_img: false
+  suffix: null
+  metrics:
+    psnr:
+      type: calculate_psnr
+      crop_border: 0
+      test_y_channel: false
+      better: higher
+    ssim:
+      type: calculate_ssim
+      crop_border: 0
+      test_y_channel: false
+      better: higher
