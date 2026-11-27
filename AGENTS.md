@@ -69,10 +69,11 @@ basicsr/
 │   │                         # + DetailRefinement 条形核细节修复，013 系列；widths/depths 可参数化，
 │   │                         # spatial_expression 将瓶颈与 1/4 解码末端各一块换为全 3×3 卷积；
 │   │                         # low_frequency_head 用末端特征与雾图预测零初始化 16×16 RGB 修正场）
-│   ├── maritime_sfnet_arch.py # MaritimeSFNet（三尺度 1/4 瓶颈空频物理对齐主干，014 系列；
+│   ├── maritime_sfnet_arch.py # MaritimeSFNet（三尺度 1/4 瓶颈空频物理对齐主干，014/015 系列；
 │   │                         # AnisoRepConv3x3 4/5分支重参数化(含可选CD) + DCA(含可选逐通道7×7 PA)
-│   │                         # + PhysicsAlignedLFM + AnisoLK(1/4与可选1/2) + FCSF(含可选场景门控)
-│   │                         # + BASR(含可选C²零曲率对称增益与场景对比度门控)，支持无损折叠与LoRA解耦）
+│   │                         # + PhysicsAlignedLFM + AnisoLK(1/4与可选1/2) + 可选AxialGlobalProfile(015a)
+│   │                         # + FCSF(含可选场景门控) + BASR(含C²零曲率增益/场景门控/可选浓雾精修015a)，
+│   │                         # 支持无损折叠与LoRA解耦）
 │   ├── freqda_arch.py        # FreqDA（冻结 004a + 频率解耦低秩适配器，005 自监督域适配）
 │   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
 │   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）

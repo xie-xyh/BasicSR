@@ -19,14 +19,19 @@ Key modules:
     - AnisotropicLargeKernelBlock: Parallel 1xK, Kx1, K_sq x K_sq, and 3x3
       depthwise branches targeting maritime horizon/vertical haze anisotropy,
       strictly zero-initialized; deployable at 1/4 bottleneck and 1/2 decoder (`use_l2_aniso_lk`).
+    - AxialGlobalProfile: Optional full-width horizontal + full-height vertical
+      1D axial profile modulation (`use_axial_global=True`, 015a), extending P3
+      to 100% image-span receptive field while preserving geometric order and
+      strictly bounded positive gating in (0, 2) with exact zero-init identity.
     - FrequencyConvexSkipFusion (FCSF): Deep-dominant convex low-band fusion
       plus gated detail injection, optional global scene context (`scene_context=True`),
       and 1x1 channel projection; full-resolution (1x) skip blocks all low-frequency
       haze passthrough (`high_pass_only`).
     - BoundedAffineSoftReconHead (BASR): Strictly positive bounded affine
       reconstruction J_hat = G(K_tilde) * I + B with exact zero-init identity
-      (G=1, B=0). Supports original sigmoid gain (014a/b/c) and C^2 zero-curvature
-      symmetric-tanh gain + scene contrast gate (`symmetric_gain=True, scene_gate=True`, 014d).
+      (G=1, B=0). Supports original sigmoid gain (014a/b/c), C^2 zero-curvature
+      symmetric-tanh gain + scene contrast gate (`symmetric_gain=True, scene_gate=True`, 014d),
+      and optional gain-gated dense-haze residual refinement (`use_refine=True`, 015a).
 """
 import math
 
@@ -294,11 +299,61 @@ class AnisotropicLargeKernelBlock(nn.Module):
         return x + self.out_proj(F.gelu(mixed))
 
 
+class AxialGlobalProfile(nn.Module):
+    """Full-image 1D horizontal/vertical axial global context modulation (015a).
+
+    Extends Proposition P3 from finite strip kernels (31x4=124 px) to 100% full
+    image width and full image height without unconstrained 2D spatial token
+    shuffling (avoiding RegionContext/MDTA cross-region dark spots):
+        - Row profile: aggregates full-width mean & max statistics for every
+          height index y, then applies 1D Conv along y (sky -> horizon -> sea).
+        - Col profile: aggregates full-height mean & max statistics for every
+          width index x, then applies 1D Conv along x (lateral haze / ship bands).
+
+    Uses DC-preserving, normalization-free, strictly bounded multiplicative
+    gating in (0, 2) plus additive bias, strictly zero-initialized to exact
+    identity.
+    """
+
+    def __init__(self, dim, k_axial=7, reduction=4):
+        super().__init__()
+        hidden = max(dim // reduction, 16)
+        self.row_net = nn.Sequential(
+            nn.Conv1d(2 * dim, hidden, 1),
+            nn.GELU(),
+            nn.Conv1d(
+                hidden, hidden, k_axial, padding=k_axial // 2,
+                padding_mode='replicate', groups=hidden),
+            nn.GELU(),
+            nn.Conv1d(hidden, 2 * dim, 1))
+        self.col_net = nn.Sequential(
+            nn.Conv1d(2 * dim, hidden, 1),
+            nn.GELU(),
+            nn.Conv1d(
+                hidden, hidden, k_axial, padding=k_axial // 2,
+                padding_mode='replicate', groups=hidden),
+            nn.GELU(),
+            nn.Conv1d(hidden, 2 * dim, 1))
+        nn.init.zeros_(self.row_net[-1].weight)
+        nn.init.zeros_(self.row_net[-1].bias)
+        nn.init.zeros_(self.col_net[-1].weight)
+        nn.init.zeros_(self.col_net[-1].bias)
+
+    def forward(self, x):
+        row_stats = torch.cat((x.mean(dim=3), x.amax(dim=3)), dim=1)
+        col_stats = torch.cat((x.mean(dim=2), x.amax(dim=2)), dim=1)
+        row_mod = self.row_net(row_stats).unsqueeze(3)
+        col_mod = self.col_net(col_stats).unsqueeze(2)
+        gamma_raw, beta = (row_mod + col_mod).chunk(2, dim=1)
+        return x * (2.0 * torch.sigmoid(gamma_raw)) + beta
+
+
 class AnisoSpatialFreqBlock(nn.Module):
-    """Dual-domain bottleneck block pairing PhysicsAlignedLFM with optional AnisoLK."""
+    """Dual-domain bottleneck block pairing PhysicsAlignedLFM with optional AnisoLK and AxialGlobal."""
 
     def __init__(self, dim, cutoff_img=0.020, edge_img=0.010, scale_factor=4,
-                 mod_grids=(16,), use_aniso_lk=False, lk_strip=31, lk_square=15):
+                 mod_grids=(16,), use_aniso_lk=False, lk_strip=31, lk_square=15,
+                 use_axial_global=False, axial_kernel=7):
         super().__init__()
         self.ms_lfm = PhysicsAlignedLFM(
             dim,
@@ -309,11 +364,16 @@ class AnisoSpatialFreqBlock(nn.Module):
         self.aniso_lk = (
             AnisotropicLargeKernelBlock(dim, k_strip=lk_strip, k_square=lk_square)
             if use_aniso_lk else None)
+        self.axial_global = (
+            AxialGlobalProfile(dim, k_axial=axial_kernel)
+            if use_axial_global else None)
 
     def forward(self, x):
         x = self.ms_lfm(x)
         if self.aniso_lk is not None:
             x = self.aniso_lk(x)
+        if self.axial_global is not None:
+            x = self.axial_global(x)
         return x
 
 
@@ -436,7 +496,7 @@ class BoundedAffineSoftReconHead(nn.Module):
     """
 
     def __init__(self, dim, out_ch=3, g_min=0.5, g_max=5.0,
-                 symmetric_gain=False, scene_gate=False):
+                 symmetric_gain=False, scene_gate=False, use_refine=False):
         super().__init__()
         if not (0.0 < g_min < 1.0 < g_max):
             raise ValueError(f'Require 0 < g_min < 1 < g_max, got ({g_min}, {g_max})')
@@ -460,9 +520,22 @@ class BoundedAffineSoftReconHead(nn.Module):
             nn.init.zeros_(self.scene_mlp[-1].bias)
         else:
             self.scene_mlp = None
+        if use_refine:
+            refine_in = dim + 2 * out_ch
+            refine_hidden = max(dim // 2, 16)
+            self.refine = nn.Sequential(
+                nn.Conv2d(refine_in, refine_hidden, 3, padding=1),
+                nn.GELU(),
+                nn.Conv2d(refine_hidden, out_ch, 3, padding=1))
+            nn.init.zeros_(self.refine[-1].weight)
+            nn.init.zeros_(self.refine[-1].bias)
+        else:
+            self.refine = None
         self.last_gain_mean = None
+        self.last_gain_p95 = None
         self.last_bias_abs = None
         self.last_scene_scale = None
+        self.last_refine_abs = None
 
     def forward(self, feat, image):
         raw_k, bias = self.head(feat).chunk(2, dim=1)
@@ -487,9 +560,19 @@ class BoundedAffineSoftReconHead(nn.Module):
                 1.0 + self.a_neg * torch.tanh(raw_k / self.a_neg))
         else:
             gain = self.g_min + (self.g_max - self.g_min) * torch.sigmoid(raw_k + self.b0)
-        self.last_gain_mean = gain.detach().mean()
+        g_det = gain.detach()
+        self.last_gain_mean = g_det.mean()
+        self.last_gain_p95 = torch.quantile(g_det[..., ::4, ::4].float().reshape(-1), 0.95)
         self.last_bias_abs = bias.detach().abs().mean()
-        return gain * image + bias
+        j_affine = gain * image + bias
+        if self.refine is not None:
+            w_dense = torch.sigmoid(2.0 * (gain.mean(dim=1, keepdim=True) - 1.5))
+            delta = self.refine(torch.cat((feat, j_affine, gain - 1.0), dim=1))
+            refined = w_dense * delta
+            self.last_refine_abs = refined.detach().abs().mean()
+            return j_affine + refined
+        self.last_refine_abs = None
+        return j_affine
 
 
 class BilinearConvUp(nn.Module):
@@ -535,6 +618,9 @@ class MaritimeSFNet(nn.Module):
             Default: (16,) for 014a; use (8, 16) for 014b/c/d.
         lk_strip (int): Strip kernel length for 1xK / Kx1 branches. Default: 31.
         lk_square (int): Square large kernel size. Default: 15.
+        use_axial_global (bool): Enable full-width/full-height 1D AxialGlobalProfile
+            inside bottleneck ASFB blocks (015a). Default: False.
+        axial_kernel (int): 1D depthwise kernel size for AxialGlobalProfile. Default: 7.
         fcsf_scene_context (bool): Add global scene GAP branch to FCSF gates
             (014d). Default: False.
         fcsf_alpha_bias (float): Initial logit bias for FCSF low-band gate alpha.
@@ -544,7 +630,10 @@ class MaritimeSFNet(nn.Module):
         basr_scene_gate (bool): Add global scene contrast modulator in BASR head
             (014d). Default: False.
         basr_g_max (float): Upper bound of BASR multiplicative gain. Default: 5.0
-            (014a/b/c); use 4.0 for 014d.
+            (014a/b/c); use 4.0 for 014d, 6.0 for 015a dense-haze headroom.
+        basr_refine (bool): Enable gain-gated lightweight residual refinement
+            after affine reconstruction to suppress high-gain quantization/haze
+            noise in dense regions (015a). Default: False.
         use_l2_aniso_lk (bool): Add lightweight mid-scale AnisotropicLargeKernelBlock
             after dec2 (1/2 scale, 256x256) targeting 0.02-0.15 mid-band (014d).
             Default: False.
@@ -577,11 +666,14 @@ class MaritimeSFNet(nn.Module):
         lfm_mod_grids=(16,),
         lk_strip=31,
         lk_square=15,
+        use_axial_global=False,
+        axial_kernel=7,
         fcsf_scene_context=False,
         fcsf_alpha_bias=-2.0,
         basr_symmetric=False,
         basr_scene_gate=False,
         basr_g_max=5.0,
+        basr_refine=False,
         use_l2_aniso_lk=False,
         l2_lk_strip=15,
         l2_lk_square=7,
@@ -638,7 +730,8 @@ class MaritimeSFNet(nn.Module):
         self.asfb1 = AnisoSpatialFreqBlock(
             w3, cutoff_img=lfm_cutoff_img, edge_img=lfm_edge_img, scale_factor=4,
             mod_grids=lfm_mod_grids, use_aniso_lk=use_aniso_lk,
-            lk_strip=lk_strip, lk_square=lk_square)
+            lk_strip=lk_strip, lk_square=lk_square,
+            use_axial_global=use_axial_global, axial_kernel=axial_kernel)
         self.bot_seg2 = nn.Sequential(*(
             MaritimeBlock(
                 w3, use_attn=True, use_reparam=use_reparam,
@@ -647,7 +740,8 @@ class MaritimeSFNet(nn.Module):
         self.asfb2 = AnisoSpatialFreqBlock(
             w3, cutoff_img=lfm_cutoff_img, edge_img=lfm_edge_img, scale_factor=4,
             mod_grids=lfm_mod_grids, use_aniso_lk=use_aniso_lk,
-            lk_strip=lk_strip, lk_square=lk_square)
+            lk_strip=lk_strip, lk_square=lk_square,
+            use_axial_global=use_axial_global, axial_kernel=axial_kernel)
         self.bot_seg3 = nn.Sequential(*(
             MaritimeBlock(
                 w3, use_attn=True, use_reparam=use_reparam,
@@ -679,7 +773,8 @@ class MaritimeSFNet(nn.Module):
         # Output head: strictly positive bounded affine soft reconstruction
         self.basr_head = BoundedAffineSoftReconHead(
             w1, out_ch=out_ch, g_max=basr_g_max,
-            symmetric_gain=basr_symmetric, scene_gate=basr_scene_gate)
+            symmetric_gain=basr_symmetric, scene_gate=basr_scene_gate,
+            use_refine=basr_refine)
 
         # Training-only auxiliary heads for multi-scale deep supervision (014c)
         if use_deep_supervision:
@@ -732,6 +827,10 @@ class MaritimeSFNet(nn.Module):
                 m for m in (self.asfb1.aniso_lk, self.asfb2.aniso_lk, self.dec2_aniso_lk)
                 if m is not None
             ],
+            'axial_global': [
+                m for m in (self.asfb1.axial_global, self.asfb2.axial_global)
+                if m is not None
+            ],
             'fcsf': [self.fcsf3, self.fcsf2, self.fcsf1],
             'basr': [self.basr_head],
         }
@@ -780,7 +879,10 @@ class MaritimeSFNet(nn.Module):
         d1 = self._run(self.fcsf1, self.up1(d2, target_size=s1.shape[-2:]), s1, level='l1')
         d1 = self._run(self.dec1, d1, level='l1')
 
-        out = self.basr_head(d1, padded)
+        if self.basr_head.refine is not None:
+            out = self._run(self.basr_head, d1, padded, level='l1')
+        else:
+            out = self.basr_head(d1, padded)
 
         # Training-only multi-scale deep supervision outputs (zero eval cost)
         if self.use_deep_supervision and self.training:
@@ -793,8 +895,10 @@ class MaritimeSFNet(nn.Module):
 
         self.diagnostics = {
             'diag_basr_gain': self.basr_head.last_gain_mean,
+            'diag_basr_gain_p95': self.basr_head.last_gain_p95,
             'diag_basr_bias': self.basr_head.last_bias_abs,
             'diag_basr_scene': self.basr_head.last_scene_scale,
+            'diag_basr_refine': self.basr_head.last_refine_abs,
             'diag_fcsf3_alpha': self.fcsf3.last_alpha_mean,
             'diag_fcsf2_alpha': self.fcsf2.last_alpha_mean,
             'diag_fcsf1_beta': self.fcsf1.last_beta_mean,
