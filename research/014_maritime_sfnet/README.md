@@ -283,11 +283,32 @@ $$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{full}}(\hat{J}, J) + \lambda_{
 
 ### 6.2 代码实现与提交前必做检查（按 `AGENTS.md §7–§8`）
 
-1. 新建 `basicsr/archs/maritime_sfnet_arch.py`（注册 `@ARCH_REGISTRY.register() class MaritimeSFNet`）与（Stage 3 时）`basicsr/models/maritime_sf_model.py`（注册 `MaritimeSFModel`，继承 `DehazeModel` 支持多尺度深监督，无 aux 输出时退化为标准 `DehazeModel`）；
-2. **单元测试**（缺一不可）：
-   - 任意奇偶尺寸（`512×512`、`536×800`、`127×255`）前向 + 反向无报错且输出尺寸精确匹配；
-   - `AnisoRepConv3×3` 折叠前后输出最大误差 `< 1e-5`（`fold_reparam()` 等价性证明）；
-   - 初始恒等检查：`BASR` 末层零初始化时 $G_c \equiv 1, B_c \equiv 0$；`ASFB` 零初始化时 $\max|\text{out} - \text{in}| = 0$；所有新增分支在 step 1–2 梯度非零且无 NaN；
-3. **6 iter 合成数据冒烟训练**（验证 `dataset → model → loss → save(pth+state) → --auto_resume → validation` 全链路）；
-4. **真实批次显存/耗时预检**（`bs16@512`，确认无需 `activation_checkpointing` 且峰值预留 < 40 GiB、耗时 ≤ 0.95 s/iter）；
-5. **中文 Git 提交**（只 commit，不 push）。
+1. 已实现 `basicsr/archs/maritime_sfnet_arch.py`（注册 `@ARCH_REGISTRY.register() class MaritimeSFNet`）与 `basicsr/models/maritime_sf_model.py`（注册 `MaritimeSFModel`，继承 `DehazeModel` 支持 1/4 & 1/2 多尺度深监督及门控/增益诊断日志，无 `deep_sup_opt` 时与 `DehazeModel` 损失完全一致）；
+2. 已冻结三份单变量 8k 探针配置（均与 `011p`/`013b` 逐字段对齐 v2 清单与基础配方，且强制 `save_checkpoint_freq: 2000`）：
+   - `research/014_maritime_sfnet/probe_014a_base.yml`（port `29543`）
+   - `research/014_maritime_sfnet/probe_014b_asfb.yml`（port `29544`）
+   - `research/014_maritime_sfnet/probe_014c_mimo.yml`（port `29545`）
+3. **验证与启动脚本**：
+   - 综合验证脚本：`research/014_maritime_sfnet/tools/verify_014.py`（包含语法与 YAML 一致性审计、奇偶尺寸前向/反向、`AnisoRepConv3×3` 无损折叠误差 `<1e-5`、BASR/ASFB 零初始化恒等、2 步全链路梯度传播、LoRA 模块分组检查、BasicSR 合成冒烟训练、以及真实批次 `bs16@512` 显存/耗时预检）；
+   - 防重复启动脚本：`research/014_maritime_sfnet/tools/launch_probe.sh`（支持首次启动与 `--auto_resume` 断点续训，强制校验 `save_checkpoint_freq > 0` 与探针目录隔离，自动接入 `dehaze-probes` SwanLab 同步）。
+
+### 6.3 服务器上机验证与启动命令清单（`basicsr` conda 环境）
+
+> 注：本机 macOS 无可用 PyTorch 动态库，已在本地完成 Python 语法、`bash -n` 与 `014a/b/c` 配置逐字段一致性检查；拉取到 Linux GPU 服务器后按顺序执行以下命令即可开跑：
+
+```bash
+conda activate basicsr
+
+# 1) 快速导入 + 全部单元测试 + CPU 合成冒烟 + GPU0 真实批次(bs16@512)显存与速度预检
+python -c "import basicsr; print(basicsr.__version__)"
+python research/014_maritime_sfnet/tools/verify_014.py --smoke --preflight-gpu 0
+
+# 2) 按顺序或双卡并行启动 014a / 014b / 014c 8k 探针（默认每 2000 iter 存模型与 .state 断点）
+bash research/014_maritime_sfnet/tools/launch_probe.sh 0 research/014_maritime_sfnet/probe_014a_base.yml research/014_maritime_sfnet/run_014a 38000
+bash research/014_maritime_sfnet/tools/launch_probe.sh 1 research/014_maritime_sfnet/probe_014b_asfb.yml research/014_maritime_sfnet/run_014b 38000
+# 014a 或 014b 结束后在空闲卡启动 014c：
+bash research/014_maritime_sfnet/tools/launch_probe.sh 0 research/014_maritime_sfnet/probe_014c_mimo.yml research/014_maritime_sfnet/run_014c 38000
+
+# 3) 若中途因 GPU/驱动故障中断，传入 --auto_resume 与新的日志目录即可从最近 2000.state 续训：
+# bash research/014_maritime_sfnet/tools/launch_probe.sh 1 research/014_maritime_sfnet/probe_014a_base.yml research/014_maritime_sfnet/run_014a_resume1 38000 --auto_resume
+```
