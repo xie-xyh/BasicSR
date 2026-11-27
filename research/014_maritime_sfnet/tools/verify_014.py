@@ -23,6 +23,8 @@ CONFIGS = {
     '014a': REPO_ROOT / 'research/014_maritime_sfnet/probe_014a_base.yml',
     '014b': REPO_ROOT / 'research/014_maritime_sfnet/probe_014b_asfb.yml',
     '014c': REPO_ROOT / 'research/014_maritime_sfnet/probe_014c_mimo.yml',
+    '014d_iso': REPO_ROOT / 'research/014_maritime_sfnet/probe_014d_iso.yml',
+    '014d_v2': REPO_ROOT / 'research/014_maritime_sfnet/probe_014d_v2.yml',
 }
 REFERENCE_013B = REPO_ROOT / 'research/013_owhregion/probe_013b_wide.yml'
 
@@ -101,7 +103,24 @@ def check_static_and_configs():
     assert cfgs['014c']['network_g']['use_deep_supervision'] is True
     assert cfgs['014c']['train']['deep_sup_opt']['weights'] == {'1/4': 0.1, '1/2': 0.1}
 
-    print('  014a / 014b / 014c config parity & single-variable checks PASSED.')
+    for tag, expected_depths in (('014d_iso', [3, 3, 8]), ('014d_v2', [4, 4, 8])):
+        ng = cfgs[tag]['network_g']
+        assert ng['depths'] == expected_depths
+        assert ng['use_cd'] is True
+        assert ng['channel_spatial_attn'] is True
+        assert ng['use_aniso_lk'] is True
+        assert ng['lfm_mod_grids'] == [8, 16]
+        assert ng['fcsf_scene_context'] is True
+        assert ng['fcsf_alpha_bias'] == -1.2
+        assert ng['basr_symmetric'] is True
+        assert ng['basr_scene_gate'] is True
+        assert ng['basr_g_max'] == 4.0
+        assert ng['use_l2_aniso_lk'] is True
+        assert ng['use_mimo_input'] is True
+        assert ng['use_deep_supervision'] is False
+        assert 'deep_sup_opt' not in cfgs[tag]['train']
+
+    print('  014a / 014b / 014c / 014d_iso / 014d_v2 config parity & ablation checks PASSED.')
     return cfgs
 
 
@@ -127,11 +146,31 @@ def check_torch_units(cfgs):
             assert max_id_err < 1e-6, f'{tag} BASR zero-init identity failed: {max_id_err}'
             assert net.aux_outputs == {}, f'{tag} eval mode must not emit aux_outputs'
 
-            # Check ASFB strict identity independently
+            # Check ASFB & L2-AnisoLK strict identity independently
             f_bot = torch.randn(1, cfg['network_g']['widths'][-1], 16, 16)
             for blk in (net.asfb1, net.asfb2):
                 err_asfb = (blk(f_bot) - f_bot).abs().max().item()
                 assert err_asfb == 0.0, f'{tag} ASFB not exact identity at init: {err_asfb}'
+            if net.dec2_aniso_lk is not None:
+                f_l2 = torch.randn(1, cfg['network_g']['widths'][1], 32, 32)
+                err_l2 = (net.dec2_aniso_lk(f_l2) - f_l2).abs().max().item()
+                assert err_l2 == 0.0, f'{tag} dec2_aniso_lk not exact identity at init: {err_l2}'
+
+            # Check C^2 zero-curvature property for symmetric BASR (Proposition P1-v2)
+            if net.basr_head.symmetric_gain:
+                eps = 1e-3
+                k_grid = torch.tensor([-eps, 0.0, eps], dtype=torch.float64)
+                ap, an = net.basr_head.a_pos, net.basr_head.a_neg
+                g_vals = torch.where(
+                    k_grid >= 0,
+                    1.0 + ap * torch.tanh(k_grid / ap),
+                    1.0 + an * torch.tanh(k_grid / an))
+                g0 = g_vals[1].item()
+                g1 = ((g_vals[2] - g_vals[0]) / (2 * eps)).item()
+                g2 = ((g_vals[2] - 2 * g_vals[1] + g_vals[0]) / (eps ** 2)).item()
+                assert abs(g0 - 1.0) < 1e-12, f'{tag} G(0)={g0}'
+                assert abs(g1 - 1.0) < 1e-5, f'{tag} G\'(0)={g1}'
+                assert abs(g2) < 1e-2, f'{tag} G\'\'(0)={g2} not zero-curvature!'
 
         # 2. Odd & rectangular sizes forward + backward + gradient flow
         net.train()
@@ -154,9 +193,9 @@ def check_torch_units(cfgs):
             assert torch.isfinite(loss), f'{tag} non-finite loss on {(h, w)}'
             assert net.basr_head.head.weight.grad is not None and net.basr_head.head.weight.grad.abs().sum() > 0
 
-        # 3. 2-step gradient propagation check (zero-init heads pass grad to backbone from step 2)
+        # 3. 3-step gradient propagation check (zero-init heads & residual gates pass grad cleanly)
         opt = torch.optim.Adam(net.parameters(), lr=1e-3)
-        for step in range(2):
+        for step in range(3):
             x = torch.rand(1, 3, 64, 64)
             target = torch.rand(1, 3, 64, 64)
             opt.zero_grad(set_to_none=True)
@@ -169,17 +208,44 @@ def check_torch_units(cfgs):
             loss.backward()
             opt.step()
         assert net.stem.weight.grad is not None and net.stem.weight.grad.abs().sum() > 0, (
-            f'{tag} stem received zero gradient after 2 steps')
+            f'{tag} stem received zero gradient after 3 steps')
         assert net.asfb1.ms_lfm.mod[-1].weight.grad is not None
-        if tag in ('014b', '014c'):
+        if cfg['network_g'].get('use_aniso_lk', False):
             assert net.asfb1.aniso_lk.out_proj.weight.grad is not None
+        if cfg['network_g'].get('use_cd', False):
+            assert net.enc1[0].conv1.cd.weight.grad is not None
+            assert net.enc1[0].conv1.cd.weight.grad.abs().sum() > 0
+        else:
+            assert net.enc1[0].conv1.cd is None
+        if cfg['network_g'].get('channel_spatial_attn', False):
+            assert net.bot_seg1[0].attn.pa.weight.grad is not None
+            assert net.bot_seg1[0].attn.pa.weight.grad.abs().sum() > 0
+            assert net.bot_seg1[0].attn.ca[-1].weight.grad.abs().sum() > 0
+        else:
+            assert net.bot_seg1[0].attn.pa is None
+        if cfg['network_g'].get('basr_scene_gate', False):
+            assert net.basr_head.scene_mlp[-1].weight.grad is not None
+            assert net.basr_head.scene_mlp[-1].weight.grad.abs().sum() > 0
+        else:
+            assert net.basr_head.scene_mlp is None
+        if cfg['network_g'].get('fcsf_scene_context', False):
+            assert net.fcsf3.scene_gate[-1].weight.grad is not None
+            assert net.fcsf3.scene_gate[-1].weight.grad.abs().sum() > 0
+        else:
+            assert net.fcsf3.scene_gate is None
+        if cfg['network_g'].get('use_l2_aniso_lk', False):
+            assert net.dec2_aniso_lk.out_proj.weight.grad is not None
+        else:
+            assert net.dec2_aniso_lk is None
 
         # 4. LoRA target grouping check
         lora_groups = net.iter_lora_target_modules()
         assert len(lora_groups['ms_lfm']) == 2
         assert len(lora_groups['fcsf']) == 3
         assert len(lora_groups['basr']) == 1
-        assert len(lora_groups['aniso_lk']) == (2 if tag in ('014b', '014c') else 0)
+        expected_lk = (2 if cfg['network_g'].get('use_aniso_lk', False) else 0) + (
+            1 if cfg['network_g'].get('use_l2_aniso_lk', False) else 0)
+        assert len(lora_groups['aniso_lk']) == expected_lk
 
         # 5. Lossless reparameterization folding equivalence
         net.eval()
@@ -217,7 +283,7 @@ def run_smoke_and_resume(cfgs):
                 cv2.imwrite(str(tmp_dir / split / 'GT' / f'{i:03d}.png'), gt)
                 cv2.imwrite(str(tmp_dir / split / 'LQ' / f'{i:03d}.png'), lq)
 
-        for tag in ('014a', '014b', '014c'):
+        for tag in ('014a', '014b', '014c', '014d_iso', '014d_v2'):
             cfg = copy.deepcopy(cfgs[tag])
             exp_name = f'smoke_{tag}_verify'
             cfg['name'] = exp_name
@@ -281,8 +347,8 @@ def run_smoke_and_resume(cfgs):
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-def run_gpu_preflight(cfgs, gpu_id: int):
-    print(f'\n=== [4/4] GPU {gpu_id} real-batch preflight (bs16 @ 512x512, no activation_checkpointing) ===')
+def run_gpu_preflight(cfgs, gpu_id: int, tags=None):
+    print(f'\n=== [4/4] GPU {gpu_id} real-batch preflight (bs16 @ 512x512, per-config checkpointing) ===')
     import os
     os.environ['CUDA_VISIBLE_DEVICES'] = str(gpu_id)
     import torch
@@ -291,7 +357,9 @@ def run_gpu_preflight(cfgs, gpu_id: int):
 
     assert torch.cuda.is_available(), 'CUDA unavailable for GPU preflight'
     results = {}
-    for tag, cfg in cfgs.items():
+    selected = tags or list(cfgs.keys())
+    for tag in selected:
+        cfg = cfgs[tag]
         torch.cuda.empty_cache()
         net = build_network(cfg['network_g']).cuda().train()
         opt = torch.optim.Adam(net.parameters(), lr=2e-4, betas=(0.9, 0.99))
@@ -321,6 +389,7 @@ def run_gpu_preflight(cfgs, gpu_id: int):
         resv_gib = torch.cuda.max_memory_reserved() / 2**30
         results[tag] = {
             'parameters_train': sum(p.numel() for p in net.parameters()),
+            'activation_checkpointing': bool(cfg['network_g'].get('activation_checkpointing', False)),
             'seconds_per_iter': round(sec_per_iter, 4),
             'peak_allocated_gib': round(alloc_gib, 3),
             'peak_reserved_gib': round(resv_gib, 3),
@@ -339,6 +408,7 @@ def main():
     parser.add_argument('--config-only', action='store_true', help='Only run syntax and YAML parity checks')
     parser.add_argument('--smoke', action='store_true', help='Also run CPU synthetic BasicSR smoke training')
     parser.add_argument('--preflight-gpu', type=int, default=None, help='GPU index for bs16@512 VRAM/speed preflight')
+    parser.add_argument('--preflight-tags', nargs='+', default=None, help='Subset of tags for GPU preflight')
     args = parser.parse_args()
 
     cfgs = check_static_and_configs()
@@ -348,7 +418,7 @@ def main():
     if args.smoke:
         run_smoke_and_resume(cfgs)
     if args.preflight_gpu is not None:
-        run_gpu_preflight(cfgs, args.preflight_gpu)
+        run_gpu_preflight(cfgs, args.preflight_gpu, tags=args.preflight_tags)
 
 
 if __name__ == '__main__':
