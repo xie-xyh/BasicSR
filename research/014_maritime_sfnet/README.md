@@ -374,7 +374,7 @@ $$G_{\text{sym}}(k) = \begin{cases} 1 + a_+\,\tanh\!\left(\dfrac{k}{a_+}\right),
    因此在原点邻域满足 $G_{\text{sym}}(k) = 1 + k + O(k^3)$，二阶 Jensen 偏置项 $\frac{1}{2}G''(0)\operatorname{Var}(k) \equiv 0$。
 4. **场景对比度全局门控（`basr_scene_gate=true`）**：提取全局统计 $[\operatorname{GAP}(F_{\text{dec}1}),\; \operatorname{GAP}(I),\; \operatorname{RMS\_Std}(I)]$（其中图像全局标准差 $\sqrt{\operatorname{Var}(I)+10^{-6}}$ 是经典的雾浓度/对比度物理指示量），经零初始化两层 MLP 输出 $s_k, s_b \in (0, 2)$（初始严格为 `1.0`）对 $(\tilde{K}, B)$ 做逐图尺度调制，在轻雾场景主动衰减过矫正、在浓雾场景全幅放行。该子模块内嵌于 `basr_head`，下游 `015` 真实海雾 LoRA 自动覆盖。
 
-### 8.2 五项升级汇总与 `014d_iso` / `014d_v2` 双臂对照设计
+### 8.2 五项升级汇总与 `014d` / `014e` 双臂对照设计
 
 | 升级项 | 对应参数开关 | 靶向解决的瓶颈 | 额外折叠参数 / 推理开销 |
 |---|---|---|---|
@@ -384,8 +384,8 @@ $$G_{\text{sym}}(k) = \begin{cases} 1 + a_+\,\tanh\!\left(\dfrac{k}{a_+}\right),
 | **④ 全局场景感知 FCSF + 中性偏置** | `fcsf_scene_context: true`, `fcsf_alpha_bias: -1.2` | Mist 轻雾色调保真（全局雾度自适应放行 `α`） | +0.025M / +0.00G |
 | **⑤ 1/2 尺度中频 `AnisoLK(15,7)` + 纯 `MIMO` 输入** | `use_l2_aniso_lk: true`, `use_mimo_input: true`, `use_deep_supervision: false` | 0.02–0.15 Nyquist（14–30 px 物理跨度）& Mist `low_mse`（去除深监督干扰） | +0.018M / +1.18G |
 
-为严格分离“纯架构靶向修复”与“对齐 DEA `(4,4,8)` 深度”的各自因果贡献，设计两组并行 8k 探针（均开启 `save_checkpoint_freq: 2000` 与 `activation_checkpointing: true`，适配 `d533` 双 3090 24G 并行）：
+为严格分离“纯架构靶向修复”与“对齐 DEA `(4,4,8)` 深度”的各自因果贡献，设计两组并行 8k 探针（均保持有效总 batch=16、`save_checkpoint_freq: 2000`）：
 
-- **`probe_014d_iso.yml`**（port `29546`，`depths=[3,3,8]`）：**7.838M 训练 / 4.555M 折叠 / ~144G** —— 与 `014b` 完全同深度、与 `011p`（7.880M / 136.2G）严格等参，精准检验五项升级的纯结构净增益；`d533` RTX 3090 实测 `bs16@512 (ckpt=True)` 峰值 **13.61 GiB alloc / 17.62 GiB reserved**，**2.32 s/iter**（8k 约 5.2 小时）；
-- **`probe_014d_v2.yml`**（port `29547`，`depths=[4,4,8]`）：**8.280M 训练 / 4.789M 折叠 / ~169G** —— 补齐与 `011p` 相同的 L1/L2 4 块深度，作为全面反超 `011p` 与晋级 60k 终评的主力候选；`d533` RTX 3090 实测 `bs16@512 (ckpt=True)` 峰值 **15.30 GiB alloc / 19.40 GiB reserved**，**2.68 s/iter**（8k 约 6.0 小时；4090 48G 约 3.2 小时）。
-- 全部 5 组配置（`014a/b/c/d_iso/d_v2`）已通过 `verify_014.py --smoke` 单元测试（含 $C^2$ 零曲率数值导数校验、`init_id = 0.00e+00`、`fold_err = 0.00e+00`、3 步全链路梯度传播、LoRA 模块分组）与实训 `014b` EMA 权重严格向后兼容加载检查。
+- **`probe_014d.yml`**（port `29546`，`depths=[3,3,8]`，`num_gpu=2, batch_size_per_gpu=8` 双卡 DDP 跑于 `d533` 双 3090）：**7.838M 训练 / 4.555M 折叠 / ~144G** —— 与 `014b` 完全同深度、与 `011p`（7.880M / 136.2G）严格等参，精准检验五项升级的纯结构净增益；
+- **`probe_014e.yml`**（port `29547`，`depths=[4,4,8]`，`num_gpu=1, batch_size_per_gpu=16` 单卡跑于 `hust` 4090 GPU1）：**8.280M 训练 / 4.789M 折叠 / ~169G** —— 补齐与 `011p` 相同的 L1/L2 4 块深度，作为全面反超 `011p` 与晋级 60k 终评的主力候选；
+- 全部 5 组配置（`014a/b/c/d/e`）均通过 `verify_014.py --smoke` 单元测试（含 $C^2$ 零曲率数值导数校验、`init_id = 0.00e+00`、`fold_err = 0.00e+00`、3 步全链路梯度传播、LoRA 模块分组）与实训 `014b` EMA 权重严格向后兼容加载检查。

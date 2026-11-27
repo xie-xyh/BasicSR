@@ -23,8 +23,8 @@ CONFIGS = {
     '014a': REPO_ROOT / 'research/014_maritime_sfnet/probe_014a_base.yml',
     '014b': REPO_ROOT / 'research/014_maritime_sfnet/probe_014b_asfb.yml',
     '014c': REPO_ROOT / 'research/014_maritime_sfnet/probe_014c_mimo.yml',
-    '014d_iso': REPO_ROOT / 'research/014_maritime_sfnet/probe_014d_iso.yml',
-    '014d_v2': REPO_ROOT / 'research/014_maritime_sfnet/probe_014d_v2.yml',
+    '014d': REPO_ROOT / 'research/014_maritime_sfnet/probe_014d.yml',
+    '014e': REPO_ROOT / 'research/014_maritime_sfnet/probe_014e.yml',
 }
 REFERENCE_013B = REPO_ROOT / 'research/013_owhregion/probe_013b_wide.yml'
 
@@ -73,8 +73,13 @@ def check_static_and_configs():
         assert cfg['logger']['use_swanlab'] is False
         assert cfg['logger']['swanlab']['project'] == 'dehaze-probes'
 
-        # Exact protocol parity with 013b / 011p v2 manifests, datasets, val, and base train settings
-        assert cfg['datasets'] == ref['datasets'], f'{tag} datasets diverge from v2 protocol!'
+        # Exact protocol parity with 013b / 011p v2 manifests, datasets (allowing DDP split with total batch=16), val, and base train settings
+        eff_bs = int(cfg['num_gpu']) * int(cfg['datasets']['train']['batch_size_per_gpu'])
+        ref_bs = int(ref['num_gpu']) * int(ref['datasets']['train']['batch_size_per_gpu'])
+        assert eff_bs == ref_bs == 16, f'{tag} effective batch size {eff_bs} != 16!'
+        ds_norm = copy.deepcopy(cfg['datasets'])
+        ds_norm['train']['batch_size_per_gpu'] = ref['datasets']['train']['batch_size_per_gpu']
+        assert ds_norm == ref['datasets'], f'{tag} datasets diverge from v2 protocol!'
         assert cfg['val'] == ref['val'], f'{tag} val section diverges from v2 protocol!'
         train_no_ds = {k: v for k, v in cfg['train'].items() if k != 'deep_sup_opt'}
         assert train_no_ds == ref['train'], f'{tag} base train recipe diverges from v2 protocol!'
@@ -103,7 +108,7 @@ def check_static_and_configs():
     assert cfgs['014c']['network_g']['use_deep_supervision'] is True
     assert cfgs['014c']['train']['deep_sup_opt']['weights'] == {'1/4': 0.1, '1/2': 0.1}
 
-    for tag, expected_depths in (('014d_iso', [3, 3, 8]), ('014d_v2', [4, 4, 8])):
+    for tag, expected_depths in (('014d', [3, 3, 8]), ('014e', [4, 4, 8])):
         ng = cfgs[tag]['network_g']
         assert ng['depths'] == expected_depths
         assert ng['use_cd'] is True
@@ -120,7 +125,7 @@ def check_static_and_configs():
         assert ng['use_deep_supervision'] is False
         assert 'deep_sup_opt' not in cfgs[tag]['train']
 
-    print('  014a / 014b / 014c / 014d_iso / 014d_v2 config parity & ablation checks PASSED.')
+    print('  014a / 014b / 014c / 014d / 014e config parity & ablation checks PASSED.')
     return cfgs
 
 
@@ -283,7 +288,7 @@ def run_smoke_and_resume(cfgs):
                 cv2.imwrite(str(tmp_dir / split / 'GT' / f'{i:03d}.png'), gt)
                 cv2.imwrite(str(tmp_dir / split / 'LQ' / f'{i:03d}.png'), lq)
 
-        for tag in ('014a', '014b', '014c', '014d_iso', '014d_v2'):
+        for tag in ('014a', '014b', '014c', '014d', '014e'):
             cfg = copy.deepcopy(cfgs[tag])
             exp_name = f'smoke_{tag}_verify'
             cfg['name'] = exp_name
@@ -366,12 +371,13 @@ def run_gpu_preflight(cfgs, gpu_id: int, tags=None):
         criteria = [build_loss(cfg['train'][k]).cuda() for k in ('pixel_opt', 'fft_opt', 'gradient_opt')]
         ds_weights = (cfg['train'].get('deep_sup_opt') or {}).get('weights', {})
 
+        bs = int(cfg['datasets']['train']['batch_size_per_gpu'])
         for step in range(4):
             if step == 1:
                 torch.cuda.reset_peak_memory_stats()
                 t0 = time.perf_counter()
-            x = torch.rand(16, 3, 512, 512, device='cuda')
-            y = torch.rand(16, 3, 512, 512, device='cuda')
+            x = torch.rand(bs, 3, 512, 512, device='cuda')
+            y = torch.rand(bs, 3, 512, 512, device='cuda')
             opt.zero_grad(set_to_none=True)
             out = net(x)
             loss = sum(c(out, y) for c in criteria)
@@ -389,6 +395,7 @@ def run_gpu_preflight(cfgs, gpu_id: int, tags=None):
         resv_gib = torch.cuda.max_memory_reserved() / 2**30
         results[tag] = {
             'parameters_train': sum(p.numel() for p in net.parameters()),
+            'batch_size_per_gpu': bs,
             'activation_checkpointing': bool(cfg['network_g'].get('activation_checkpointing', False)),
             'seconds_per_iter': round(sec_per_iter, 4),
             'peak_allocated_gib': round(alloc_gib, 3),

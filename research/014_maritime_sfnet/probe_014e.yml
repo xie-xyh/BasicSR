@@ -1,4 +1,4 @@
-name: probe_014d_v2_hust_v2_8000iter
+name: probe_014e_hust_v2_8000iter
 model_type: MaritimeSFModel
 scale: 1
 num_gpu: 1
