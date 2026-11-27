@@ -317,3 +317,75 @@ bash research/014_maritime_sfnet/tools/launch_probe.sh 0 research/014_maritime_s
 # 3) 若中途因 GPU/驱动故障中断，传入 --auto_resume 与新的日志目录即可从最近 2000.state 续训：
 # bash research/014_maritime_sfnet/tools/launch_probe.sh 1 research/014_maritime_sfnet/probe_014a_base.yml research/014_maritime_sfnet/run_014a_resume1 19000 --auto_resume
 ```
+
+---
+
+## 7. `014a / 014b / 014c` 八千步探针实测与逐图归因（2026-11-27）
+
+三组 8k 探针已全部完成（`014a`、`014b` 跑于 `d533` 双 3090 24G，`014c` 跑于 `hust` 4090 48G GPU1，严格同 v2 清单 / `seed=0` / `bs16@512` / `EMA=0.999`），与强基线 `011k_DEA` / `012a_DEA`（`011p@8k`，7.88M）和前代 `013a`（9.33M）对比如下（内部 283 图）：
+
+| 实验 | 训练/折叠参数 | Dense PSNR / SSIM | Mist PSNR / SSIM | Moderate PSNR / SSIM | 8k 末端内部诊断 |
+|---|---:|---:|---:|---:|---|
+| `013a` (`OWHRegionUNet`) | 9.33M / 9.33M | 19.63 / 0.8719 | 23.79 / 0.9463 | 22.10 / 0.9163 | — |
+| `011k_DEA` (`011p@8k`) | 7.88M / ~3.7M | 21.501 / 0.8846 | **26.705** / **0.9574** | 24.436 / 0.9257 | — |
+| `012a_DEA` (`011p@8k` 复现) | 7.88M / ~3.7M | **21.591** / 0.8851 | 26.599 / 0.9571 | **24.631** / **0.9257** | — |
+| **`014a`** (新基座) | 5.63M / 4.19M | 21.2715 / 0.8841 | 25.8885 / 0.9546 | 24.0740 / 0.9242 | `gain=1.217, α3=0.220, α2=0.242` |
+| **`014b`** (`+ASFB`) | 5.83M / 4.39M | **21.4885** / **0.8858** | 26.2617 / 0.9564 | 24.3610 / 0.9254 | `gain=1.147, α3=0.245, α2=0.216` |
+| **`014c`** (`+MIMO+DeepSup`) | 5.84M / 4.41M | 21.3920 / 0.8846 | 26.3081 / 0.9567 | 24.1826 / 0.9248 | `gain=1.171, α3=0.302, α2=0.249` |
+
+### 7.1 逐图 283 图配对归因的关键结论
+
+1. **`014b`（`+ASFB`）对 `014a` 为三子集一致统计显著正增益**（`paired_014b_vs_014a_8000_internal/summary.json`）：
+   - Dense **+0.217 dB**（95% CI `[+0.027, +0.410]`）/ SSIM **+0.00174**（`top_smooth_mse` −8.7%，`mid_mse` −3.4%，`high_mse` −1.9%）；
+   - Mist **+0.373 dB**（95% CI `[+0.023, +0.711]`）/ SSIM **+0.00184**（`overshoot_mse` −19.5%，`bottom_smooth_mse` −11.6%）；
+   - Moderate **+0.287 dB**（95% CI `[+0.047, +0.524]`）/ SSIM +0.00116（`overshoot_mse` −15.3%，`high_mse` −2.8%）。
+   - 仅用比 DEA 少 **26%** 的训练参数（5.83M vs 7.88M），`014b` 已在 Dense PSNR 上基本追平 `011k_DEA`（21.489 vs 21.501）、**在 Dense SSIM 上反超全部 DEA 基线（0.8858 vs 0.8846 / 0.8851）**，并在**三子集高频 `high_mse` 上全面优于 DEA**。
+2. **`014c`（`+MIMO + DeepSup`）揭示了“输入多尺度有益、硬辅助损失有害”的解耦事实**：
+   - 相对 `014b`，`014c` 在 Mist 上 `+0.046 dB / +0.0003 SSIM`（`low_mse` 降至 `0.00283`，`fcsf3_alpha` 提升至 `0.302`），说明 `mimo_in2/in3` 零初始化多尺度雾图输入提供了有用的低频雾线索；
+   - 但在 Dense（−0.097 dB / −0.0012 SSIM）和 Moderate（−0.178 dB / −0.0006 SSIM）上明显退化，原因在于 0.1 权重的 `1/4`、`1/2` 像素级辅助头强迫瓶颈特征直接拟合原始 RGB（且经旧版凸偏 BASR 头），与主解码器表征形成目标竞争。因此 **`014d` 保留 `use_mimo_input=true`，明确移除 `deep_sup_opt`**。
+3. **三组 014 相对 `011k/012a_DEA` 暴露出两条完全一致、可定位到代码行的根因短板**：
+   - **短板 A — 系统性轻雾过冲（`overshoot_mse` 三子集均偏高 +21%～+31%）**：
+     `014b` 在 Dense/Mist/Moderate 的 `overshoot_mse` 为 `0.00127 / 0.00107 / 0.00116`（vs `012a_DEA` 的 `0.00101 / 0.00084 / 0.00095`，95% CI 严格 > 0）；三个探针的 `diag_basr_gain` 稳定落在 `1.15–1.22`，证实存在系统性正向增益偏移。
+     - **数学根因（旧版 BASR 的凸性 Jensen 偏置）**：式 (3) 中 $G_{\text{old}}(k) = 0.5 + 4.5\,\sigma(k - \ln 8)$ 在恒等原点处的二阶导数严格为正：
+       $$G_{\text{old}}''(0) = 4.5 \cdot \frac{1}{9} \cdot \frac{8}{9} \cdot \left(1 - \frac{2}{9}\right) = \frac{28}{81} \approx +0.3457 > 0 \tag{11}$$
+       由二阶泰勒展开 $\mathbb{E}[G_{\text{old}}(k)] \approx 1 + \frac{4}{9}\mathbb{E}[k] + \frac{14}{81}\operatorname{Var}(k)$，即便轻雾图特征期望 $\mathbb{E}[k]=0$，任何零均值特征方差 $\operatorname{Var}(k)>0$ 都会通过 Jensen 不等式产生**正向增益偏置**，同时 $k<0$ 侧陷入 sigmoid 左尾压缩区难以回拉；此外 `FCSF` 仅看局部 6–12 px 感受野且 `alpha` 初始偏置 `-2.0`（8k 仍未收敛），导致极轻雾场景下浅层自然色调被过度抑制。
+   - **短板 B — 中频带 `mid_mse`（0.02–0.15 Nyquist）显著落后（Mist +6.7%～+10.2%、Moderate +11.4%～+12.0%，95% CI 严格 > 0）**：
+     - 根因 1：`AnisoRepConv3×3` 剔除了 `004_lowfreq §8` 实测能量占比第一（35.3%）的**中心差分分支（Center Difference, CD）**，缺失了各向同性拉普拉斯中频带通先验；
+     - 根因 2：瓶颈 `DCA` 的空间门控 `sa` 为全通道共享的单通道图，缺少按通道独立的 7×7 空间像素调制，削弱了中频船体/水岸边缘分离能力；
+     - 根因 3：1/2 尺度（256×256）缺少针对 0.02–0.15 中频波长（13–100 px）的各向异性中大核，且 L1/L2 仅各 3 块（比 DEA 的 4/4/8 少 26% 参数）。
+
+---
+
+## 8. `014d` 全面反超架构升级（Proposition P1-v2 + 五项靶向修复）
+
+针对上述两条定量瓶颈，`014d` 在严格保持 `014a/b/c` 权重向后兼容与 `fold_reparam()` + 4 组 LoRA 解耦的前提下，实施五项精准升级：
+
+### 8.1 Proposition P1-v2：$C^2$ 零曲率非对称双曲正切 BASR + 场景对比度门控
+
+将式 (3) 中的凸 sigmoid 增益替换为以恒等点 $k=0$ 为拐点的分段非对称 $\tanh$ 映射（取 $g_{\min}=0.5,\; g_{\max}=4.0 \implies a_+ = g_{\max}-1 = 3.0,\; a_- = 1-g_{\min} = 0.5$）：
+
+$$G_{\text{sym}}(k) = \begin{cases} 1 + a_+\,\tanh\!\left(\dfrac{k}{a_+}\right), & k \ge 0 \\[6pt] 1 + a_-\,\tanh\!\left(\dfrac{k}{a_-}\right), & k < 0 \end{cases} \tag{12}$$
+
+**性质严格证明**：
+1. **严格有界正增益与零初始化恒等**：$\forall k \in \mathbb{R},\; G_{\text{sym}}(k) \in (g_{\min}, g_{\max}) = (0.5, 4.0)$，且 $G_{\text{sym}}(0^+) = G_{\text{sym}}(0^-) = 1$；
+2. **一阶单位对称灵敏度（$C^1$）**：$G_{\text{sym}}'(k) = \operatorname{sech}^2(k / a_\pm) \implies G_{\text{sym}}'(0^+) = G_{\text{sym}}'(0^-) = 1$，彻底消除 $k<0$ 侧斜率坍缩；
+3. **恒等原点二阶零曲率（$C^2$，消除 Jensen 过冲偏置）**：
+   $$G_{\text{sym}}''(k) = -\frac{2}{a_\pm}\operatorname{sech}^2\!\left(\frac{k}{a_\pm}\right)\tanh\!\left(\frac{k}{a_\pm}\right) \implies G_{\text{sym}}''(0^+) = G_{\text{sym}}''(0^-) = 0 \tag{13}$$
+   因此在原点邻域满足 $G_{\text{sym}}(k) = 1 + k + O(k^3)$，二阶 Jensen 偏置项 $\frac{1}{2}G''(0)\operatorname{Var}(k) \equiv 0$。
+4. **场景对比度全局门控（`basr_scene_gate=true`）**：提取全局统计 $[\operatorname{GAP}(F_{\text{dec}1}),\; \operatorname{GAP}(I),\; \operatorname{RMS\_Std}(I)]$（其中图像全局标准差 $\sqrt{\operatorname{Var}(I)+10^{-6}}$ 是经典的雾浓度/对比度物理指示量），经零初始化两层 MLP 输出 $s_k, s_b \in (0, 2)$（初始严格为 `1.0`）对 $(\tilde{K}, B)$ 做逐图尺度调制，在轻雾场景主动衰减过矫正、在浓雾场景全幅放行。该子模块内嵌于 `basr_head`，下游 `015` 真实海雾 LoRA 自动覆盖。
+
+### 8.2 五项升级汇总与 `014d_iso` / `014d_v2` 双臂对照设计
+
+| 升级项 | 对应参数开关 | 靶向解决的瓶颈 | 额外折叠参数 / 推理开销 |
+|---|---|---|---|
+| **① 5 分支含中心差分重参数化 (`Rep5-CD`)** | `use_cd: true` | `mid_mse`（+0 DC 增益、各向同性中频带通） | **+0.00M / +0.00G**（推理完全折叠！） |
+| **② 瓶颈分组 7×7 逐通道空间注意 (`DCA-PA`)** | `channel_spatial_attn: true` | `mid_mse` & 船体/水岸边缘分离（残差式 `p1 + pa(x, p1)` 无死锁） | +0.114M / +1.87G |
+| **③ $C^2$ 零曲率 BASR + 场景对比度门控** | `basr_symmetric: true`, `basr_scene_gate: true`, `basr_g_max: 4.0` | 三子集 `overshoot_mse`（−21%~31% 目标）& Mist `light_haze` | +0.001M / +0.00G |
+| **④ 全局场景感知 FCSF + 中性偏置** | `fcsf_scene_context: true`, `fcsf_alpha_bias: -1.2` | Mist 轻雾色调保真（全局雾度自适应放行 `α`） | +0.025M / +0.00G |
+| **⑤ 1/2 尺度中频 `AnisoLK(15,7)` + 纯 `MIMO` 输入** | `use_l2_aniso_lk: true`, `use_mimo_input: true`, `use_deep_supervision: false` | 0.02–0.15 Nyquist（14–30 px 物理跨度）& Mist `low_mse`（去除深监督干扰） | +0.018M / +1.18G |
+
+为严格分离“纯架构靶向修复”与“对齐 DEA `(4,4,8)` 深度”的各自因果贡献，设计两组并行 8k 探针（均开启 `save_checkpoint_freq: 2000` 与 `activation_checkpointing: true`，适配 `d533` 双 3090 24G 并行）：
+
+- **`probe_014d_iso.yml`**（port `29546`，`depths=[3,3,8]`）：**7.838M 训练 / 4.555M 折叠 / ~144G** —— 与 `014b` 完全同深度、与 `011p`（7.880M / 136.2G）严格等参，精准检验五项升级的纯结构净增益；`d533` RTX 3090 实测 `bs16@512 (ckpt=True)` 峰值 **13.61 GiB alloc / 17.62 GiB reserved**，**2.32 s/iter**（8k 约 5.2 小时）；
+- **`probe_014d_v2.yml`**（port `29547`，`depths=[4,4,8]`）：**8.280M 训练 / 4.789M 折叠 / ~169G** —— 补齐与 `011p` 相同的 L1/L2 4 块深度，作为全面反超 `011p` 与晋级 60k 终评的主力候选；`d533` RTX 3090 实测 `bs16@512 (ckpt=True)` 峰值 **15.30 GiB alloc / 19.40 GiB reserved**，**2.68 s/iter**（8k 约 6.0 小时；4090 48G 约 3.2 小时）。
+- 全部 5 组配置（`014a/b/c/d_iso/d_v2`）已通过 `verify_014.py --smoke` 单元测试（含 $C^2$ 零曲率数值导数校验、`init_id = 0.00e+00`、`fold_err = 0.00e+00`、3 步全链路梯度传播、LoRA 模块分组）与实训 `014b` EMA 权重严格向后兼容加载检查。
