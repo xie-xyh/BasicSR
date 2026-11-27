@@ -1,0 +1,16 @@
+{
+  "015a": {
+    "params_train": 7931133,
+    "batch_size_per_gpu": 16,
+    "seconds_per_iter": 2.4114,
+    "peak_allocated_gib": 13.606,
+    "peak_reserved_gib": 18.09
+  },
+  "015b": {
+    "params_train": 7838430,
+    "batch_size_per_gpu": 16,
+    "seconds_per_iter": 2.3156,
+    "peak_allocated_gib": 13.605,
+    "peak_reserved_gib": 17.729
+  }
+}
