@@ -69,6 +69,10 @@ basicsr/
 │   │                         # + DetailRefinement 条形核细节修复，013 系列；widths/depths 可参数化，
 │   │                         # spatial_expression 将瓶颈与 1/4 解码末端各一块换为全 3×3 卷积；
 │   │                         # low_frequency_head 用末端特征与雾图预测零初始化 16×16 RGB 修正场）
+│   ├── maritime_sfnet_arch.py # MaritimeSFNet（三尺度 1/4 瓶颈空频物理对齐主干，014 系列；
+│   │                         # AnisoRepConv3x3 四分支各向异性重参数化 + DCA 双域通道空间注意
+│   │                         # + PhysicsAlignedLFM 尺度-频带对齐调制 + AnisoLK 十字大核
+│   │                         # + FCSF 频分凸跳连 + BASR 有界仿射软重建头，原生支持折叠与 LoRA 解耦）
 │   ├── freqda_arch.py        # FreqDA（冻结 004a + 频率解耦低秩适配器，005 自监督域适配）
 │   ├── sdlora_dehaze_arch.py # SDLoRADehaze 单步扩散去雾（SD2.1-base 冻结主干 + UNet LoRA，
 │   │                         # 有雾 latent 直接作为扩散起点，需 diffusers/peft 与本地 SD 权重）
@@ -91,6 +95,7 @@ basicsr/
 │   ├── sda_model.py          # SDAModel（= DehazeModel + SDA 辅助监督 T_d/T_r/T_s，配对 GT，006a）
 │   ├── wavelet_model.py      # WaveletDehazeModel（= DehazeModel + 子带分解监督 base/coarse/fine 三路 L1，010b）
 │   ├── wavelet_unet_model.py # WaveletUNetModel（= DehazeModel + LL1/detail1 子带监督，011a）
+│   ├── maritime_sf_model.py  # MaritimeSFModel（= DehazeModel + 可选 1/4 & 1/2 多尺度深监督 + 门控/增益诊断，014 系列）
 │   ├── lmhaze_model.py       # LMHazeModel（= DehazeModel + 可选 logit、MixUp、mod-8 填充、梯度裁剪）
 │   └── lr_scheduler.py       # CosineAnnealingRestartLR / CosineAnnealingRestartCyclicLR 等
 ├── losses/                   # basic_loss.py (L1/MSE/Charbonnier/Perceptual), spectral_loss.py (FFT 频域),
