@@ -389,3 +389,16 @@ $$G_{\text{sym}}(k) = \begin{cases} 1 + a_+\,\tanh\!\left(\dfrac{k}{a_+}\right),
 - **`probe_014d.yml`**（port `29546`，`depths=[3,3,8]`，`num_gpu=2, batch_size_per_gpu=8` 双卡 DDP 跑于 `d533` 双 3090）：**7.838M 训练 / 4.555M 折叠 / ~144G** —— 与 `014b` 完全同深度、与 `011p`（7.880M / 136.2G）严格等参，精准检验五项升级的纯结构净增益；
 - **`probe_014e.yml`**（port `29547`，`depths=[4,4,8]`，`num_gpu=1, batch_size_per_gpu=16` 单卡跑于 `hust` 4090 GPU1）：**8.280M 训练 / 4.789M 折叠 / ~169G** —— 补齐与 `011p` 相同的 L1/L2 4 块深度，作为全面反超 `011p` 与晋级 60k 终评的主力候选；
 - 全部 5 组配置（`014a/b/c/d/e`）均通过 `verify_014.py --smoke` 单元测试（含 $C^2$ 零曲率数值导数校验、`init_id = 0.00e+00`、`fold_err = 0.00e+00`、3 步全链路梯度传播、LoRA 模块分组）与实训 `014b` EMA 权重严格向后兼容加载检查。
+
+### 8.3 `014d` / `014e` 八千步实测与正式 100k 主干占号（2026-11-28）
+
+| 实验 | 训练 / 折叠参数 | Dense PSNR / SSIM | Mist PSNR / SSIM | Moderate PSNR / SSIM | SwanLab (`dehaze-probes`) |
+|---|---:|---:|---:|---:|---|
+| `011k_DEA` (`011p@8k`) | 7.880M / ~3.7M | 21.501 / 0.8846 | 26.705 / 0.9574 | 24.436 / 0.9257 | 基线 |
+| `012a_DEA` (`011p@8k` 复现) | 7.880M / ~3.7M | 21.591 / 0.8851 | 26.599 / 0.9571 | 24.631 / 0.9257 | 基线 |
+| `014b` (`+ASFB`) | 5.826M / 4.387M | 21.4885 / 0.8858 | 26.2617 / 0.9564 | 24.3610 / 0.9254 | `uu3asug8` |
+| `014e` (`depths=4,4,8`) | 8.280M / 4.789M | 21.8060 / 0.8887 | 26.3983 / 0.9579 | 24.6789 / 0.9284 | `vjgmtyra` |
+| **`014d` (`depths=3,3,8`)** | **7.838M / 4.555M** | **21.9290 / 0.8894** | **26.7390 / 0.9594** | **24.9567 / 0.9294** | `74jn40vp` |
+
+- **结论**：`014d` 以更少参数（7.838M vs `011p` 7.880M / `014e` 8.280M）在全部三子集 6 项指标上**全面反超 `011p` 基线与 `014e`**（相对 `011k_DEA`：Dense **+0.428 dB / +0.0048 SSIM**、Mist **+0.034 dB / +0.0020 SSIM**、Moderate **+0.521 dB / +0.0037 SSIM**；相对 `014b`：三子集分别 **+0.440 / +0.477 / +0.596 dB**）。
+- **正式主干占号与启动**：选定 `014d` 晋级 100k 正式主干训练 **`014d_MaritimeSFNet_OWHscreened_100k_B16G1`**（`options/train/MaritimeSFNet/train_MaritimeSFNet_014d_owh_100k.yml`，官方 2,711 图评估配置 `options/test/MaritimeSFNet/test_MaritimeSFNet_014d_owh_official.yml`），在 `hust` GPU1 启用选择性激活重计算 `activation_checkpointing: l1_l2`（梯度误差 `0.00e+00`，32.3 GiB / 1.57 s/it）、原生 SwanLab 云端项目 `dehaze`、`save_checkpoint_freq: 4000` 与 `val_freq: 4000`。

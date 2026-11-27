@@ -110,10 +110,12 @@ options/train/DEANet/           # DEA-Net 去雾训练配置（train_DEANet_mixe
 options/train/FreqDA/           # FreqDA 自监督域适配训练配置（005 系列，冻结 004a 骨架）
 options/train/SDLoRA/           # SDLoRA 单步扩散去雾训练配置（002 基线，Dense 子集 LoRA 适配）
 options/train/LMHaze/           # LMHaze OWH 全量配对训练配置（011a，150k，内部可学习路由器）
+options/train/MaritimeSFNet/    # MaritimeSFNet 正式主干训练配置（014d 100k OWH v2 协议，原生 SwanLab dehaze）
 options/test/SRResNet_SRGAN/    # SR 测试配置模板
 options/test/DEANet/            # DEA-Net 去雾测试配置（按子集分别输出指标）
 options/test/SDLoRA/            # SDLoRA 去雾测试配置（Dense 主测 + Mist/Moderate 泛化观察）
 options/test/LMHaze/            # LMHaze OWH 三子集测试配置
+options/test/MaritimeSFNet/     # MaritimeSFNet 官方 2,711 图三子集终评测试配置
 inference/                      # inference_esrgan.py / inference_swinir.py 单图推理范例
 scripts/data_preparation/       # extract_subimages.py, create_lmdb.py, generate_meta_info.py,
                                 # filter_min_size.py（按最小边长过滤成对数据集，生成软链接副本）
