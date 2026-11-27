@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 014 探针启动脚本（防重复启动 + 强制检查断点保存配置 + 支持单卡/多卡DDP + SwanLab 同步）
+# 014 探针启动脚本（防重复启动 + 强制检查断点保存配置 + 支持单卡/多卡DDP + 可选CPU亲和度 + SwanLab 同步）
 # 用法：
 #   单卡: bash research/014_maritime_sfnet/tools/launch_probe.sh <gpu> <config> <output_dir> [min_free_mib] [--auto_resume]
 #   多卡: bash research/014_maritime_sfnet/tools/launch_probe.sh 0,1 <config> <output_dir> [min_free_mib] [--auto_resume]
+#   可选环境变量：
+#     CPU_AFFINITY=0-7,12-31   （通过 taskset 绑定全部训练/DataLoader 进程，屏蔽不稳定 CPU 核）
+#     NCCL_P2P_DISABLE=1       （多卡默认 1，禁用消费级 PCIe P2P 改走 /dev/shm）
+#     NCCL_IB_DISABLE=1        （多卡默认 1）
 # 说明：
 #   - 首次启动拒绝覆盖已有 experiments/probes/<name> 与 output_dir；
 #   - 异常中断续训时传入第 5 参数 --auto_resume（需使用新的 output_dir 记录本次日志），
@@ -15,6 +19,7 @@ config=$2
 output=$3
 minimum_free=${4:-19000}
 resume_flag=${5:-}
+cpu_affinity=${CPU_AFFINITY:-}
 python="$HOME/miniconda3/envs/basicsr/bin/python"
 
 IFS=',' read -ra gpu_list <<< "$gpu"
@@ -71,37 +76,41 @@ sha256sum "$config" basicsr/archs/maritime_sfnet_arch.py basicsr/models/maritime
 git rev-parse HEAD > "$output/revision.txt"
 bash research/011_wavelet_unet/tools/start_swanlab_bridge.sh \
     "$config" "$PWD/tb_logger/probes" "$output/exit_code" "$output/swanlab"
-export OMP_NUM_THREADS=1 CUDA_VISIBLE_DEVICES="$gpu"
+export OMP_NUM_THREADS=1 CUDA_VISIBLE_DEVICES="$gpu" PYTHONFAULTHANDLER=1
+if (( ngpu > 1 )); then
+    export NCCL_P2P_DISABLE="${NCCL_P2P_DISABLE:-1}"
+    export NCCL_IB_DISABLE="${NCCL_IB_DISABLE:-1}"
+fi
 setsid -f bash -c '
     config=$1
     output=$2
     resume_flag=$3
     ngpu=$4
     master_port=$5
+    cpu_affinity=$6
     exec >>"$output/console.log" 2>&1
-    printf "开始 %s，GPU %s (ngpu=%s, port=%s)，resume=%s\n" "$(date -Is)" "$CUDA_VISIBLE_DEVICES" "$ngpu" "$master_port" "${resume_flag:-none}"
-    if (( ngpu > 1 )); then
-        if [[ -n "$resume_flag" ]]; then
-            "$HOME/miniconda3/envs/basicsr/bin/python" -u -m torch.distributed.run \
-                --nproc_per_node="$ngpu" --master_port="$master_port" \
-                basicsr/train.py -opt "$config" --launcher pytorch --auto_resume &
-        else
-            "$HOME/miniconda3/envs/basicsr/bin/python" -u -m torch.distributed.run \
-                --nproc_per_node="$ngpu" --master_port="$master_port" \
-                basicsr/train.py -opt "$config" --launcher pytorch &
-        fi
-    else
-        if [[ -n "$resume_flag" ]]; then
-            "$HOME/miniconda3/envs/basicsr/bin/python" -u basicsr/train.py -opt "$config" --auto_resume &
-        else
-            "$HOME/miniconda3/envs/basicsr/bin/python" -u basicsr/train.py -opt "$config" &
-        fi
+    printf "开始 %s，GPU %s (ngpu=%s, port=%s, cpu_affinity=%s, nccl_p2p_disable=%s)，resume=%s\n" \
+        "$(date -Is)" "$CUDA_VISIBLE_DEVICES" "$ngpu" "$master_port" "${cpu_affinity:-all}" "${NCCL_P2P_DISABLE:-default}" "${resume_flag:-none}"
+    cmd=()
+    if [[ -n "$cpu_affinity" ]]; then
+        cmd+=(taskset -c "$cpu_affinity")
     fi
+    if (( ngpu > 1 )); then
+        cmd+=("$HOME/miniconda3/envs/basicsr/bin/python" -u -m torch.distributed.run
+            --nproc_per_node="$ngpu" --master_port="$master_port"
+            basicsr/train.py -opt "$config" --launcher pytorch)
+    else
+        cmd+=("$HOME/miniconda3/envs/basicsr/bin/python" -u basicsr/train.py -opt "$config")
+    fi
+    if [[ -n "$resume_flag" ]]; then
+        cmd+=("$resume_flag")
+    fi
+    "${cmd[@]}" &
     echo $! > "$output/pid"
     wait "$(cat "$output/pid")"
     status=$?
     printf "%s\n" "$status" > "$output/exit_code"
     printf "结束 %s，退出码 %s\n" "$(date -Is)" "$status"
     exit "$status"
-' probe "$config" "$output" "$resume_flag" "$ngpu" "$master_port" </dev/null >/dev/null 2>&1
-printf '已启动 %s，GPU %s (ngpu=%s)，日志 %s/console.log\n' "$config" "$gpu" "$ngpu" "$output"
+' probe "$config" "$output" "$resume_flag" "$ngpu" "$master_port" "$cpu_affinity" </dev/null >/dev/null 2>&1
+printf '已启动 %s，GPU %s (ngpu=%s, cpu_affinity=%s)，日志 %s/console.log\n' "$config" "$gpu" "$ngpu" "${cpu_affinity:-all}" "$output"

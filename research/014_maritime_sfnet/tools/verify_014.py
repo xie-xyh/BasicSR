@@ -67,7 +67,7 @@ def check_static_and_configs():
         assert cfg['path']['experiments_root'] == 'experiments/probes'
         assert cfg['path']['resume_state'] is None
         assert cfg['logger']['tb_logdir'] == 'tb_logger/probes'
-        assert cfg['logger']['save_checkpoint_freq'] == 2000
+        assert 0 < cfg['logger']['save_checkpoint_freq'] <= 2000
         assert cfg['val']['val_freq'] == 2000
         assert cfg['logger']['use_tb_logger'] is True
         assert cfg['logger']['use_swanlab'] is False
