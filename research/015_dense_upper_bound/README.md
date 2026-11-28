@@ -75,11 +75,17 @@
 - 8k 末端内部诊断：`015a` 达 `gain=1.206, gain_p95=1.431, refine=0.115`（浓雾精修头显著激活，5h12m 完训）；`015b` 达 `gain=1.097, gain_p95=1.228, fcsf3_alpha=0.392, fcsf2_alpha=0.465, fcsf1_beta=0.404`（6h15m 完训，6k 时 Dense 22.44 即反超 `014d@8k`）。
 - 结论：`015a` 严格同 `v2` 协议跨过 ≥ +0.3 dB 硬过线；`015b` 三子集全面暴涨（Mist 采样比例从 32.9% 降至 28.2% 仍反涨 +0.670 dB），强烈指向 `use_rot=false` 释放海事方向物理先验为主因。
 
-### 3.3 第二轮双卡并行：`015c` 合体上限 + `015d` 单变量消融（2026-11-28 启动）
+### 3.3 第二轮双卡并行：`015c` 合体上限 + `015d` 单变量消融（2026-11-28 11:38 启动）
 
-| 探针臂 | 机器 / 卡位 | 精确变量定义 | 回答的核心问题 | 断点频率 | SwanLab (`dehaze-probes`) |
-|---|---|---|---|---:|---|
-| **`015c`** (`probe_015c_axial_basr_maritime_d533_v2_8000iter`) | `d533` **GPU 0** | **`015a` 架构 + `015b` 海事配方**（`AxialGlobal + BASR-g6-Refine` + `use_rot=false + BandBalancedFFT + dense322`，port `29553`） | 检验 `AxialGlobalProfile` 在解除 `rot90/vflip` 干扰后的协同上限（`015c - 015b`） | 1000 iter | *(启动后回填)* |
-| **`015d`** (`probe_015d_norot_only_d533_v2_8000iter`) | `d533` **GPU 1** | **`014d` 架构 + 仅关闭 `use_rot=false`**（严格保留原始 `v2` 1:1:1 清单与原版 `FFTLoss`，port `29554`） | 精准拆解 `015b` 的 +1.33/+0.67/+0.96 dB：`015d - 014d` = 纯海事方向先验净增益；`015b - 015d` = `BandBalancedFFT + dense322` 净增益 | 1000 iter | *(启动后回填)* |
+| 探针臂 | 机器 / 卡位 | 进程 PID / 显存 | 精确变量定义 | 回答的核心问题 | SwanLab (`dehaze-probes`) |
+|---|---|---|---|---|---|
+| **`015c`** (`probe_015c_axial_basr_maritime_d533_v2_8000iter`) | `d533` **GPU 0** | `1960363` / 18.4 GiB (100%) | **`015a` 架构 + `015b` 海事配方**（`AxialGlobal + BASR-g6-Refine` + `use_rot=false + BandBalancedFFT + dense322`，port `29553`） | 检验 `AxialGlobalProfile` 在解除 `rot90/vflip` 干扰后的协同上限（`015c - 015b`） | [`02sg8ihp`](https://swanlab.cn/@xieyh/dehaze-probes/runs/02sg8ihp) |
+| **`015d`** (`probe_015d_norot_only_d533_v2_8000iter`) | `d533` **GPU 1** | `1960411` / 18.9 GiB (99%) | **`014d` 架构 + 仅关闭 `use_rot=false`**（严格保留原始 `v2` 1:1:1 清单与原版 `FFTLoss`，port `29554`） | 精准拆解 `015b` 的 +1.33/+0.67/+0.96 dB：`015d - 014d` = 纯海事方向先验净增益；`015b - 015d` = `BandBalancedFFT + dense322` 净增益 | [`1rfupwlv`](https://swanlab.cn/@xieyh/dehaze-probes/runs/1rfupwlv) |
 
-*(待 `015c` / `015d` 启动验证后回填 PID 与 SwanLab 链接，8k 完训后统一回填因子消融汇总表。)*
+> 异常中断续训命令（每 `1000` iter 自动落盘 `.state` 断点，`CPU_AFFINITY=0-7,12-31`）：
+> ```bash
+> CPU_AFFINITY=0-7,12-31 bash research/015_dense_upper_bound/tools/launch_probe.sh 0 research/015_dense_upper_bound/probe_015c_axial_basr_maritime.yml research/015_dense_upper_bound/run_015c_resume1 18500 --auto_resume
+> CPU_AFFINITY=0-7,12-31 bash research/015_dense_upper_bound/tools/launch_probe.sh 1 research/015_dense_upper_bound/probe_015d_norot_only.yml research/015_dense_upper_bound/run_015d_resume1 18500 --auto_resume
+> ```
+
+*(两组均已在 iter 100 实测打通 SwanLab 云端标量同步，预计 5–6 小时完成，完训后统一回填完整因子消融表。)*
