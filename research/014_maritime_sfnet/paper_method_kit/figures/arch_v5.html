@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>MaritimeSFNet Architecture v5 — Flat Vector Horizontal Ribbon Master (AST-v2 / CVPR Style)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    background: #FFFFFF;
+    width: 1520px;
+    height: 800px;
+    overflow: hidden;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  svg { display: block; width: 1520px; height: 800px; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1520 800" width="1520" height="800">
+  <defs>
+    <marker id="ak" viewBox="0 0 10 8" refX="8.8" refY="4" markerWidth="6.0" markerHeight="4.8" orient="auto">
+      <path d="M 0 0.7 L 9.2 4 L 0 7.3 z" fill="#18181B"/>
+    </marker>
+    <marker id="at" viewBox="0 0 10 8" refX="8.8" refY="4" markerWidth="5.8" markerHeight="4.6" orient="auto">
+      <path d="M 0 0.7 L 9.2 4 L 0 7.3 z" fill="#2F6B60"/>
+    </marker>
+    <clipPath id="clip-in5"><rect x="24" y="100" width="166" height="114" rx="4"/></clipPath>
+    <clipPath id="clip-out5"><rect x="1330" y="100" width="166" height="114" rx="4"/></clipPath>
+  </defs>
+
+  <style>
+    /* AST-v2 Signature Style: Borderless flat pastel bars + soft tinted borderless rounded cards + crisp black orthogonal flow */
+    .p-amber  { fill: #FDE07E; stroke: none; }
+    .p-blue   { fill: #A7D4F5; stroke: none; }
+    .p-pink   { fill: #F8C4BA; stroke: none; }
+    .p-mint   { fill: #A9E0C5; stroke: none; }
+    .p-lav    { fill: #D3C4F0; stroke: none; }
+    .p-teal   { fill: #7FD1CC; stroke: none; }
+    .p-lime   { fill: #C8E695; stroke: none; }
+    .p-gray   { fill: #DCE3EA; stroke: none; }
+
+    /* Soft borderless pastel module zones (exact AST-v2 Fig. 4 & Fig. 5 look!) */
+    .zone-gray { fill: #F5F6F8; stroke: #71717A; stroke-width: 1.15; }
+    .zone-in   { fill: #FFFFFF; stroke: #27272A; stroke-width: 1.25; stroke-dasharray: 4 3; }
+    .card-blue { fill: #EAF3FB; stroke: none; }
+    .card-pink { fill: #FBF0EE; stroke: none; }
+    .card-lav  { fill: #F2EFFA; stroke: none; }
+    .card-mint { fill: #EBF7F1; stroke: none; }
+
+    /* Bold crisp black orthogonal paths */
+    .ln   { fill: none; stroke: #18181B; stroke-width: 1.6; stroke-linejoin: round; }
+    .arr  { fill: none; stroke: #18181B; stroke-width: 1.6; stroke-linejoin: round; marker-end: url(#ak); }
+    .skip { fill: none; stroke: #18181B; stroke-width: 1.45; stroke-dasharray: 5 3.5; stroke-linejoin: round; marker-end: url(#ak); }
+    .mimo { fill: none; stroke: #2F6B60; stroke-width: 1.35; stroke-dasharray: 4 3; stroke-linejoin: round; marker-end: url(#at); }
+
+    .op-c { fill: #FFFFFF; stroke: #18181B; stroke-width: 1.6; }
+    .op-t { font-size: 13px; font-weight: 700; fill: #18181B; text-anchor: middle; dominant-baseline: central; }
+
+    /* Clean academic typography: serif for titles/math, crisp sans inside vertical pillars */
+    .serif     { font-family: 'Times New Roman', Georgia, serif; fill: #18181B; }
+    .serif-it  { font-family: 'Times New Roman', Georgia, serif; font-style: italic; fill: #18181B; }
+    .serif-b   { font-family: 'Times New Roman', Georgia, serif; font-weight: 700; fill: #18181B; }
+    .bar-t     { font-family: 'Times New Roman', Georgia, serif; font-size: 12px; font-weight: 700; fill: #18181B; text-anchor: middle; dominant-baseline: central; }
+    .bar-ts    { font-family: 'Times New Roman', Georgia, serif; font-size: 10.8px; font-weight: 700; fill: #18181B; text-anchor: middle; dominant-baseline: central; }
+    .dim-t     { font-family: 'Times New Roman', Georgia, serif; font-size: 9.8px; fill: #27272A; text-anchor: middle; }
+    .cap-t     { font-family: 'Times New Roman', Georgia, serif; font-size: 13.5px; font-weight: 700; fill: #18181B; text-anchor: middle; }
+    .lora-dot  { fill: #C85A3F; stroke: #FFFFFF; stroke-width: 1.0; }
+    .lora-txt  { font-size: 7.5px; font-weight: 700; fill: #FFFFFF; text-anchor: middle; dominant-baseline: central; }
+  </style>
+
+  <!-- Pure White Canvas -->
+  <rect x="0" y="0" width="1520" height="800" fill="#FFFFFF"/>
+
+  <!-- ========================================================================= -->
+  <!-- TOP HALF: (a) AST-v2 STYLE HORIZONTAL LEFT-TO-RIGHT OVERVIEW              -->
+  <!-- ========================================================================= -->
+
+  <!-- Real Maritime Input & Output Images -->
+  <text x="107" y="86" class="serif-b" font-size="14" text-anchor="middle">Hazy Maritime (<tspan class="serif-it">I</tspan>)</text>
+  <image href="assets/maritime_hazy.png" x="24" y="100" width="166" height="114" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip-in5)"/>
+  <rect x="24" y="100" width="166" height="114" rx="4" fill="none" stroke="#3F3F46" stroke-width="1.0"/>
+
+  <text x="1413" y="86" class="serif-b" font-size="14" text-anchor="middle">Restored (<tspan class="serif-it">Ĵ</tspan>)</text>
+  <image href="assets/maritime_clear.png" x="1330" y="100" width="166" height="114" preserveAspectRatio="xMidYMid slice" clip-path="url(#clip-out5)"/>
+  <rect x="1330" y="100" width="166" height="114" rx="4" fill="none" stroke="#3F3F46" stroke-width="1.0"/>
+
+  <!-- Top Raw Hazy Image Arch I -> C2-BASR (Exact AST-v2 top arch!) -->
+  <path d="M 208 157 L 208 26 L 1264 26 L 1264 112" class="arr"/>
+  <text x="736" y="19" class="serif-it" font-size="12.5" text-anchor="middle">Raw Radiance Skip I</text>
+
+  <!-- Input arrow -> Stem Conv -->
+  <path d="M 190 157 L 228 157" class="arr"/>
+  <rect x="230" y="116" width="28" height="82" rx="4" class="p-amber"/>
+  <text x="244" y="157" class="bar-t" transform="rotate(-90, 244, 157)">Conv</text>
+
+  <path d="M 258 157 L 296 157" class="arr"/>
+  <text x="277" y="148" class="dim-t">H×W×36</text>
+  <text x="277" y="172" class="serif-b" font-size="11.5" text-anchor="middle">F<tspan font-size="8" dy="2">0</tspan></text>
+
+  <!-- ===== ENCODER GROUP (Scale 1 -> Scale 2) ===== -->
+  <rect x="298" y="84" width="218" height="156" rx="22" class="zone-gray"/>
+  <text x="356" y="229" class="serif" font-size="12.5" text-anchor="middle">Encoder (1× → 1/2)</text>
+
+  <!-- Enc1 dashed inner stage -->
+  <rect x="310" y="96" width="60" height="112" rx="14" class="zone-in"/>
+  <rect x="325" y="108" width="30" height="72" rx="4" class="p-blue"/>
+  <text x="340" y="144" class="bar-ts" transform="rotate(-90, 340, 144)">Rep5-CD</text>
+  <text x="340" y="196" class="serif-it" font-size="12" text-anchor="middle">×3</text>
+
+  <path d="M 355 157 L 386 157" class="arr"/>
+  <rect x="388" y="122" width="24" height="70" rx="4" class="p-amber"/>
+  <text x="400" y="157" class="bar-ts" transform="rotate(-90, 400, 157)">Down</text>
+
+  <!-- Enc2 dashed inner stage -->
+  <path d="M 412 157 L 434 157" class="arr"/>
+  <rect x="436" y="96" width="68" height="112" rx="14" class="zone-in"/>
+  <rect x="455" y="108" width="30" height="72" rx="4" class="p-blue"/>
+  <text x="470" y="144" class="bar-ts" transform="rotate(-90, 470, 144)">Rep5-CD</text>
+  <text x="470" y="196" class="serif-it" font-size="12" text-anchor="middle">×3</text>
+
+  <!-- Down2 to Bottleneck -->
+  <path d="M 485 157 L 528 157" class="arr"/>
+  <rect x="530" y="122" width="24" height="70" rx="4" class="p-amber"/>
+  <text x="542" y="157" class="bar-ts" transform="rotate(-90, 542, 157)">Down</text>
+  <path d="M 554 157 L 578 157" class="arr"/>
+
+  <!-- ===== 1/4 BOTTLENECK GROUP (Scale 3) ===== -->
+  <rect x="580" y="84" width="318" height="156" rx="22" class="zone-gray" style="fill:#EDF6F1;"/>
+  <text x="739" y="229" class="serif" font-size="13" text-anchor="middle">1/4 Bottleneck (H/4×W/4×144)</text>
+
+  <rect x="592" y="96" width="294" height="112" rx="14" class="zone-in"/>
+
+  <rect x="604" y="114" width="28" height="72" rx="4" class="p-blue"/>
+  <text x="618" y="150" class="bar-ts" transform="rotate(-90, 618, 150)">Bot ×2</text>
+  <path d="M 632 157 L 644 157" class="arr"/>
+
+  <rect x="646" y="114" width="30" height="72" rx="4" class="p-mint"/>
+  <text x="661" y="150" class="bar-ts" transform="rotate(-90, 661, 150)">ASFB</text>
+  <circle cx="672" cy="118" r="5" class="lora-dot"/><text x="672" y="118" class="lora-txt">L</text>
+  <path d="M 676 157 L 688 157" class="arr"/>
+
+  <rect x="690" y="114" width="28" height="72" rx="4" class="p-blue"/>
+  <text x="704" y="150" class="bar-ts" transform="rotate(-90, 704, 150)">Bot ×3</text>
+  <path d="M 718 157 L 730 157" class="arr"/>
+
+  <rect x="732" y="114" width="30" height="72" rx="4" class="p-mint"/>
+  <text x="747" y="150" class="bar-ts" transform="rotate(-90, 747, 150)">ASFB</text>
+  <circle cx="758" cy="118" r="5" class="lora-dot"/><text x="758" y="118" class="lora-txt">L</text>
+  <path d="M 762 157 L 774 157" class="arr"/>
+
+  <rect x="776" y="114" width="28" height="72" rx="4" class="p-blue"/>
+  <text x="790" y="150" class="bar-ts" transform="rotate(-90, 790, 150)">Bot ×3</text>
+  <path d="M 804 157 L 822 157" class="arr"/>
+
+  <rect x="824" y="114" width="32" height="72" rx="4" class="p-lav"/>
+  <text x="840" y="150" class="bar-ts" transform="rotate(-90, 840, 150)">FCSF3</text>
+  <circle cx="852" cy="118" r="5" class="lora-dot"/><text x="852" y="118" class="lora-txt">L</text>
+
+  <!-- Bottleneck internal skip F3 -->
+  <path d="M 598 157 L 598 198 L 840 198 L 840 188" class="skip"/>
+
+  <!-- Up2 -->
+  <path d="M 856 157 L 912 157" class="arr"/>
+  <rect x="914" y="122" width="24" height="70" rx="4" class="p-amber"/>
+  <text x="926" y="157" class="bar-ts" transform="rotate(-90, 926, 157)">Up</text>
+  <path d="M 938 157 L 960 157" class="arr"/>
+
+  <!-- ===== DECODER GROUP (1/2 -> 1×) ===== -->
+  <rect x="962" y="84" width="268" height="156" rx="22" class="zone-gray"/>
+  <text x="1096" y="229" class="serif" font-size="13" text-anchor="middle">Decoder (1/2 → 1×)</text>
+
+  <!-- Scale 2 Decoder stage -->
+  <rect x="974" y="96" width="120" height="112" rx="14" class="zone-in"/>
+  <rect x="984" y="114" width="28" height="72" rx="4" class="p-lav"/>
+  <text x="998" y="150" class="bar-ts" transform="rotate(-90, 998, 150)">FCSF2</text>
+  <circle cx="1008" cy="118" r="5" class="lora-dot"/><text x="1008" y="118" class="lora-txt">L</text>
+
+  <path d="M 1012 157 L 1020 157" class="ln"/>
+  <rect x="1020" y="114" width="28" height="72" rx="4" class="p-blue"/>
+  <text x="1034" y="150" class="bar-ts" transform="rotate(-90, 1034, 150)">Rep5 ×3</text>
+
+  <path d="M 1048 157 L 1056 157" class="ln"/>
+  <rect x="1056" y="114" width="28" height="72" rx="4" class="p-mint"/>
+  <text x="1070" y="150" class="bar-ts" transform="rotate(-90, 1070, 150)">L2-LK</text>
+  <circle cx="1080" cy="118" r="5" class="lora-dot"/><text x="1080" y="118" class="lora-txt">L</text>
+
+  <!-- Up1 -->
+  <path d="M 1084 157 L 1104 157" class="arr"/>
+  <rect x="1106" y="122" width="22" height="70" rx="4" class="p-amber"/>
+  <text x="1117" y="157" class="bar-ts" transform="rotate(-90, 1117, 157)">Up</text>
+  <path d="M 1128 157 L 1142 157" class="arr"/>
+
+  <!-- Scale 1 Decoder stage -->
+  <rect x="1144" y="96" width="76" height="112" rx="14" class="zone-in"/>
+  <rect x="1152" y="114" width="28" height="72" rx="4" class="p-lav"/>
+  <text x="1166" y="150" class="bar-ts" transform="rotate(-90, 1166, 150)">FCSF1</text>
+  <circle cx="1176" cy="118" r="5" class="lora-dot"/><text x="1176" y="118" class="lora-txt">L</text>
+
+  <path d="M 1180 157 L 1186 157" class="ln"/>
+  <rect x="1186" y="114" width="28" height="72" rx="4" class="p-blue"/>
+  <text x="1200" y="150" class="bar-ts" transform="rotate(-90, 1200, 150)">Rep5 ×3</text>
+
+  <!-- Clean Top Dashed Skip Arches (F1 -> FCSF1, F2 -> FCSF2) -->
+  <path d="M 374 157 L 374 48 L 1166 48 L 1166 112" class="skip"/>
+  <text x="770" y="42" class="serif-it" font-size="11.5" text-anchor="middle">Skip F<tspan class="serif" font-size="8" dy="2">1</tspan><tspan class="serif" dy="-2"> (α = 0)</tspan></text>
+
+  <path d="M 508 157 L 508 66 L 998 66 L 998 112" class="skip"/>
+  <text x="753" y="61" class="serif-it" font-size="11.5" text-anchor="middle">Skip F<tspan class="serif" font-size="8" dy="2">2</tspan></text>
+
+  <!-- Clean Bottom MIMO Injection Paths (routed cleanly into explicit + nodes, zero text collision!) -->
+  <path d="M 107 214 L 107 264 L 568 264 L 568 166" class="mimo"/>
+  <path d="M 424 264 L 424 166" class="mimo"/>
+  <circle cx="424" cy="157" r="7.5" class="op-c"/><text x="424" y="157" class="op-t" style="font-size:11px;">+</text>
+  <circle cx="568" cy="157" r="7.5" class="op-c"/><text x="568" y="157" class="op-t" style="font-size:11px;">+</text>
+  <rect x="266" y="254" width="128" height="19" rx="3" fill="#FFFFFF"/>
+  <text x="330" y="267" class="serif" font-size="11" text-anchor="middle" style="fill:#2F6B60; font-weight:700;">MIMO (↓2×, ↓4×)</text>
+
+  <!-- Output C2-BASR Head -> Restored Image -->
+  <path d="M 1214 157 L 1246 157" class="arr"/>
+  <rect x="1248" y="114" width="32" height="86" rx="4" class="p-pink"/>
+  <text x="1264" y="157" class="bar-ts" transform="rotate(-90, 1264, 157)">C²-BASR</text>
+  <circle cx="1276" cy="118" r="5" class="lora-dot"/><text x="1276" y="118" class="lora-txt">L</text>
+
+  <path d="M 1280 157 L 1328 157" class="arr"/>
+  <text x="1304" y="148" class="dim-t">H×W×3</text>
+
+  <text x="760" y="290" class="cap-t">(a) Overview of MaritimeSFNet (Three-Scale Norm-Free Backbone)</text>
+
+  <!-- ========================================================================= -->
+  <!-- BOTTOM HALF: 2×2 AST-v2 BORDERLESS SOFT-TINTED MODULE CARDS               -->
+  <!-- ========================================================================= -->
+
+  <!-- ---------- CARD (b): Rep5-CD & Residual DCA-PA (Soft Pink) ---------- -->
+  <rect x="24" y="314" width="724" height="218" rx="16" class="card-pink"/>
+
+  <!-- Left sub-block: Rep5-CD -->
+  <text x="190" y="334" class="serif-b" font-size="12" text-anchor="middle">AnisoRepConv 3×3 (Rep5-CD)</text>
+  <path d="M 40 424 L 68 424" class="ln"/>
+  <line x1="68" y1="358" x2="68" y2="490" class="ln"/>
+
+  <path d="M 68 358 L 86 358" class="arr"/><rect x="88" y="346" width="68" height="24" rx="4" class="p-amber"/><text x="122" y="358" class="bar-ts">Plain 3×3</text><path d="M 156 358 L 186 358 L 186 413" class="arr"/>
+  <path d="M 68 391 L 86 391" class="arr"/><rect x="88" y="379" width="68" height="24" rx="4" class="p-gray"/> <text x="122" y="391" class="bar-ts">PW 1×1</text>  <path d="M 156 391 L 186 391" class="ln"/>
+  <path d="M 68 424 L 86 424" class="arr"/><rect x="88" y="412" width="68" height="24" rx="4" class="p-pink"/> <text x="122" y="424" class="bar-ts">HD 1×3</text>  <path d="M 156 424 L 175 424" class="arr"/>
+  <path d="M 68 457 L 86 457" class="arr"/><rect x="88" y="445" width="68" height="24" rx="4" class="p-pink"/> <text x="122" y="457" class="bar-ts">VD 3×1</text>  <path d="M 156 457 L 186 457" class="ln"/>
+  <path d="M 68 490 L 86 490" class="arr"/><rect x="88" y="478" width="68" height="24" rx="4" class="p-mint"/> <text x="122" y="490" class="bar-ts">CD (Σ=0)</text><path d="M 156 490 L 186 490 L 186 435" class="arr"/>
+
+  <circle cx="186" cy="424" r="9.5" class="op-c"/><text x="186" y="424" class="op-t">+</text>
+  <path d="M 196 424 L 236 424" class="skip"/>
+  <text x="216" y="414" class="serif-it" font-size="11" text-anchor="middle">Fold</text>
+  <rect x="238" y="388" width="76" height="72" rx="6" class="p-blue"/>
+  <text x="276" y="416" class="bar-t">Dense 3×3</text>
+  <text x="276" y="434" class="dim-t">−41.9% Params</text>
+  <path d="M 314 424 L 336 424" class="arr"/>
+
+  <!-- Subtle internal divider -->
+  <line x1="354" y1="336" x2="354" y2="514" stroke="#E5C1BA" stroke-width="1.2" stroke-dasharray="4 3"/>
+
+  <!-- Right sub-block: Residual DCA-PA -->
+  <text x="548" y="334" class="serif-b" font-size="12" text-anchor="middle">Residual DCA-PA (Norm-Free)</text>
+  <path d="M 372 424 L 402 424" class="ln"/>
+  <path d="M 386 424 L 386 356 L 702 356 L 702 414" class="arr"/>
+
+  <path d="M 402 424 L 402 392 L 420 392" class="arr"/>
+  <rect x="422" y="376" width="64" height="32" rx="4" class="p-amber"/>
+  <text x="454" y="392" class="bar-ts">CA (GAP)</text>
+  <path d="M 486 392 L 508 392 L 508 414" class="ln"/>
+
+  <path d="M 402 424 L 402 456 L 420 456" class="arr"/>
+  <rect x="422" y="440" width="64" height="32" rx="4" class="p-blue"/>
+  <text x="454" y="456" class="bar-ts">SA (7×7)</text>
+  <path d="M 486 456 L 508 456 L 508 434" class="ln"/>
+
+  <circle cx="508" cy="424" r="9.5" class="op-c"/><text x="508" y="424" class="op-t">+</text>
+  <path d="M 518 424 L 542 424" class="arr"/>
+  <path d="M 528 424 L 528 484 L 626 484 L 626 434" class="arr"/>
+
+  <rect x="544" y="394" width="62" height="60" rx="5" class="p-teal"/>
+  <text x="575" y="416" class="bar-ts">Interleave</text>
+  <text x="575" y="432" class="bar-ts">DW 7×7</text>
+
+  <path d="M 606 424 L 616 424" class="arr"/>
+  <circle cx="626" cy="424" r="9.5" class="op-c"/><text x="626" y="424" class="op-t">+</text>
+
+  <path d="M 636 424 L 650 424" class="arr"/>
+  <rect x="652" y="406" width="32" height="36" rx="4" class="p-lav"/>
+  <text x="668" y="424" class="bar-ts">2σ</text>
+
+  <path d="M 684 424 L 692 424" class="arr"/>
+  <circle cx="702" cy="424" r="9.5" class="op-c"/><text x="702" y="424" class="op-t">×</text>
+  <path d="M 712 424 L 736 424" class="arr"/>
+
+  <text x="386" y="523" class="cap-t">(b) Rep5-CD &amp; Residual DCA-PA</text>
+
+  <!-- ---------- CARD (c): ASFB (MS-LFM + AnisoLK, Soft Sky-Blue) ---------- -->
+  <rect x="772" y="314" width="724" height="218" rx="16" class="card-blue"/>
+
+  <!-- Left: MS-LFM -->
+  <text x="954" y="334" class="serif-b" font-size="12" text-anchor="middle">MS-LFM (<tspan class="serif-it">c</tspan><tspan font-size="8.5" dy="2">f</tspan><tspan dy="-2"> = 0.10)</tspan></text>
+  <path d="M 786 424 L 814 424" class="ln"/>
+  <path d="M 800 424 L 800 354 L 1094 354 L 1094 414" class="arr"/>
+
+  <!-- Upper pool branch -->
+  <path d="M 814 424 L 814 388 L 834 388" class="arr"/>
+  <rect x="836" y="372" width="66" height="32" rx="4" class="p-amber"/>
+  <text x="869" y="388" class="bar-ts">Pool 8/16</text>
+  <path d="M 902 388 L 920 388" class="arr"/>
+  <rect x="922" y="372" width="70" height="32" rx="4" class="p-pink"/>
+  <text x="957" y="388" class="bar-ts">3×3 → γ,β</text>
+  <circle cx="987" cy="377" r="5" class="lora-dot"/><text x="987" y="377" class="lora-txt">L</text>
+
+  <path d="M 992 388 L 1020 388 L 1020 444" class="arr"/>
+  <text x="1010" y="416" class="serif-it" font-size="12.5">γ</text>
+  <path d="M 992 382 L 1058 382 L 1058 444" class="arr"/>
+  <text x="1067" y="416" class="serif-it" font-size="12.5">β</text>
+
+  <!-- Lower FFT branch -->
+  <path d="M 814 424 L 814 456 L 830 456" class="arr"/>
+  <rect x="832" y="440" width="46" height="32" rx="4" class="p-gray"/>
+  <text x="855" y="456" class="bar-ts">rFFT2</text>
+  <path d="M 878 456 L 889 456" class="arr"/>
+  <rect x="891" y="440" width="46" height="32" rx="4" class="p-teal"/>
+  <text x="914" y="456" class="bar-ts">LP</text>
+  <path d="M 937 456 L 948 456" class="arr"/>
+  <rect x="950" y="440" width="46" height="32" rx="4" class="p-gray"/>
+  <text x="973" y="456" class="bar-ts">irFFT2</text>
+  <path d="M 996 456 L 1009 456" class="arr"/>
+
+  <circle cx="1020" cy="456" r="9.5" class="op-c"/><text x="1020" y="456" class="op-t">×</text>
+  <path d="M 1030 456 L 1048 456" class="arr"/>
+  <circle cx="1058" cy="456" r="9.5" class="op-c"/><text x="1058" y="456" class="op-t">+</text>
+  <path d="M 1068 456 L 1094 456 L 1094 434" class="arr"/>
+  <circle cx="1094" cy="424" r="9.5" class="op-c"/><text x="1094" y="424" class="op-t">+</text>
+
+  <!-- Connect to AnisoLK -->
+  <path d="M 1104 424 L 1148 424" class="arr"/>
+  <line x1="1126" y1="336" x2="1126" y2="514" stroke="#BBD6EC" stroke-width="1.2" stroke-dasharray="4 3"/>
+
+  <!-- Right: AnisoLK -->
+  <text x="1312" y="334" class="serif-b" font-size="12" text-anchor="middle">Maritime AnisoLK (4-Group)</text>
+  <path d="M 1138 424 L 1138 354 L 1464 354 L 1464 414" class="arr"/>
+
+  <rect x="1150" y="392" width="42" height="64" rx="4" class="p-amber"/>
+  <text x="1171" y="424" class="bar-ts" transform="rotate(-90, 1171, 424)">1×1 Split</text>
+  <circle cx="1188" cy="397" r="5" class="lora-dot"/><text x="1188" y="397" class="lora-txt">L</text>
+
+  <path d="M 1192 424 L 1208 424" class="ln"/>
+  <line x1="1208" y1="370" x2="1208" y2="480" class="ln"/>
+
+  <path d="M 1208 370 L 1224 370" class="arr"/><rect x="1226" y="358" width="76" height="24" rx="4" class="p-mint"/> <text x="1264" y="370" class="bar-ts">DW 1×31</text> <path d="M 1302 370 L 1324 370 L 1324 414" class="ln"/>
+  <path d="M 1208 406 L 1224 406" class="arr"/><rect x="1226" y="394" width="76" height="24" rx="4" class="p-mint"/> <text x="1264" y="406" class="bar-ts">DW 31×1</text> <path d="M 1302 406 L 1316 406 L 1316 424" class="ln"/>
+  <path d="M 1208 442 L 1224 442" class="arr"/><rect x="1226" y="430" width="76" height="24" rx="4" class="p-lime"/> <text x="1264" y="442" class="bar-ts">DW 15×15</text><path d="M 1302 442 L 1316 442 L 1316 424" class="ln"/>
+  <path d="M 1208 480 L 1224 480" class="arr"/><rect x="1226" y="468" width="76" height="24" rx="4" class="p-gray"/> <text x="1264" y="480" class="bar-ts">DW 3×3</text>  <path d="M 1302 480 L 1324 480 L 1324 434" class="ln"/>
+
+  <circle cx="1332" cy="424" r="9.5" class="op-c"/><text x="1332" y="424" class="op-t" style="font-size:11px;">C</text>
+  <path d="M 1342 424 L 1364 424" class="arr"/>
+
+  <rect x="1366" y="392" width="66" height="64" rx="4" class="p-amber"/>
+  <text x="1399" y="416" class="bar-ts">GELU</text>
+  <text x="1399" y="432" class="bar-ts">1×1 Conv</text>
+  <circle cx="1427" cy="397" r="5" class="lora-dot"/><text x="1427" y="397" class="lora-txt">L</text>
+
+  <path d="M 1432 424 L 1454 424" class="arr"/>
+  <circle cx="1464" cy="424" r="9.5" class="op-c"/><text x="1464" y="424" class="op-t">+</text>
+  <path d="M 1474 424 L 1492 424" class="arr"/>
+
+  <text x="1134" y="523" class="cap-t">(c) Anisotropic Spatial–Frequency Bottleneck (ASFB)</text>
+
+  <!-- ---------- CARD (d): Scene-FCSF (Soft Lavender) ---------- -->
+  <rect x="24" y="556" width="724" height="222" rx="16" class="card-lav"/>
+
+  <!-- Inputs F_enc (top) & F_dec (bottom) -->
+  <rect x="52" y="606" width="54" height="34" rx="5" class="p-blue"/>
+  <text x="79" y="623" class="serif-it" font-size="13" text-anchor="middle" style="font-weight:700;">F<tspan class="serif" font-size="9" dy="2.5">enc</tspan></text>
+
+  <rect x="52" y="704" width="54" height="34" rx="5" class="p-mint"/>
+  <text x="79" y="721" class="serif-it" font-size="13" text-anchor="middle" style="font-weight:700;">F<tspan class="serif" font-size="9" dy="2.5">dec</tspan></text>
+
+  <!-- LP Split -->
+  <path d="M 106 623 L 138 623" class="arr"/>
+  <rect x="140" y="604" width="72" height="38" rx="5" class="p-gray"/>
+  <text x="176" y="623" class="bar-t">LP / HP</text>
+
+  <!-- Top Detail F_enc^H branch -->
+  <path d="M 176 604 L 176 580 L 538 580 L 538 612" class="arr"/>
+  <text x="357" y="572" class="serif-it" font-size="12" text-anchor="middle">F<tspan class="serif" font-size="8.5" dy="2">enc</tspan><tspan class="serif" font-size="8.5" dy="-5">H</tspan></text>
+
+  <!-- Delta L = F_enc^L - F_dec^L (generous padding!) -->
+  <path d="M 212 623 L 246 623 L 246 652" class="ln"/>
+  <path d="M 106 721 L 246 721 L 246 692" class="ln"/>
+  <rect x="218" y="654" width="98" height="38" rx="5" class="p-amber"/>
+  <text x="267" y="673" class="serif-it" font-size="12" text-anchor="middle" style="font-weight:700;">ΔL = F<tspan class="serif" font-size="7.8" dy="2">enc</tspan><tspan class="serif" font-size="7.8" dy="-4.5">L</tspan><tspan dy="2.5">−F</tspan><tspan class="serif" font-size="7.8" dy="2">dec</tspan><tspan class="serif" font-size="7.8" dy="-4.5">L</tspan></text>
+
+  <!-- Local DW Gate + Global Scene Gate -> Sum -> Sigmoid -> (alpha, beta) (100% mathematically faithful!) -->
+  <path d="M 316 673 L 330 673" class="ln"/>
+  <path d="M 330 650 L 342 650" class="arr"/>
+  <path d="M 330 696 L 342 696" class="arr"/>
+  <line x1="330" y1="650" x2="330" y2="696" class="ln"/>
+
+  <rect x="344" y="635" width="90" height="30" rx="4" class="p-lav"/>
+  <text x="389" y="650" class="bar-ts">Local DW Gate</text>
+  <circle cx="429" cy="640" r="4.8" class="lora-dot"/><text x="429" y="640" class="lora-txt">L</text>
+
+  <rect x="344" y="681" width="90" height="30" rx="4" class="p-pink"/>
+  <text x="389" y="696" class="bar-ts">SceneGate</text>
+  <circle cx="429" cy="686" r="4.8" class="lora-dot"/><text x="429" y="686" class="lora-txt">L</text>
+
+  <!-- Sum logits -> Sigmoid -> split (beta top, alpha bottom) -->
+  <path d="M 434 650 L 456 650 L 456 663" class="ln"/>
+  <path d="M 434 696 L 456 696 L 456 683" class="ln"/>
+  <circle cx="456" cy="673" r="8.5" class="op-c"/><text x="456" y="673" class="op-t" style="font-size:11.5px;">+</text>
+  <path d="M 465 673 L 478 673" class="arr"/>
+  <rect x="480" y="657" width="26" height="32" rx="4" class="p-gray"/>
+  <text x="493" y="673" class="bar-ts">σ</text>
+
+  <!-- beta -> top multiply, alpha -> bottom multiply -->
+  <path d="M 506 665 L 516 665 L 516 623 L 528 623" class="arr"/>
+  <text x="510" y="642" class="serif-it" font-size="12">β</text>
+  <circle cx="538" cy="623" r="9.5" class="op-c"/><text x="538" y="623" class="op-t">×</text>
+
+  <path d="M 506 681 L 516 681 L 516 704 L 528 704" class="arr"/>
+  <text x="510" y="700" class="serif-it" font-size="12">α</text>
+  <circle cx="538" cy="704" r="9.5" class="op-c"/><text x="538" y="704" class="op-t">×</text>
+  <path d="M 267 692 L 267 734 L 538 734 L 538 714" class="skip"/>
+
+  <!-- F_dec direct bottom pass -->
+  <path d="M 156 721 L 156 748 L 590 748 L 590 672" class="arr"/>
+
+  <!-- Combine -> 1x1 Conv -->
+  <path d="M 548 623 L 590 623 L 590 652" class="arr"/>
+  <path d="M 548 704 L 590 704 L 590 672" class="arr"/>
+  <circle cx="590" cy="662" r="9.5" class="op-c"/><text x="590" y="662" class="op-t">+</text>
+
+  <path d="M 600 662 L 622 662" class="arr"/>
+  <rect x="624" y="624" width="46" height="76" rx="5" class="p-amber"/>
+  <text x="647" y="662" class="bar-t" transform="rotate(-90, 647, 662)">1×1 Conv</text>
+  <circle cx="665" cy="629" r="5" class="lora-dot"/><text x="665" y="629" class="lora-txt">L</text>
+
+  <path d="M 670 662 L 722 662" class="arr"/>
+  <text x="698" y="648" class="serif-it" font-size="12.5" text-anchor="middle">F<tspan class="serif" font-size="8.5" dy="2">fuse</tspan></text>
+
+  <text x="386" y="768" class="cap-t">(d) Scene-Aware Convex Skip Fusion (Scene-FCSF)</text>
+
+  <!-- ---------- CARD (e): C2-BASR Head + Scene Contrast Gate (Soft Mint) ---------- -->
+  <rect x="772" y="556" width="724" height="222" rx="16" class="card-mint"/>
+
+  <!-- Inputs d_1 and I -->
+  <rect x="800" y="606" width="48" height="34" rx="5" class="p-blue"/>
+  <text x="824" y="623" class="serif-it" font-size="13.5" text-anchor="middle" style="font-weight:700;">d<tspan class="serif" font-size="9" dy="2.5">1</tspan></text>
+
+  <rect x="800" y="712" width="48" height="34" rx="5" class="p-pink"/>
+  <text x="824" y="729" class="serif-it" font-size="13.5" text-anchor="middle" style="font-weight:700;">I</text>
+
+  <!-- 3x3 Conv -> (K~, B) -->
+  <path d="M 848 623 L 888 623" class="arr"/>
+  <rect x="890" y="600" width="84" height="46" rx="5" class="p-amber"/>
+  <text x="932" y="616" class="bar-t">3×3 Conv</text>
+  <text x="932" y="633" class="serif-it" font-size="12" text-anchor="middle">→ (K̃, B)</text>
+  <circle cx="969" cy="605" r="5" class="lora-dot"/><text x="969" y="605" class="lora-txt">L</text>
+
+  <!-- Scene Contrast MLP -->
+  <path d="M 868 623 L 868 674 L 888 674" class="arr"/>
+  <path d="M 848 729 L 868 729 L 868 686 L 888 686" class="arr"/>
+  <rect x="890" y="658" width="128" height="46" rx="5" class="p-lav"/>
+  <text x="954" y="674" class="bar-ts">Scene Contrast MLP</text>
+  <text x="954" y="690" class="dim-t">[GAP(d<tspan font-size="7.5" dy="1.5">1</tspan><tspan dy="-1.5">), GAP(I), σ</tspan><tspan font-size="7.5" dy="1.5">RMS</tspan><tspan dy="-1.5">(I)]</tspan></text>
+  <circle cx="1013" cy="663" r="5" class="lora-dot"/><text x="1013" y="663" class="lora-txt">L</text>
+
+  <!-- Multiply by (s_k, s_b) -->
+  <path d="M 974 623 L 1044 623" class="arr"/>
+  <path d="M 1018 681 L 1054 681 L 1054 633" class="arr"/>
+  <text x="1086" y="675" class="serif-it" font-size="11.5">2σ → (s<tspan class="serif" font-size="8" dy="1.5">k</tspan><tspan dy="-1.5">, s</tspan><tspan class="serif" font-size="8" dy="1.5">b</tspan><tspan dy="-1.5">)</tspan></text>
+  <circle cx="1054" cy="623" r="9.5" class="op-c"/><text x="1054" y="623" class="op-t">×</text>
+
+  <!-- Overhead Modulated Bias B~ -->
+  <path d="M 1054 613 L 1054 580 L 1404 580 L 1404 719" class="arr"/>
+  <text x="1229" y="573" class="serif-it" font-size="12" text-anchor="middle">B̃ = B · s<tspan class="serif" font-size="8.5" dy="2">b</tspan></text>
+
+  <!-- G_sym piecewise tanh block -->
+  <path d="M 1064 623 L 1114 623" class="arr"/>
+  <rect x="1116" y="596" width="176" height="58" rx="6" class="p-pink"/>
+  <text x="1204" y="613" class="serif-b" font-size="12" text-anchor="middle"><tspan class="serif-it">G</tspan><tspan font-size="8.5" dy="2">sym</tspan><tspan dy="-2">(</tspan><tspan class="serif-it">k</tspan>) = 1 + <tspan class="serif-it">a</tspan><tspan font-size="8.5" dy="2">±</tspan><tspan dy="-2"> tanh(</tspan><tspan class="serif-it">k</tspan>/<tspan class="serif-it">a</tspan><tspan font-size="8.5" dy="2">±</tspan><tspan dy="-2">)</tspan></text>
+  <text x="1204" y="635" class="serif-it" font-size="11.5" text-anchor="middle" style="fill:#7F1D1D;">G(0)=1, G′(0)=1, G″(0)=0</text>
+
+  <!-- G * I + B~ -> J_hat -->
+  <path d="M 848 729 L 1326 729" class="arr"/>
+  <path d="M 1292 625 L 1336 625 L 1336 719" class="arr"/>
+  <circle cx="1336" cy="729" r="9.5" class="op-c"/><text x="1336" y="729" class="op-t">×</text>
+
+  <path d="M 1346 729 L 1394 729" class="arr"/>
+  <circle cx="1404" cy="729" r="9.5" class="op-c"/><text x="1404" y="729" class="op-t">+</text>
+  <path d="M 1414 729 L 1468 729" class="arr"/>
+  <text x="1450" y="715" class="serif-it" font-size="13.5" text-anchor="middle" style="font-weight:700;">Ĵ</text>
+
+  <text x="1134" y="768" class="cap-t">(e) C² Zero-Curvature BASR Head &amp; Scene Contrast Gate</text>
+</svg>
+</body>
+</html>

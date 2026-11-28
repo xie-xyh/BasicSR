@@ -8,10 +8,12 @@ Complete publication-ready methodology package for **`MaritimeSFNet` (`014d`)**,
 
 ### A. Visual Design Specification & Architecture Diagram Iterations (All Versions Preserved)
 - [`notes/visual_design_spec.md`](notes/visual_design_spec.md) — Semantic 4-hue **Morandi-IEEE** palette, typography, geometry, and anti-AI rules aligned with CVPR/ICCV/ECCV/IEEE T-ITS visual standards.
-- **Iterative Master Architecture Diagram (HTML+SVG → 300+ DPI PNG)**:
+- **Iterative Master Architecture Diagram (HTML+SVG → 300 DPI PNG, All Versions Retained)**:
   1. [`figures/arch_v1.html`](figures/arch_v1.html) → [`figures/arch_v1.png`](figures/arch_v1.png) — Initial 4-panel concept ([`notes/diagram_v1_critique.md`](notes/diagram_v1_critique.md)).
-  2. [`figures/arch_v2.html`](figures/arch_v2.html) → [`figures/arch_v2.png`](figures/arch_v2.png) — Fixed routing, math subscripts, LoRA badges, and stacked cards ([`notes/diagram_v2_critique.md`](notes/diagram_v2_critique.md)).
-  3. **[`figures/arch_v3.html`](figures/arch_v3.html) → [`figures/arch_v3.png`](figures/arch_v3.png)** — **Final Publication Master** (`2962 × 1834 px` @ 300 DPI, [`notes/diagram_v3_audit.md`](notes/diagram_v3_audit.md)).
+  2. [`figures/arch_v2.html`](figures/arch_v2.html) → [`figures/arch_v2.png`](figures/arch_v2.png) — Routing & typography pass ([`notes/diagram_v2_critique.md`](notes/diagram_v2_critique.md)).
+  3. [`figures/arch_v3.html`](figures/arch_v3.html) → [`figures/arch_v3.png`](figures/arch_v3.png) — Detailed Morandi-IEEE dashboard master ([`notes/diagram_v3_audit.md`](notes/diagram_v3_audit.md)).
+  4. **[`figures/arch_v4.html`](figures/arch_v4.html) → [`figures/arch_v4.png`](figures/arch_v4.png)** — **Final Publication Master (DEA-Net / IEEE TIP Flat-Vector U-Shape Split Style)** (`2980 × 1644 px`, real maritime photos, soft pastel scale strips, concise labels; embedded in `maritime_sfnet_method.tex`).
+  5. **[`figures/arch_v5.html`](figures/arch_v5.html) → [`figures/arch_v5.png`](figures/arch_v5.png)** — **Alternate Publication Master (AST-v2 / CVPR Flat-Vector Horizontal Ribbon + Borderless Pastel Cards)** (`3002 × 1584 px`, [`notes/diagram_v4_v5_upgrade.md`](notes/diagram_v4_v5_upgrade.md)).
 - **Maritime Motivation Teaser (HTML+SVG → 300 DPI PNG)**:
   - [`figures/fig1_maritime_motivation.html`](figures/fig1_maritime_motivation.html) → [`figures/fig1_maritime_motivation.png`](figures/fig1_maritime_motivation.png) (`2886 × 842 px`).
 

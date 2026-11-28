@@ -88,8 +88,8 @@ Notice that an equivalent additive residual formulation $J_c(x) = I_c(x) + \Delt
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{arch_v3.png}
-\caption{Complete architecture of \textbf{MaritimeSFNet} (\texttt{014d}). \textbf{(a)}~Overall three-scale, normalization-free encoder--decoder ($s_{\max}=4$, channels $C_1{=}36, C_2{=}72, C_3{=}144$) with zero-initialized multi-scale input injection (\texttt{MIMO}), bilinear anti-grid upsampling, strict high-pass full-resolution skip ($\alpha_1\equiv 0$), and raw hazy radiance skip $I$ into the physics reconstruction head. Circled \texttt{L} markers denote the four domain-sensitive parameter groups exposed for downstream real-sea-fog LoRA adaptation while the folded local backbone remains frozen. \textbf{(b)}~Five-branch spectral-prior reparameterizable convolution (\texttt{Rep5-CD}) with zero-DC center-difference branch and lossless folding, alongside the deadlock-free residual \texttt{DCA-PA} bottleneck attention. \textbf{(c)}~Anisotropic Spatial--Frequency Bottleneck (\texttt{ASFB}) coupling physics-aligned \texttt{MS-LFM} ($c_f=4c_{\mathrm{img}}=0.10$) and translation-equivariant four-group \texttt{AnisoLK}. \textbf{(d)}~Scene-aware convex skip fusion (\texttt{Scene-FCSF}) and $C^2$ zero-curvature \texttt{BASR} head with global RMS-contrast scene gating.}
+\includegraphics[width=\textwidth]{arch_v4.png}
+\caption{Complete architecture of \textbf{MaritimeSFNet} (\texttt{014d}). \textbf{(a)}~Overall three-scale, normalization-free encoder--decoder ($s_{\max}=4$, widths $36/72/144$) with zero-initialized multi-scale input injection (\texttt{MIMO}), bilinear anti-grid upsampling, strict high-pass full-resolution skip ($\alpha_1\equiv 0$), and raw hazy radiance skip $I$ into the physics reconstruction head. Circled \texttt{L} badges denote the four domain-sensitive parameter groups exposed for downstream real-sea-fog LoRA adaptation while the folded local backbone remains frozen. \textbf{(b)}~Five-branch spectral-prior reparameterizable block (\texttt{Rep5-CD}) with zero-DC center-difference branch ($\Sigma=0$) and lossless folding into a single $3\times 3$ convolution ($-41.9\%$ parameters). \textbf{(c)}~Deadlock-free residual \texttt{DCA-PA} bottleneck attention. \textbf{(d)}~Anisotropic Spatial--Frequency Bottleneck (\texttt{ASFB}) coupling physics-aligned \texttt{MS-LFM} ($c_f=4c_{\mathrm{img}}=0.10$) and four-group translation-equivariant \texttt{AnisoLK}. \textbf{(e)}~Scene-aware convex skip fusion (\texttt{Scene-FCSF}). \textbf{(f)}~$C^2$ zero-curvature \texttt{BASR} head ($G''(0)=0$) with global RMS-contrast scene gating.}
 \label{fig:arch}
 \end{figure*}
 
@@ -134,10 +134,10 @@ Accordingly, MaritimeSFNet adopts a \textbf{three-scale normalization-free hiera
 \end{enumerate}
 
 % -----------------------------------------------------------------------------
-\subsection{Spectral-Prior Reparameterization (\texttt{Rep5-CD}) and Residual \texttt{DCA-PA}}
+\subsection{Spectral-Prior Reparameterization (\texorpdfstring{\texttt{Rep5-CD}}{Rep5-CD}) and Residual \texorpdfstring{\texttt{DCA-PA}}{DCA-PA}}
 \label{sec:rep5}
 
-While the bottleneck removes the $0\text{--}0.025$ veil, maritime navigation safety critically depends on recovering crisp $0.02\text{--}0.15$ mid-band vessel contours, bridge superstructures, masts, and harbor cranes without corrupting the DC airlight baseline. Each local residual block in MaritimeSFNet (\texttt{Enc1/2}, \texttt{Bot1--3}, \texttt{Dec1/2}) employs a five-branch anisotropic reparameterizable operator \textbf{AnisoRepConv $3\times 3$ (\texttt{Rep5-CD})} (Fig.~\ref{fig:arch}(b), left):
+While the bottleneck removes the $0\text{--}0.025$ veil, maritime navigation safety critically depends on recovering crisp $0.02\text{--}0.15$ mid-band vessel contours, bridge superstructures, masts, and harbor cranes without corrupting the DC airlight baseline. Each local residual block in MaritimeSFNet (\texttt{Enc1/2}, \texttt{Bot1--3}, \texttt{Dec1/2}) employs a five-branch anisotropic reparameterizable operator \textbf{AnisoRepConv $3\times 3$ (\texttt{Rep5-CD})} (Fig.~\ref{fig:arch}(b)):
 \begin{equation}
 \mathcal{F}_{\mathrm{rep}}(X) = \Big(W_{\mathrm{plain}} + W_{\mathrm{pw}} + W_{\mathrm{hd}}^{\mathrm{eff}} + W_{\mathrm{vd}}^{\mathrm{eff}} + W_{\mathrm{cd}}^{\mathrm{eff}}\Big) * X + b_{\mathrm{eq}},
 \label{eq:rep5}
@@ -167,7 +167,7 @@ Summing~\eqref{eq:cd_kernel} over its $3\times 3$ spatial support yields $\wideh
 
 Unlike plain convolutions that must implicitly trade off DC bias against edge gradients during optimization, \texttt{Rep5-CD} structurally decouples the gradient landscape during training: \texttt{CD}, \texttt{HD}, and \texttt{VD} cannot leak DC haze shifts, forcing them to specialize exclusively in vessel edges and mid-band structure, while \texttt{Plain} and \texttt{PW} manage smooth radiometric continuity. As measured directly on trained \texttt{014d} weights (Fig.~\ref{fig:spectral}(b)--(c)), the network autonomously allocates \textbf{60.9\%} of Frobenius kernel energy to \texttt{CD} (measured DC ratio $5.75\times 10^{-19}$) and \textbf{26.1\%} to \texttt{HD+VD} (peaking at $30.0\%$ in the $1/4$ bottleneck).
 
-\textbf{Deadlock-Free Residual Bottleneck Attention (\texttt{DCA-PA}):} Inside the eight $1/4$-scale bottleneck blocks (\texttt{Bot1--3}), each \texttt{Rep5-CD} residual block is followed by a lightweight normalization-free Dual-Domain Channel--Pixel Attention module (\texttt{DCA-PA}, Fig.~\ref{fig:arch}(b), right). Given feature map $x\in\mathbb{R}^{C\times H_4\times W_4}$, we compute a broadcastable global channel prior $w_{\mathrm{ca}} = \mathrm{MLP}_{\mathrm{ca}}(\mathrm{GAP}(x))\in\mathbb{R}^{C\times 1\times 1}$ and a spatial prior $w_{\mathrm{sa}} = \mathrm{Conv}_{7\times 7}([\mathrm{Mean}_c(x), \mathrm{Max}_c(x)])\in\mathbb{R}^{1\times H_4\times W_4}$, summing them into $p_1 = w_{\mathrm{ca}} + w_{\mathrm{sa}}\in\mathbb{R}^{C\times H_4\times W_4}$. Rather than stopping at channel-shared spatial weighting, we interleave $x$ and $p_1$ channel-by-channel and pass them through a zero-initialized grouped $7\times 7$ depthwise convolution $\mathrm{PA}_0$ in a \emph{residual} refinement form:
+\textbf{Deadlock-Free Residual Bottleneck Attention (\texttt{DCA-PA}):} Inside the eight $1/4$-scale bottleneck blocks (\texttt{Bot1--3}), each \texttt{Rep5-CD} residual block is followed by a lightweight normalization-free Dual-Domain Channel--Pixel Attention module (\texttt{DCA-PA}, Fig.~\ref{fig:arch}(c)). Given feature map $x\in\mathbb{R}^{C\times H_4\times W_4}$, we compute a broadcastable global channel prior $w_{\mathrm{ca}} = \mathrm{MLP}_{\mathrm{ca}}(\mathrm{GAP}(x))\in\mathbb{R}^{C\times 1\times 1}$ and a spatial prior $w_{\mathrm{sa}} = \mathrm{Conv}_{7\times 7}([\mathrm{Mean}_c(x), \mathrm{Max}_c(x)])\in\mathbb{R}^{1\times H_4\times W_4}$, summing them into $p_1 = w_{\mathrm{ca}} + w_{\mathrm{sa}}\in\mathbb{R}^{C\times H_4\times W_4}$. Rather than stopping at channel-shared spatial weighting, we interleave $x$ and $p_1$ channel-by-channel and pass them through a zero-initialized grouped $7\times 7$ depthwise convolution $\mathrm{PA}_0$ in a \emph{residual} refinement form:
 \begin{equation}
 p_2 = p_1 + \mathrm{PA}_0\big(\mathrm{Interleave}(x, p_1)\big), \qquad y = x \odot \big(2\,\sigma(p_2)\big).
 \label{eq:dcapa}
@@ -175,14 +175,17 @@ p_2 = p_1 + \mathrm{PA}_0\big(\mathrm{Interleave}(x, p_1)\big), \qquad y = x \od
 Two properties make~\eqref{eq:dcapa} strictly superior to direct sequential pixel-attention gating: (i)~at initialization, zero-initialized projections give $p_2\equiv 0 \Rightarrow 2\sigma(p_2)\equiv 1$, preserving strict identity mapping and DC statistics; (ii)~the residual bypass $p_1$ avoids the zero-gradient deadlock that arises when a zero-initialized $\mathrm{PA}_0$ sits serially after $p_1$, allowing both global channel color balance and per-channel $7\times 7$ spatial separation of bright vessels from hazy skies to train smoothly from iteration~1.
 
 % -----------------------------------------------------------------------------
-\subsection{Anisotropic Spatial--Frequency Bottleneck (\texttt{ASFB}) and Mid-Band \texttt{L2-AnisoLK}}
+\subsection{Anisotropic Spatial--Frequency Bottleneck (\texorpdfstring{\texttt{ASFB}}{ASFB}) and Mid-Band \texorpdfstring{\texttt{L2-AnisoLK}}{L2-AnisoLK}}
 \label{sec:asfb}
 
-At the $1/4$-scale bottleneck ($128\times 128$ for a $512^2$ input), MaritimeSFNet interleaves two \textbf{Anisotropic Spatial--Frequency Bottleneck (\texttt{ASFB})} modules after \texttt{Bot1} and \texttt{Bot2} (Fig.~\ref{fig:arch}(a,c)). Each \texttt{ASFB} couples two complementary, strictly zero-initialized pathways designed specifically for open-water horizon geometry:
+At the $1/4$-scale bottleneck ($128\times 128$ for a $512^2$ input), MaritimeSFNet interleaves two \textbf{Anisotropic Spatial--Frequency Bottleneck (\texttt{ASFB})} modules after \texttt{Bot1} and \texttt{Bot2} (Fig.~\ref{fig:arch}(a,d)). Each \texttt{ASFB} couples two complementary, strictly zero-initialized pathways designed specifically for open-water horizon geometry:
 
 \textbf{1) Multi-Scale Low-Frequency Modulation (\texttt{MS-LFM}):} Applying Proposition~\ref{prop:scale} with target maritime veil band $c_{\mathrm{img}} = 0.025$ gives exact feature-domain cutoff $c_f = 4\,c_{\mathrm{img}} = 0.10$. For bottleneck tensor $X\in\mathbb{R}^{C_3\times H_4\times W_4}$, we apply an orthonormal real 2D Fourier transform $\mathcal{F}(\cdot)$, multiply by a smooth radial sigmoid low-pass mask $M_{\mathrm{lp}}(r_f; c_f)$, and invert to obtain the clean low-frequency component $X_{\mathrm{low}} = \mathcal{F}^{-1}(M_{\mathrm{lp}} \odot \mathcal{F}(X))$. To adapt modulation spatially across both global ocean illumination and localized coastal fog banks, we extract dual adaptive average pooling grids at $8\times 8$ and $16\times 16$, upsample and concatenate them, and predict spatial scale and shift fields $(\gamma, \beta)$ via a zero-initialized $3\times 3$ modulation head:
 \begin{equation}
-X_{\mathrm{freq}} = X + \gamma(X_{\mathrm{pool},8}, X_{\mathrm{pool},16}) \odot X_{\mathrm{low}} + \beta(X_{\mathrm{pool},8}, X_{\mathrm{pool},16}).
+\begin{aligned}
+X_{\mathrm{freq}} = X &+ \gamma(X_{\mathrm{pool},8}, X_{\mathrm{pool},16}) \odot X_{\mathrm{low}} \\
+                      &+ \beta(X_{\mathrm{pool},8}, X_{\mathrm{pool},16}).
+\end{aligned}
 \label{eq:mslfm}
 \end{equation}
 Because \texttt{MS-LFM} contains zero normalization layers and is initialized identically to zero ($\gamma,\beta \equiv 0$), it preserves DC color calibration while directly attenuating the $86\%\text{--}87\%$ sea-fog veil.
@@ -212,7 +215,7 @@ Each kernel plays a dedicated physical role at $1/4$ scale: $\mathrm{DW}_{1\time
 \textbf{Mid-Band 1/2-Scale Refinement (\texttt{L2-AnisoLK}):} To bridge the gap between the $1/4$-scale bottleneck ($60\text{--}124$\,px spans) and full-resolution local convolutions, we append a lightweight half-scale \texttt{L2-AnisoLK} block ($\mathrm{DW}_{1\times 15}$, $\mathrm{DW}_{15\times 1}$, $\mathrm{DW}_{7\times 7}$, $\mathrm{DW}_{3\times 3}$; physical spans $14\text{--}30$\,px) directly after \texttt{Dec2} at a cost of only $+0.018\text{M}$ parameters. This targets the exact $0.02\text{--}0.15$ mid-band wavelength of mid-range ship superstructures, bridge windows, and rigging. Train-free ERF diagnostics (Fig.~\ref{fig:erf}) confirm that \texttt{ASFB} and \texttt{L2-AnisoLK} expand the pre-BASR \texttt{Dec1} effective receptive field area above $25\%$ response by \textbf{+169.3\%} ($0.437$ vs.\ $0.162$, $213\times 165$\,px vs.\ $127\times 100$\,px) while increasing bottleneck cross-to-diagonal anisotropy from $1.343$ to $1.557$.
 
 % -----------------------------------------------------------------------------
-\subsection{Scene-Aware Frequency-Decoupled Convex Skip Fusion (\texttt{Scene-FCSF})}
+\subsection{Scene-Aware Frequency-Decoupled Convex Skip Fusion (\texorpdfstring{\texttt{Scene-FCSF}}{Scene-FCSF})}
 \label{sec:fcsf}
 
 Standard U-Net skip connections concatenate or add raw shallow encoder features $F_{\mathrm{enc}}$ directly onto dehazed decoder features $F_{\mathrm{dec}}$. Because shallow features retain strong unprocessed sea-fog airlight in their low-frequency band, unconstrained skip connections re-inject haze back into the decoder; conversely, eliminating skip connections loses crisp ship-edge localization.
@@ -222,9 +225,12 @@ We resolve this tension by decomposing both encoder and decoder features at scal
 F^L = \mathcal{L}(F), \qquad F^H = F - F^L.
 \label{eq:lp_split}
 \end{equation}
-We then define \textbf{Scene-Aware Frequency-Decoupled Convex Skip Fusion (\texttt{Scene-FCSF})} (Fig.~\ref{fig:arch}(d), top):
+We then define \textbf{Scene-Aware Frequency-Decoupled Convex Skip Fusion (\texttt{Scene-FCSF})} (Fig.~\ref{fig:arch}(e)):
 \begin{equation}
-F_{\mathrm{fuse}} = \mathrm{Conv}_{1\times 1}\!\Big(\underbrace{(1 - \alpha)\odot F_{\mathrm{dec}}^L + \alpha \odot F_{\mathrm{enc}}^L}_{\text{strictly convex low-band fusion}} + F_{\mathrm{dec}}^H + \beta \odot F_{\mathrm{enc}}^H\Big),
+\begin{aligned}
+F_{\mathrm{fuse}} = \mathrm{Conv}_{1\times 1}\!\Big(&\underbrace{(1 - \alpha)\odot F_{\mathrm{dec}}^L + \alpha \odot F_{\mathrm{enc}}^L}_{\text{strictly convex low-band fusion}} \\
+&+ F_{\mathrm{dec}}^H + \beta \odot F_{\mathrm{enc}}^H\Big),
+\end{aligned}
 \label{eq:fcsf}
 \end{equation}
 which admits the computationally clean residual form $F_{\mathrm{fuse}} = \mathrm{Conv}_{1\times 1}(F_{\mathrm{dec}} + \alpha\odot(F_{\mathrm{enc}}^L - F_{\mathrm{dec}}^L) + \beta\odot F_{\mathrm{enc}}^H)$.
@@ -242,7 +248,7 @@ Crucially, local $6\text{--}12$\,px receptive fields cannot reliably distinguish
 with deep-dominant initialization $b_{\alpha}=-1.2$ ($\alpha_0\approx 0.231$, giving the dehazed decoder $77\%$ initial control). At full $1\times$ resolution (\texttt{FCSF1}), $\alpha_1$ is structurally fixed to $0$ so only detail gate $\beta_1$ operates. As verified across 283 OWH scenes (Fig.~\ref{fig:basr}(b)), \texttt{Scene-FCSF} autonomously learns monotonic visibility adaptation without any haze-density labels: mean $\alpha_3$ rises smoothly from \textbf{0.316} (Dense) $\to$ \textbf{0.352} (Moderate) $\to$ \textbf{0.460} (Mist), $\alpha_2$ rises \textbf{0.431 $\to$ 0.468 $\to$ 0.534}, while detail injection $\beta_1$ intensifies under heavier fog (\textbf{0.386} Dense $\to$ \textbf{0.367} Moderate $\to$ \textbf{0.288} Mist).
 
 % -----------------------------------------------------------------------------
-\subsection{$C^2$ Zero-Curvature Bounded Affine Soft Reconstruction (\texttt{$C^2$-BASR})}
+\subsection{\texorpdfstring{$C^2$}{C2} Zero-Curvature Bounded Affine Soft Reconstruction (\texorpdfstring{\texttt{$C^2$-BASR}}{C2-BASR})}
 \label{sec:basr}
 
 Motivated by the exact atmospheric scattering inverse~\eqref{eq:affine_inv}, the output head maps final decoder features $d_1\in\mathbb{R}^{C_1\times H\times W}$ via a zero-initialized $3\times 3$ convolution into six channels representing multiplicative gain logits $\tilde{K}\in\mathbb{R}^{3\times H\times W}$ and additive airlight bias $B\in\mathbb{R}^{3\times H\times W}$. To avoid both polarity inversion ($G<0$) and $1/t\to\infty$ blow-up in dense fog, an intuitive parameterization bounds $G$ via a shifted sigmoid:
@@ -260,7 +266,7 @@ Let $g_{\min}\in(0,1)$ and $g_{\max}>1$ define the strictly positive gain interv
 \begin{enumerate}
     \item \textbf{Sigmoid Curvature \& Gradient Asymmetry:} For the shifted sigmoid~\eqref{eq:basr_sig} with $g_{\min}=0.5, g_{\max}=5.0$, $\sigma(b_0)=1/9$, yielding first and second derivatives at identity $k=0$:
     \begin{equation}
-    G_{\mathrm{sig}}'(0) = \frac{4}{9} \approx 0.444, \qquad G_{\mathrm{sig}}''(0) = \frac{28}{81} \approx +0.3457 > 0.
+    G_{\mathrm{sig}}'(0) = \frac{4}{9} \approx 0.444,\quad G_{\mathrm{sig}}''(0) = \frac{28}{81} \approx +0.346 > 0.
     \label{eq:sig_curv}
     \end{equation}
     Consequently, (a)~for any zero-mean local perturbation $k$ with small variance $\sigma_k^2$, Taylor expansion yields positive Jensen gain bias $\mathbb{E}[G_{\mathrm{sig}}(k)] - 1 \approx \frac{14}{81}\sigma_k^2 > 0$; and (b)~sensitivity is severely asymmetric around identity, with $G_{\mathrm{sig}}'(+0.5)/G_{\mathrm{sig}}'(-0.5) = 2.16$, starving negative attenuation updates ($k<0$) relative to positive contrast boosts ($k>0$).
@@ -299,7 +305,7 @@ Taking one-sided limits as $k\to 0^\pm$, $\operatorname{sech}^2(0)=1$ and $\tanh
 \label{fig:basr}
 \end{figure*}
 
-\textbf{Global RMS-Contrast Scene Gate:} Because maritime visibility spans a $2.11\times$ contrast range, we equip \texttt{$C^2$-BASR} with a lightweight global \textbf{Scene Contrast Gate} (Fig.~\ref{fig:arch}(d), bottom) taking the concatenated scene descriptor $z_{\mathrm{scene}} = [\mathrm{GAP}(d_1),\; \mathrm{GAP}(I),\; \sigma_{\mathrm{RMS}}(I)] \in \mathbb{R}^{C_1+6}$, where $\sigma_{\mathrm{RMS}}(I) = \sqrt{\mathrm{Var}_{u,v}(I) + 10^{-6}}$ is the per-channel spatial contrast standard deviation---a direct physical indicator of sea-fog density. A zero-initialized two-layer MLP outputs global scaling factors $(s_k, s_b) = 2\sigma(\mathrm{MLP}_0(z_{\mathrm{scene}}))\in(0,2)^2$ (strictly $1.0$ at initialization), yielding the final reconstructed clear radiance:
+\textbf{Global RMS-Contrast Scene Gate:} Because maritime visibility spans a $2.11\times$ contrast range, we equip \texttt{$C^2$-BASR} with a lightweight global \textbf{Scene Contrast Gate} (Fig.~\ref{fig:arch}(f)) taking the concatenated scene descriptor $z_{\mathrm{scene}} = [\mathrm{GAP}(d_1),\; \mathrm{GAP}(I),\; \sigma_{\mathrm{RMS}}(I)] \in \mathbb{R}^{C_1+6}$, where $\sigma_{\mathrm{RMS}}(I) = \sqrt{\mathrm{Var}_{u,v}(I) + 10^{-6}}$ is the per-channel spatial contrast standard deviation---a direct physical indicator of sea-fog density. A zero-initialized two-layer MLP outputs global scaling factors $(s_k, s_b) = 2\sigma(\mathrm{MLP}_0(z_{\mathrm{scene}}))\in(0,2)^2$ (strictly $1.0$ at initialization), yielding the final reconstructed clear radiance:
 \begin{equation}
 \hat{J}(x) = G_{\mathrm{sym}}\!\big(s_k \odot \tilde{K}(x)\big) \odot I(x) + s_b \odot B(x).
 \label{eq:basr_final}
@@ -324,7 +330,8 @@ Furthermore, real marine sea fog exhibits wavelength-dependent blue-shifted atmo
 \caption{Native Structural Partition of MaritimeSFNet for Onboard Deployment and Downstream Real-Sea-Fog LoRA Adaptation}
 \label{tab:lora_groups}
 \renewcommand{\arraystretch}{1.15}
-\setlength{\tabcolsep}{4pt}
+\setlength{\tabcolsep}{3.5pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}llll@{}}
 \toprule
 \textbf{Module Group} & \textbf{Sub-Modules} & \textbf{Post-Pretrain} & \textbf{Physical Domain Role} \\
@@ -337,7 +344,7 @@ Interface~\textcircled{2} & \texttt{AnisoLK} $1{\times}1$ proj & LoRA ($r{=}8$) 
 Interface~\textcircled{3} & \texttt{Scene-FCSF} gates & LoRA ($r{=}4\text{--}8$) & Re-balances RGB dispersion \\
 Interface~\textcircled{4} & \texttt{$C^2$-BASR} + Gate & LoRA ($r{=}4\text{--}8$) & Pixel contrast $G_c$ \& chroma $B_c$ \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 % =============================================================================
@@ -354,8 +361,9 @@ To isolate the causal contribution of every design choice without confounding hy
 \centering
 \caption{Controlled Causal Ablation Ladder on OWH Internal Validation (283 Images, Identical 8k-Iter Protocol, EMA Weights). Parameter Counts Report Training / Folded Deployment Sizes. Best Scores in \textbf{Bold}, Second Best \underline{Underlined}.}
 \label{tab:ablation}
-\renewcommand{\arraystretch}{1.16}
-\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1.18}
+\setlength{\tabcolsep}{5pt}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}llcccc@{}}
 \toprule
 \textbf{Model / Variant} & \textbf{Key Architectural Configuration} & \textbf{Params (Tr / Fold)} & \textbf{Dense (PSNR / SSIM)} & \textbf{Moderate (PSNR / SSIM)} & \textbf{Mist (PSNR / SSIM)} \\
@@ -370,7 +378,7 @@ To isolate the causal contribution of every design choice without confounding hy
 \texttt{014e} (Deeper $4,4,8$) & Full \texttt{014d} modules, depths $(4,4,8)$ & 8.28M / 4.79M & \underline{21.806} / \underline{0.8886} & \underline{24.679} / \underline{0.9275} & 26.398 / 0.9573 \\
 \textbf{\texttt{014d} (MaritimeSFNet)} & \textbf{Rep5-CD + DCA-PA + ASFB + L2-LK + Scene-FCSF + $C^2$-BASR + MIMO} & \textbf{7.84M / 4.55M} & \textbf{21.929 / 0.8894} & \textbf{24.957 / 0.9294} & \textbf{26.739 / 0.9594} \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table*}
 
 Table~\ref{tab:ablation} reveals four decisive causal findings:
@@ -391,7 +399,8 @@ To verify that \texttt{014d}'s gains stem directly from the mechanisms derived i
 \caption{Paired Error Attribution of \texttt{014d} vs.\ \texttt{014b} Across 283 OWH Scenes ($^*$ Indicates $95\%$ Bootstrap CI Strictly Excludes Zero)}
 \label{tab:paired}
 \renewcommand{\arraystretch}{1.15}
-\setlength{\tabcolsep}{4.2pt}
+\setlength{\tabcolsep}{3.6pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lrrr@{}}
 \toprule
 \textbf{Paired Metric (\texttt{014d} vs.\ \texttt{014b})} & \textbf{Dense ($94$)} & \textbf{Moderate ($95$)} & \textbf{Mist ($94$)} \\
@@ -407,7 +416,7 @@ Low-Band MSE ($<0.02$) & $-5.9\%$ & $\mathbf{-15.6\%^*}$ & $-18.7\%$ \\
 Near-Sea Smooth MSE (\%) & $\mathbf{-13.6\%^*}$ & $\mathbf{-16.0\%^*}$ & $\mathbf{-22.1\%^*}$ \\
 Horizon Mid-Band Contrib. (\%) & $\mathbf{-8.0\%^*}$ & $\mathbf{-13.8\%^*}$ & $\mathbf{-8.5\%^*}$ \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 Every error component tracks its targeted module cleanly: (i)~\texttt{$C^2$-BASR} and \texttt{Scene-FCSF} reduce \texttt{overshoot\_mse} by \textbf{11.8\%--13.4\%} and near-field sea-surface smooth MSE by \textbf{13.6\%--22.1\%} (all statistically significant on near-sea regions); (ii)~\texttt{Rep5-CD}, \texttt{DCA-PA}, and \texttt{L2-AnisoLK} slash \texttt{mid\_mse} by \textbf{7.3\%--13.1\%} and horizon-band mid-frequency error by \textbf{8.0\%--13.8\%} with $p<0.05$ across all three visibility tiers.
@@ -429,7 +438,7 @@ Fig.~\ref{fig:spatial} visualizes restored images alongside the internal per-pix
     \item \textbf{Vessel-Selective \texttt{FCSF1} Detail Gate $\beta_1(x)$:} Full-resolution high-pass injection locks onto the cruise liner decks ($\mu=0.41$) and sailing-ship masts/rigging ($\mu=0.32$), while quieting on the already crisp mist ferry foreground ($\mu=0.24$) and focusing selectively on the misty distant mountain shoreline.
 \end{itemize}
 
-\subsection{Unsupervised Visibility Manifold Disentanglement (\texttt{t-SNE} \& \texttt{K-Means})}
+\subsection{Unsupervised Visibility Manifold Disentanglement (\texorpdfstring{\texttt{t-SNE}}{t-SNE} \& \texorpdfstring{\texttt{K-Means}}{K-Means})}
 \label{sec:manifold}
 
 \begin{figure*}[t]
@@ -474,7 +483,8 @@ Table~\ref{tab:manifold} and Fig.~\ref{fig:tsne} expose a striking \textbf{encod
 \caption{Lossless \texttt{Rep5-CD} Folding Verification and FP32 Inference Throughput on a Single NVIDIA RTX~3090}
 \label{tab:folding}
 \renewcommand{\arraystretch}{1.15}
-\setlength{\tabcolsep}{4.8pt}
+\setlength{\tabcolsep}{3.8pt}
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lcccc@{}}
 \toprule
 \textbf{State} & \textbf{Params} & \textbf{Max Fold Err} & \textbf{$512{\times}512$ (FPS)} & \textbf{720p (FPS)} \\
@@ -482,7 +492,7 @@ Table~\ref{tab:manifold} and Fig.~\ref{fig:tsne} expose a striking \textbf{encod
 Unfolded (Train) & 7.838M & --- & 38.45\,ms (26.00) & 151.95\,ms (6.58) \\
 \textbf{Folded (Deploy)} & \textbf{4.555M} & \textbf{0.00e+00} & \textbf{37.68\,ms (26.54)} & \textbf{151.01\,ms (6.62)} \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 Table~\ref{tab:folding} confirms exact deployment folding via \texttt{fold\_reparam()}: merging all five \texttt{Rep5-CD} training branches reduces total model size by \textbf{41.89\%} ($7.838\text{M}\to 4.555\text{M}$) with \textbf{bit-exact numerical equivalence} ($\max|\hat{J}_{\mathrm{fold}}-\hat{J}_{\mathrm{train}}|=0.00\times 10^0$ in FP32). At $512\times 512$ input resolution, folded MaritimeSFNet sustains \textbf{26.54\,FPS} ($37.68$\,ms/frame) in standard FP32 without TensorRT or FP16 quantization, and $6.62$\,FPS at $720\text{p}$ ($2.72$\,FPS at $1080\text{p}$), comfortably supporting real-time marine navigation video pipelines.

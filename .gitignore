@@ -21,6 +21,7 @@ version.py
 *.png
 !research/014_maritime_sfnet/paper_method_kit/figures/*.html
 !research/014_maritime_sfnet/paper_method_kit/figures/*.png
+!research/014_maritime_sfnet/paper_method_kit/figures/assets/*.png
 research/014_maritime_sfnet/paper_method_kit/analysis/*.npz
 research/014_maritime_sfnet/paper_method_kit/analysis/**/*.npz
 research/014_maritime_sfnet/paper_method_kit/latex/*.aux
@@ -28,6 +29,7 @@ research/014_maritime_sfnet/paper_method_kit/latex/*.out
 research/014_maritime_sfnet/paper_method_kit/latex/*.fls
 research/014_maritime_sfnet/paper_method_kit/latex/*.fdb_latexmk
 research/014_maritime_sfnet/paper_method_kit/latex/*.synctex.gz
+research/014_maritime_sfnet/paper_method_kit/latex/build_pass*.log
 research/014_maritime_sfnet/paper_method_kit/latex/page_previews/
 *.jpeg
 *.jpg
