@@ -63,17 +63,23 @@
 | **`015a` (`probe_015a_axial_basr`)** | `d533` GPU 0 | 7.931M / 4.648M | 13.61 / **18.09 GiB** | 2.41 s/it | ~5.4 h |
 | **`015b` (`probe_015b_maritime_recipe`)** | `d533` GPU 1 | 7.838M / 4.555M | 13.61 / **17.73 GiB** | 2.32 s/it | ~5.2 h |
 
-### 3.2 并行启动与 SwanLab 追踪（`dehaze-probes`，2026-11-28 01:11 启动）
+### 3.2 `015a` / `015b` 八千步实测结果（2026-11-28 完成，内部 283 图，`params_ema`）
 
-| 探针臂 | 机器 / 卡位 | 进程 PID / 核亲和度 | 实测稳定显存 | 断点频率 | SwanLab (`dehaze-probes`) |
+| 实验 | 变量 | Dense PSNR / SSIM | Mist PSNR / SSIM | Moderate PSNR / SSIM | 相对 `014d@8k` (D / Mi / Mo) | SwanLab (`dehaze-probes`) |
+|---|---|---:|---:|---:|---:|---|
+| `011k_DEA` (`011p@8k`) | 旧基线 | 21.501 / 0.8846 | 26.705 / 0.9574 | 24.436 / 0.9257 | — | 基线 |
+| `014d@8k` | `014` 最强主干 | 21.9290 / 0.8894 | 26.7390 / 0.9594 | 24.9567 / 0.9294 | 基线 | `74jn40vp` |
+| **`015a@8k`** | 仅架构升级（`AxialGlobal + BASR-g6-Refine`，严守 `v2`） | **22.2487 / 0.8906** | **27.1309 / 0.9618** | **24.9976 / 0.9295** | **+0.320 / +0.392 / +0.041** | [`9ljyf7i5`](https://swanlab.cn/@xieyh/dehaze-probes/runs/9ljyf7i5) |
+| **`015b@8k`** | 仅海事配方（`use_rot=false + BandBalancedFFT + dense322`，同 `014d` 架构） | **23.2622 / 0.8957** | **27.4088 / 0.9621** | **25.9128 / 0.9343** | **+1.333 / +0.670 / +0.956** | [`b5h4gkml`](https://swanlab.cn/@xieyh/dehaze-probes/runs/b5h4gkml) |
+
+- 8k 末端内部诊断：`015a` 达 `gain=1.206, gain_p95=1.431, refine=0.115`（浓雾精修头显著激活，5h12m 完训）；`015b` 达 `gain=1.097, gain_p95=1.228, fcsf3_alpha=0.392, fcsf2_alpha=0.465, fcsf1_beta=0.404`（6h15m 完训，6k 时 Dense 22.44 即反超 `014d@8k`）。
+- 结论：`015a` 严格同 `v2` 协议跨过 ≥ +0.3 dB 硬过线；`015b` 三子集全面暴涨（Mist 采样比例从 32.9% 降至 28.2% 仍反涨 +0.670 dB），强烈指向 `use_rot=false` 释放海事方向物理先验为主因。
+
+### 3.3 第二轮双卡并行：`015c` 合体上限 + `015d` 单变量消融（2026-11-28 启动）
+
+| 探针臂 | 机器 / 卡位 | 精确变量定义 | 回答的核心问题 | 断点频率 | SwanLab (`dehaze-probes`) |
 |---|---|---|---|---:|---|
-| **`015a`** (`probe_015a_axial_basr_d533_v2_8000iter`) | `d533` GPU 0 | `1201201` / `0-7,12-31` | 18.7 GiB / 100% util | 1000 iter | [`9ljyf7i5`](https://swanlab.cn/@xieyh/dehaze-probes/runs/9ljyf7i5) |
-| **`015b`** (`probe_015b_maritime_recipe_d533_v2_8000iter`) | `d533` GPU 1 | `1201252` / `0-7,12-31` | 19.1 GiB / 97% util | 1000 iter | [`b5h4gkml`](https://swanlab.cn/@xieyh/dehaze-probes/runs/b5h4gkml) |
+| **`015c`** (`probe_015c_axial_basr_maritime_d533_v2_8000iter`) | `d533` **GPU 0** | **`015a` 架构 + `015b` 海事配方**（`AxialGlobal + BASR-g6-Refine` + `use_rot=false + BandBalancedFFT + dense322`，port `29553`） | 检验 `AxialGlobalProfile` 在解除 `rot90/vflip` 干扰后的协同上限（`015c - 015b`） | 1000 iter | *(启动后回填)* |
+| **`015d`** (`probe_015d_norot_only_d533_v2_8000iter`) | `d533` **GPU 1** | **`014d` 架构 + 仅关闭 `use_rot=false`**（严格保留原始 `v2` 1:1:1 清单与原版 `FFTLoss`，port `29554`） | 精准拆解 `015b` 的 +1.33/+0.67/+0.96 dB：`015d - 014d` = 纯海事方向先验净增益；`015b - 015d` = `BandBalancedFFT + dense322` 净增益 | 1000 iter | *(启动后回填)* |
 
-> 异常中断续训命令（自动接续最近 `1000.state` 断点）：
-> ```bash
-> CPU_AFFINITY=0-7,12-31 bash research/015_dense_upper_bound/tools/launch_probe.sh 0 research/015_dense_upper_bound/probe_015a_axial_basr.yml research/015_dense_upper_bound/run_015a_resume1 18500 --auto_resume
-> CPU_AFFINITY=0-7,12-31 bash research/015_dense_upper_bound/tools/launch_probe.sh 1 research/015_dense_upper_bound/probe_015b_maritime_recipe.yml research/015_dense_upper_bound/run_015b_resume1 18500 --auto_resume
-> ```
-
-*(待 8k 训练结束并执行 `paired_eval.py` 后，回填最终三子集 PSNR / SSIM 与频段归因对比表。)*
+*(待 `015c` / `015d` 启动验证后回填 PID 与 SwanLab 链接，8k 完训后统一回填因子消融汇总表。)*

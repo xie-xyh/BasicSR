@@ -15,6 +15,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 CONFIGS = {
     '015a': REPO_ROOT / 'research/015_dense_upper_bound/probe_015a_axial_basr.yml',
     '015b': REPO_ROOT / 'research/015_dense_upper_bound/probe_015b_maritime_recipe.yml',
+    '015c': REPO_ROOT / 'research/015_dense_upper_bound/probe_015c_axial_basr_maritime.yml',
+    '015d': REPO_ROOT / 'research/015_dense_upper_bound/probe_015d_norot_only.yml',
 }
 REF_014D = REPO_ROOT / 'research/014_maritime_sfnet/probe_014d.yml'
 
@@ -83,12 +85,26 @@ def check_static_and_configs():
     assert c15b['train']['fft_opt']['type'] == 'BandBalancedFFTLoss'
     assert c15b['train']['fft_opt']['low_weight'] == 0.00607
 
+    # 015c: exact combination of 015a architecture + 015b maritime recipe
+    c15c = cfgs['015c']
+    assert c15c['network_g'] == c15a['network_g'], '015c architecture must match 015a!'
+    assert c15c['datasets'] == c15b['datasets'], '015c datasets must match 015b!'
+    assert c15c['train'] == c15b['train'], '015c train recipe must match 015b!'
+
+    # 015d: strict single-variable ablation of use_rot=false on 014d (exact v2 manifest + FFTLoss)
+    c15d = cfgs['015d']
+    assert c15d['network_g'] == c15b['network_g'], '015d architecture must match 014d/015b!'
+    assert c15d['train'] == ref['train'], '015d train losses/schedule must match 014d!'
+    assert c15d['datasets']['train']['meta_info_file'] == ref['datasets']['train']['meta_info_file']
+    assert c15d['datasets']['train']['use_rot'] is False
+    assert c15d['datasets']['train']['use_hflip'] is True
+
     # Verify dense322 manifest has zero leakage (exact subset of v2 train manifest)
     base_lines = [l.strip() for l in (REPO_ROOT / ref['datasets']['train']['meta_info_file']).read_text().splitlines() if l.strip()]
     d322_lines = [l.strip() for l in (REPO_ROOT / c15b['datasets']['train']['meta_info_file']).read_text().splitlines() if l.strip()]
     assert set(d322_lines) == set(base_lines), 'dense322 manifest must cover exact same unique images as v2 train!'
     print(f'  dense322 manifest verified: {len(d322_lines)} rows from {len(base_lines)} unique v2 train pairs.')
-    print('  015a / 015b orthogonality & isolation checks PASSED.')
+    print('  015a / 015b / 015c / 015d factorial orthogonality & isolation checks PASSED.')
     return cfgs, ref
 
 
@@ -153,7 +169,7 @@ def check_torch_units(cfgs, ref):
 
         assert net.stem.weight.grad is not None and net.stem.weight.grad.abs().sum() > 0
         assert net.diagnostics['diag_basr_gain_p95'] is not None
-        if tag == '015a':
+        if cfg['network_g'].get('use_axial_global', False):
             assert net.asfb1.axial_global.row_net[0].weight.grad.abs().sum() > 0
             assert net.asfb1.axial_global.col_net[0].weight.grad.abs().sum() > 0
             assert net.basr_head.refine[0].weight.grad.abs().sum() > 0
